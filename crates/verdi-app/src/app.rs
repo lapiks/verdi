@@ -1,22 +1,22 @@
 use verdi_window::Window;
 
-pub struct Application {
-    window: Window,
+pub struct App {
+    //window: Window,
 }
 
-impl Application {
-    pub fn new() -> Application{
-        Application::default()
+impl App {
+    pub fn new() -> App{
+        App::default()
     }
 
     pub fn run(&self) {
-        //self.window.run();
+        verdi_window::run();
     }
 }
 
-impl Default for Application {
+impl Default for App {
     fn default() -> Self {
         let window = Window::new();
-        Self { window: window }
+        Self { /*window: window*/ }
     }
 }

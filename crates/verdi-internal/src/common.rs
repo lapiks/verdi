@@ -1,2 +1,2 @@
 // common imports
-pub use crate::{ window::*, renderer::* };
+pub use crate::{ app::prelude::* , window::*, renderer::* };
