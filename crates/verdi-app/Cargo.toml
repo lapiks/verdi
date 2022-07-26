@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 verdi-window = { path = "../verdi-window" }
+verdi-renderer = { path = "../verdi-renderer" }

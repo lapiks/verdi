@@ -1,7 +1,7 @@
 use verdi_window::Window;
 
 pub struct App {
-    //window: Window,
+    window: Window,
 }
 
 impl App {
@@ -17,6 +17,9 @@ impl App {
 impl Default for App {
     fn default() -> Self {
         let window = Window::new();
-        Self { /*window: window*/ }
+
+        verdi_renderer::initialise(&window);
+
+        Self { window: window }
     }
 }
