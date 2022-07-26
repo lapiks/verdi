@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 wgpu = "0.13.0"
+verdi-window = { path = "../verdi-window" }
