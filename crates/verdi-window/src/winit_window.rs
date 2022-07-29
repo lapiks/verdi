@@ -14,8 +14,7 @@ pub fn create_and_run() -> winit::window::Window
             ref event,
             window_id,
         } if window_id == window.id() => match event {
-            WindowEvent::CloseRequested
-            | WindowEvent::KeyboardInput {
+            WindowEvent::CloseRequested | WindowEvent::KeyboardInput {
                 input:
                     KeyboardInput {
                         state: ElementState::Pressed,
@@ -24,6 +23,9 @@ pub fn create_and_run() -> winit::window::Window
                     },
                 ..
             } => *control_flow = ControlFlow::Exit,
+            WindowEvent::Resized(physical_size) => {
+                // fire event
+            }
             _ => {}
         },
         _ => {}

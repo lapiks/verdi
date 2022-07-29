@@ -56,4 +56,12 @@ impl Renderer
             config
         }
     }
+
+    pub fn on_window_resize(&mut self, new_width: u32, new_height: u32) {
+        if new_width > 0 && new_height > 0 {
+            self.config.width = new_width;
+            self.config.height = new_height;
+            self.surface.configure(&self.device, &self.config);
+        }
+    }
 }
