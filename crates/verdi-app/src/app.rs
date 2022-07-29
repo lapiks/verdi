@@ -5,26 +5,23 @@ use futures::executor::block_on;
 
 pub struct App {
     window: Window,
+    renderer: Renderer,
 }
 
 impl App {
     pub fn new() -> App {
-        App::default()
+        let window = Window::new(1024, 768);
+
+        let renderer = block_on(create_renderer(&window));
+
+        Self { window: window, renderer: renderer }
     }
 
-    pub fn run(&self) {
-        block_on(self.inner_run());
-    }
-
-    async fn inner_run(&self) {
-        Renderer::new(&self.window).await;
+    pub fn render(&mut self) {
+        self.renderer.render();
     }
 }
 
-impl Default for App {
-    fn default() -> Self {
-        let window = Window::new(1024, 768);
-
-        Self { window: window }
-    }
+async fn create_renderer(window: &Window) -> Renderer {
+    return Renderer::new(window).await;
 }

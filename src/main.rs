@@ -1,7 +1,7 @@
 use verdi::common::*;
 
 fn main() {
-    let app = App::new();
+    let mut app = App::new();
 
-    app.run();
+    app.render();
 }
