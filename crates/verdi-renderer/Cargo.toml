@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 wgpu = "0.13.0"
 winit = "0.26"
+bytemuck = { version = "1.4", features = [ "derive" ] }

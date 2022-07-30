@@ -1,9 +1,15 @@
+use wgpu::util::DeviceExt;
+
+use crate::vertex::Vertex;
+use crate::vertex::VERTICES;
+
 pub struct Renderer {
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     render_pipeline: wgpu::RenderPipeline,
+    vertex_buffer: wgpu::Buffer,
 }
 
 impl Renderer
@@ -64,7 +70,7 @@ impl Renderer
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[],
+                buffers: &[Vertex::descriptor()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -99,13 +105,21 @@ impl Renderer
             multiview: None,
         });
 
+        let vertex_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(VERTICES),
+                usage: wgpu::BufferUsages::VERTEX,
+            }
+        );
     
         Self {
             surface,
             device,
             queue,
             config,
-            render_pipeline
+            render_pipeline,
+            vertex_buffer
         }
     }
 
@@ -145,6 +159,7 @@ impl Renderer
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.draw(0..3, 0..1);
         }
 
