@@ -13,3 +13,7 @@ pub mod window {
 pub mod renderer {
     pub use verdi_renderer::*;
 }
+
+pub mod game {
+    pub use verdi_game::*;
+}

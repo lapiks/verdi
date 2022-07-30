@@ -1205,10 +1205,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "verdi-game"
+version = "0.1.0"
+dependencies = [
+ "winit",
+]
+
+[[package]]
 name = "verdi-internal"
 version = "0.1.0"
 dependencies = [
  "verdi-app",
+ "verdi-game",
  "verdi-renderer",
  "verdi-window",
 ]
@@ -1217,8 +1225,8 @@ dependencies = [
 name = "verdi-renderer"
 version = "0.1.0"
 dependencies = [
- "verdi-window",
  "wgpu",
+ "winit",
 ]
 
 [[package]]
@@ -1226,6 +1234,9 @@ name = "verdi-window"
 version = "0.1.0"
 dependencies = [
  "env_logger",
+ "futures",
+ "verdi-game",
+ "verdi-renderer",
  "winit",
 ]
 

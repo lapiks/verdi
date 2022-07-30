@@ -1,5 +1,3 @@
-use verdi_window::Window;
-
 pub struct Renderer {
     surface: wgpu::Surface,
     device: wgpu::Device,
@@ -9,12 +7,12 @@ pub struct Renderer {
 
 impl Renderer
 {
-    pub async fn new(window: &Window) -> Self {
+    pub async fn new(window: &winit::window::Window) -> Self {
         // The instance is the first thing you create when using wgpu. Its main purpose is to create Adapters and Surfaces
         let instance = wgpu::Instance::new(wgpu::Backends::all());
     
         // The surface is the part of the window that we draw to
-        let surface = unsafe { instance.create_surface(&window.internal_window) };
+        let surface = unsafe { instance.create_surface(window) };
     
         // The adapter is a handle to our actual graphics card
         let adapter = instance.request_adapter(
@@ -43,8 +41,8 @@ impl Renderer
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface.get_supported_formats(&adapter)[0],
-            width: window.width,
-            height: window.height,
+            width: 1024, // en dur !
+            height: 764,
             present_mode: wgpu::PresentMode::Fifo,
         };
         surface.configure(&device, &config);
