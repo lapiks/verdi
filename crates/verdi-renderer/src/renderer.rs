@@ -1,15 +1,18 @@
 use wgpu::util::DeviceExt;
 
+use crate::render_device::RenderDevice;
 use crate::vertex::Vertex;
 use crate::vertex::VERTICES;
+use crate::vertex::INDICES;
 
 pub struct Renderer {
     surface: wgpu::Surface,
-    device: wgpu::Device,
+    render_device: RenderDevice,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: wgpu::Buffer,
+    index_buffer: wgpu::Buffer,
 }
 
 impl Renderer
@@ -44,6 +47,8 @@ impl Renderer
             },
             None, // Trace path
         ).await.unwrap();
+
+        let render_device = RenderDevice::from(device);
     
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -52,19 +57,19 @@ impl Renderer
             height: 764,
             present_mode: wgpu::PresentMode::Fifo,
         };
-        surface.configure(&device, &config);
+        surface.configure(&render_device.device, &config);
 
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader/shader.wgsl"));
+        let shader = render_device.device.create_shader_module(wgpu::include_wgsl!("shader/shader.wgsl"));
 
         let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            render_device.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
                 bind_group_layouts: &[],
                 push_constant_ranges: &[],
             });
 
  
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let render_pipeline = render_device.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
@@ -105,21 +110,32 @@ impl Renderer
             multiview: None,
         });
 
-        let vertex_buffer = device.create_buffer_init(
+        let vertex_buffer = render_device.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
                 contents: bytemuck::cast_slice(VERTICES),
                 usage: wgpu::BufferUsages::VERTEX,
             }
         );
+        let num_vertices = VERTICES.len() as u32;
+
+        let index_buffer = render_device.device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(INDICES),
+                usage: wgpu::BufferUsages::INDEX,
+            }
+        );
+        let num_indices = INDICES.len() as u32;
     
         Self {
             surface,
-            device,
+            render_device,
             queue,
             config,
             render_pipeline,
-            vertex_buffer
+            vertex_buffer,
+            index_buffer,
         }
     }
 
@@ -127,7 +143,7 @@ impl Renderer
         if new_size.width > 0 && new_size.height > 0 {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
-            self.surface.configure(&self.device, &self.config);
+            self.surface.configure(&self.render_device.device, &self.config);
         }
     }
 
@@ -135,7 +151,7 @@ impl Renderer
         let output = self.surface.get_current_texture()?;
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+        let mut encoder = self.render_device.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Render Encoder"),
         });
         
@@ -160,7 +176,8 @@ impl Renderer
 
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.draw(0..3, 0..1);
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16); // 1.
+            render_pass.draw_indexed(0..INDICES.len() as u32, 0, 0..1); // 2.
         }
 
         // submit will accept anything that implements IntoIter
