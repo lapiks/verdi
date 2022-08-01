@@ -1,3 +1,4 @@
-pub struct Entity {
+pub type EntityId = u64;
 
+pub struct Entity {
 }
