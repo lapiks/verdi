@@ -1,3 +1,3 @@
-struct Entity {
+pub struct Entity {
 
 }
