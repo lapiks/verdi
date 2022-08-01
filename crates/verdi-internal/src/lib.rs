@@ -17,3 +17,7 @@ pub mod renderer {
 pub mod game {
     pub use verdi_game::*;
 }
+
+pub mod ecs {
+    pub use verdi_ecs::*;
+}
