@@ -36,7 +36,6 @@ impl World {
                     
                 }
         }
-        
         false
     }
 }
