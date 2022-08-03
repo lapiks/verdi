@@ -21,3 +21,7 @@ pub mod game {
 pub mod ecs {
     pub use verdi_ecs::*;
 }
+
+pub mod math {
+    pub use verdi_math::*;
+}
