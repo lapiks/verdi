@@ -22,6 +22,10 @@ pub mod ecs {
     pub use verdi_ecs::*;
 }
 
+pub mod ecs2 {
+    pub use verdi_ecs2::*;
+}
+
 pub mod math {
     pub use verdi_math::*;
 }

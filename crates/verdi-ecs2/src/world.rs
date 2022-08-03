@@ -1,4 +1,4 @@
-use crate::entity::{EntityId};
+use crate::entity::{EntityId, EntityRef};
 use crate::component::{ComponentVec};
 
 pub struct World {
@@ -14,19 +14,19 @@ impl World {
         }
     }
 
-    pub fn spawn(&mut self) -> EntityId {
+    pub fn spawn(&mut self) -> EntityRef {
         let entity_id = self.entities_count;
         // add a new empty entry in each component columns
         for component_vec in self.component_vecs.iter_mut() {
             component_vec.push_none();
         }
         self.entities_count += 1;
-        entity_id as EntityId
+        EntityRef::new(self, self.entities_count as EntityId)
     }
 
-    fn add_component_to_entity<ComponentType: 'static>(
+    pub(crate) fn add_component_to_entity<ComponentType: 'static>(
         &mut self,
-        entity: usize,
+        entity: EntityId,
         component: ComponentType,
     ) {
         for component_vec in self.component_vecs.iter_mut() {
@@ -34,11 +34,10 @@ impl World {
                 .as_any_mut()
                 .downcast_mut::<Vec<Option<ComponentType>>>()
             {
-                component_vec[entity] = Some(component);
+                component_vec[entity as usize] = Some(component);
                 return;
             }
         }
-
         // No matching component storage exists yet, so we have to register a new one.
         let mut new_component_vec: Vec<Option<ComponentType>> = Vec::with_capacity(self.entities_count);
 
@@ -48,7 +47,7 @@ impl World {
         }
 
         // Give this Entity the Component.
-        new_component_vec[entity] = Some(component);
+        new_component_vec[entity as usize] = Some(component);
 
         // Register the new component type
         self.register_component::<ComponentType>(new_component_vec);
