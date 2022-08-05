@@ -59,17 +59,10 @@ impl Renderer
         };
         surface.configure(&render_device.device, &config);
 
-        let shader = render_device.device.create_shader_module(wgpu::include_wgsl!("shader/shader.wgsl"));
+        let shader = render_device.create_shader_module();
+        let render_pipeline_layout = render_device.create_pipeline_layout();
 
-        let render_pipeline_layout =
-            render_device.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[],
-                push_constant_ranges: &[],
-            });
-
- 
-        let render_pipeline = render_device.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let render_pipeline = render_device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
@@ -110,23 +103,17 @@ impl Renderer
             multiview: None,
         });
 
-        let vertex_buffer = render_device.device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(VERTICES),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
-        let num_vertices = VERTICES.len() as u32;
+        let vertex_buffer = render_device.create_buffer(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex Buffer"),
+            contents: bytemuck::cast_slice(VERTICES),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
 
-        let index_buffer = render_device.device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(INDICES),
-                usage: wgpu::BufferUsages::INDEX,
-            }
-        );
-        let num_indices = INDICES.len() as u32;
+        let index_buffer = render_device.create_buffer(&wgpu::util::BufferInitDescriptor {
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(INDICES),
+            usage: wgpu::BufferUsages::INDEX,
+        });
     
         Self {
             surface,
