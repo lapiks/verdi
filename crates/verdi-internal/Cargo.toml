@@ -10,6 +10,5 @@ verdi-app = { path = "../verdi-app" }
 verdi-window = { path = "../verdi-window" }
 verdi-renderer = { path = "../verdi-renderer" }
 verdi-game = { path = "../verdi-game" }
-verdi-ecs = { path = "../verdi-ecs" }
 verdi-ecs2 = { path = "../verdi-ecs2" }
 verdi-math = { path = "../verdi-math" }
