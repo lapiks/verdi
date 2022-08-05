@@ -1,4 +1,4 @@
-use crate::entity::{EntityId, EntityRef};
+use crate::entity::{EntityId, EntityRef, self};
 use crate::component::{ComponentVec};
 
 pub struct World {
@@ -6,6 +6,12 @@ pub struct World {
     component_vecs: Vec<Box<dyn ComponentVec>>, // component storage as columns
     entities: Vec<EntityId>,
 }
+
+pub enum EntityError {
+    UnknownEntity,
+}
+
+pub type EntityResult = Result<bool, EntityError>;
 
 impl World {
     pub fn new() -> Self {
@@ -27,9 +33,16 @@ impl World {
         EntityRef::new(self, entity_id as EntityId)
     }
 
-    pub fn despawn(&mut self, entity: EntityId) {
-        for component_vec in self.component_vecs.iter_mut() {
-            component_vec.set_none(entity);
+    pub fn despawn(&mut self, entity: EntityId) -> EntityResult {
+        match self.entity(entity) {
+            None => Err(EntityError::UnknownEntity),
+            Some(entity_ref) => {
+                for component_vec in self.component_vecs.iter_mut() {
+                    component_vec.set_none(entity);
+                }
+                self.entities.remove(entity as usize);
+                Ok(true)
+            }
         }
     }
 

@@ -15,4 +15,6 @@ fn main() {
 
     let entity_ref = world.entity(entity).unwrap()
         .add(Weight(68));
+
+    world.despawn(entity);
 }
