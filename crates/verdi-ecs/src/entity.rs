@@ -20,8 +20,9 @@ impl<'a> EntityRef<'a> {
         self
     }
 
-    pub fn remove<ComponentType: 'static>(&mut self) {
-
+    pub fn remove<ComponentType: 'static>(&mut self) -> &mut Self {
+        self.world.remove_component_from_entity::<ComponentType>(self.entity);
+        self
     }
 
     pub fn id(&self) -> EntityId {

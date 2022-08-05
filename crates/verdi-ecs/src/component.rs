@@ -10,6 +10,8 @@ pub trait ComponentVec {
     fn push_none(&mut self);
     // Set a none value at Entity index
     fn set_none(&mut self, entity: EntityId);
+    // Check if any entity still uses this component
+    fn empty(&self) -> bool;
 }
 
 impl<T: 'static> ComponentVec for Vec<Option<T>> {
@@ -27,5 +29,14 @@ impl<T: 'static> ComponentVec for Vec<Option<T>> {
 
     fn set_none(&mut self, entity: EntityId) {
         self[entity as usize] = None;
+    }
+
+    fn empty(&self) -> bool {
+        for component in self.iter() {
+            if component.is_some() {
+                return false;
+            }
+        }
+        true
     }
 }

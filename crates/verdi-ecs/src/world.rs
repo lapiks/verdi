@@ -65,6 +65,7 @@ impl World {
                 return;
             }
         }
+
         // No matching component storage exists yet, so we have to register a new one.
         let mut new_component_vec: Vec<Option<ComponentType>> = Vec::with_capacity(self.entities_count);
 
@@ -80,9 +81,37 @@ impl World {
         self.register_component::<ComponentType>(new_component_vec);
     }
 
+    pub(crate) fn remove_component_from_entity<ComponentType: 'static>(
+        &mut self,
+        entity: EntityId
+    ) {
+        // Find the good component vec
+        if let Some(component_vec) = self.borrow_mut_component_vec::<ComponentType>() {
+            component_vec.set_none(entity); // remove
+            // check if any entity still uses this component, if not we can unregister it
+            if component_vec.empty() == true {
+                self.unregister_component::<ComponentType>();
+            }
+        }
+    }
+
     fn register_component<ComponentType: 'static>(&mut self, component_vec: Vec<Option<ComponentType>>) {
         self.component_vecs.push(
             Box::new(component_vec));
+    }
+
+    fn unregister_component<ComponentType: 'static>(&mut self) {
+        let mut n = 0;
+        for component_vec in self.component_vecs.iter_mut() {
+            if let Some(component_vec) = component_vec
+                .as_any()
+                .downcast_ref::<Vec<Option<ComponentType>>>()
+            {
+                break;
+            }
+            n += 1;
+        }
+        self.component_vecs.remove(n);
     }
 
     fn borrow_component_vec<ComponentType: 'static>(&self) -> Option<&Vec<Option<ComponentType>>> {
@@ -91,6 +120,19 @@ impl World {
             if let Some(component_vec) = component_vec
                 .as_any()
                 .downcast_ref::<Vec<Option<ComponentType>>>()
+            {
+                return Some(component_vec);
+            }
+        }
+        None
+    }
+
+    fn borrow_mut_component_vec<ComponentType: 'static>(&mut self) -> Option<&mut Vec<Option<ComponentType>>> {
+        // try to find a matching component vec
+        for component_vec in self.component_vecs.iter_mut() {
+            if let Some(component_vec) = component_vec
+                .as_any_mut()
+                .downcast_mut::<Vec<Option<ComponentType>>>()
             {
                 return Some(component_vec);
             }
