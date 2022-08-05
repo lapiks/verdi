@@ -19,4 +19,12 @@ impl<'a> EntityRef<'a> {
         self.world.add_component_to_entity(self.entity, component);
         self
     }
+
+    pub fn remove<ComponentType: 'static>(&mut self) {
+
+    }
+
+    pub fn id(&self) -> EntityId {
+        self.entity
+    }
 }

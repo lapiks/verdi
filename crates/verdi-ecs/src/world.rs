@@ -4,6 +4,7 @@ use crate::component::{ComponentVec};
 pub struct World {
     entities_count: usize,
     component_vecs: Vec<Box<dyn ComponentVec>>, // component storage as columns
+    entities: Vec<EntityId>,
 }
 
 impl World {
@@ -11,6 +12,7 @@ impl World {
         Self {
             entities_count: 0,
             component_vecs: Vec::new(),
+            entities: Vec::new(),
         }
     }
 
@@ -21,7 +23,19 @@ impl World {
             component_vec.push_none();
         }
         self.entities_count += 1;
-        EntityRef::new(self, self.entities_count as EntityId)
+        self.entities.push(entity_id as EntityId);
+        EntityRef::new(self, entity_id as EntityId)
+    }
+
+    pub fn despawn(&mut self, entity: EntityId) {
+        for component_vec in self.component_vecs.iter_mut() {
+            component_vec.set_none(entity);
+        }
+    }
+
+    pub fn entity(&mut self, entity: EntityId) -> Option<EntityRef> {
+        let id = self.entities.get(entity as usize)?;
+        Some(EntityRef::new(self, *id))
     }
 
     pub(crate) fn add_component_to_entity<ComponentType: 'static>(
@@ -56,5 +70,18 @@ impl World {
     fn register_component<ComponentType: 'static>(&mut self, component_vec: Vec<Option<ComponentType>>) {
         self.component_vecs.push(
             Box::new(component_vec));
+    }
+
+    fn borrow_component_vec<ComponentType: 'static>(&self) -> Option<&Vec<Option<ComponentType>>> {
+        // try to find a matching component vec
+        for component_vec in self.component_vecs.iter() {
+            if let Some(component_vec) = component_vec
+                .as_any()
+                .downcast_ref::<Vec<Option<ComponentType>>>()
+            {
+                return Some(component_vec);
+            }
+        }
+        None
     }
 }
