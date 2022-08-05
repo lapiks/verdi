@@ -18,8 +18,8 @@ pub mod game {
     pub use verdi_game::*;
 }
 
-pub mod ecs2 {
-    pub use verdi_ecs2::*;
+pub mod ecs {
+    pub use verdi_ecs::*;
 }
 
 pub mod math {

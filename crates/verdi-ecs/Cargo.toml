@@ -1,5 +1,5 @@
 [package]
-name = "verdi-ecs2"
+name = "verdi-ecs"
 version = "0.1.0"
 edition = "2021"
 
