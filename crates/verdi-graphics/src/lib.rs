@@ -6,6 +6,12 @@ pub mod prelude {
     };
 }
 
+mod vertex;
+mod vertex_buffer;
+mod index_buffer;
+mod program;
+mod shader;
+
 extern crate glium;
 
 pub fn run() {
