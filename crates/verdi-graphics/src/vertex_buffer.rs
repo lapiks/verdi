@@ -1,7 +1,7 @@
 use crate::{vertex::Vertex};
 
 pub struct VertexBuffer {
-    internal_buffer: glium::VertexBuffer<Vertex>,
+    pub internal_buffer: glium::VertexBuffer<Vertex>,
 }
 
 impl VertexBuffer {
