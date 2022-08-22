@@ -14,6 +14,10 @@ pub mod renderer {
     pub use verdi_renderer::*;
 }
 
+pub mod graphics {
+    pub use verdi_graphics::*;
+}
+
 pub mod game {
     pub use verdi_game::*;
 }

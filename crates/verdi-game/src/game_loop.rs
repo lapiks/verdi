@@ -7,6 +7,7 @@ use futures::executor::block_on;
 
 use verdi_window::Window;
 use verdi_renderer::Renderer;
+use verdi_graphics;
 
 pub fn run() {
     let event_loop = EventLoop::new();
@@ -45,4 +46,8 @@ pub fn run() {
         }
         _ => {}
     });
+}
+
+pub fn run2() {
+    verdi_graphics::run();
 }
