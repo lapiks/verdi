@@ -4,10 +4,12 @@ use glium::uniform;
 pub mod prelude {
     #[doc(hidden)]
     pub use crate::{
-        
+        graphics_chip::GraphicsChip,
+
     };
 }
 
+mod graphics_chip;
 mod vertex;
 mod vertex_buffer;
 mod index_buffer;
@@ -16,7 +18,7 @@ mod shader;
 mod render_pass;
 mod teapot;
 
-extern crate glium;
+
 
 pub fn run() {
     use glium::{glutin, Surface};

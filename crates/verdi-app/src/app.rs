@@ -1,9 +1,37 @@
+use glium::{glutin, Surface, uniform};
+
+use verdi_graphics::prelude::*;
+
 pub struct App {
 
 }
 
 impl App {
     pub fn run() {
-        verdi_game::run2();
+        let event_loop = glutin::event_loop::EventLoop::new();
+        let wb = glutin::window::WindowBuilder::new();
+        let cb = glutin::ContextBuilder::new();
+        let display = glium::Display::new(wb, cb, &event_loop).unwrap();
+        
+        let gpu = GraphicsChip::new(display).unwrap();
+
+        event_loop.run(move |ev, _, control_flow| {
+            gpu.render();
+
+            let next_frame_time = std::time::Instant::now() +
+                std::time::Duration::from_nanos(16_666_667);
+
+            *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
+            match ev {
+                glutin::event::Event::WindowEvent { event, .. } => match event {
+                    glutin::event::WindowEvent::CloseRequested => {
+                        *control_flow = glutin::event_loop::ControlFlow::Exit;
+                        return;
+                    },
+                    _ => return,
+                },
+                _ => (),
+            }
+        });
     }
 }

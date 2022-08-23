@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 verdi-game = { path = "../verdi-game" }
+verdi-graphics = { path = "../verdi-graphics" }
+glium = "*"
