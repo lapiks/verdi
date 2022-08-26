@@ -1,15 +1,22 @@
 use glium::{glutin, Surface, uniform};
 use crate::vertex::Vertex;
-
+use verdi_math::prelude::*;
 pub struct GraphicsChip {
     display: glium::Display,
     gouraud_program: glium::Program,
     vertex_buffer: Vec<Vertex>,
+    current_vertex_state: Vertex
 }
 
 pub enum GraphicsChipError {
     ProgramCreation,
     ShaderParsing,
+}
+
+pub enum PrimitiveType {
+    triangles,
+    points,
+    lines,
 }
 
 impl GraphicsChip {
@@ -40,15 +47,14 @@ impl GraphicsChip {
 
         let vertex_buffer = Vec::new();
 
+        let current_vertex_state = Vertex::default();
+
         Ok(Self {
             display,
             gouraud_program,
             vertex_buffer,
+            current_vertex_state
         })
-    }
-
-    pub fn init() {
-        
     }
 
     pub fn render(&mut self) {
@@ -66,9 +72,9 @@ impl GraphicsChip {
         // the direction of the light
         let light = [-1.0, 0.4, 0.9f32];
 
-        let vertex1 = Vertex { position: [-0.5, -0.5, 0.0], normal: [0.0, 0.0, 1.0] };
-        let vertex2 = Vertex { position: [ 0.0,  0.5, 0.0], normal: [0.0, 0.0, 1.0] };
-        let vertex3 = Vertex { position: [ 0.5, -0.25, 0.0], normal: [0.0, 0.0, 1.0] };
+        let vertex1 = Vertex { position: [-0.5, -0.5, 0.0], normal: [0.0, 0.0, 1.0], ..Vertex::default() };
+        let vertex2 = Vertex { position: [ 0.0,  0.5, 0.0], normal: [0.0, 0.0, 1.0], ..Vertex::default()};
+        let vertex3 = Vertex { position: [ 0.5, -0.25, 0.0], normal: [0.0, 0.0, 1.0], ..Vertex::default()};
         self.vertex_buffer = vec![vertex1, vertex2, vertex3];
 
         let vertex_buffer = glium::VertexBuffer::new(&self.display, &self.vertex_buffer).unwrap();
@@ -83,5 +89,30 @@ impl GraphicsChip {
         ).unwrap();
 
         target.finish().unwrap();
+    }
+
+    pub fn begin(primitive_type: PrimitiveType) {
+
+    }
+
+    pub fn end() {
+
+    }
+
+    pub fn vertex(&mut self, coords: Vec3) {
+        self.current_vertex_state.position = coords.to_array();
+        self.vertex_buffer.push(self.current_vertex_state);
+    }
+
+    pub fn normal(&mut self, coords: Vec3) {
+        self.current_vertex_state.normal = coords.to_array();
+    }
+
+    pub fn tex_coord(&mut self, coords: Vec2) {
+        self.current_vertex_state.uv = coords.to_array();
+    }
+
+    pub fn color(&mut self, coords: Vec4) {
+        self.current_vertex_state.color = coords.to_array();
     }
 }
