@@ -13,7 +13,7 @@ impl App {
         let cb = glutin::ContextBuilder::new();
         let display = glium::Display::new(wb, cb, &event_loop).unwrap();
         
-        let gpu = GraphicsChip::new(display).unwrap();
+        let mut gpu = GraphicsChip::new(display).unwrap();
 
         event_loop.run(move |ev, _, control_flow| {
             gpu.render();

@@ -2,8 +2,9 @@ use glium::{glutin, Surface, uniform};
 use crate::vertex::Vertex;
 
 pub struct GraphicsChip {
-    pub display: glium::Display,
+    display: glium::Display,
     gouraud_program: glium::Program,
+    vertex_buffer: Vec<Vertex>,
 }
 
 pub enum GraphicsChipError {
@@ -37,9 +38,12 @@ impl GraphicsChip {
             None
         ).unwrap();
 
+        let vertex_buffer = Vec::new();
+
         Ok(Self {
             display,
             gouraud_program,
+            vertex_buffer,
         })
     }
 
@@ -47,15 +51,15 @@ impl GraphicsChip {
         
     }
 
-    pub fn render(&self) {
+    pub fn render(&mut self) {
         let mut target = self.display.draw();
         target.clear_color(0.0, 0.0, 1.0, 1.0);
 
         // uniforms (à bouger)
         let matrix = [
-            [0.01, 0.0, 0.0, 0.0],
-            [0.0, 0.01, 0.0, 0.0],
-            [0.0, 0.0, 0.01, 0.0],
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
             [0.0, 0.0, 0.0, 1.0f32]
         ];
 
@@ -65,9 +69,9 @@ impl GraphicsChip {
         let vertex1 = Vertex { position: [-0.5, -0.5, 0.0], normal: [0.0, 0.0, 1.0] };
         let vertex2 = Vertex { position: [ 0.0,  0.5, 0.0], normal: [0.0, 0.0, 1.0] };
         let vertex3 = Vertex { position: [ 0.5, -0.25, 0.0], normal: [0.0, 0.0, 1.0] };
-        let vertices = vec![vertex1, vertex2, vertex3];
+        self.vertex_buffer = vec![vertex1, vertex2, vertex3];
 
-        let vertex_buffer = glium::VertexBuffer::new(&self.display, &vertices).unwrap();
+        let vertex_buffer = glium::VertexBuffer::new(&self.display, &self.vertex_buffer).unwrap();
         let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
         target.draw(
