@@ -1,11 +1,12 @@
 use glium::{glutin, Surface, uniform};
-use crate::vertex::Vertex;
+use crate::{vertex::Vertex, program};
 use verdi_math::prelude::*;
 pub struct GraphicsChip {
     display: glium::Display,
     gouraud_program: glium::Program,
     vertex_buffer: Vec<Vertex>,
-    current_vertex_state: Vertex
+    current_vertex_state: Vertex,
+    current_primitive: PrimitiveType
 }
 
 pub enum GraphicsChipError {
@@ -49,11 +50,14 @@ impl GraphicsChip {
 
         let current_vertex_state = Vertex::default();
 
+        let current_primitive = PrimitiveType::triangles;
+
         Ok(Self {
             display,
             gouraud_program,
             vertex_buffer,
-            current_vertex_state
+            current_vertex_state,
+            current_primitive
         })
     }
 
@@ -91,12 +95,14 @@ impl GraphicsChip {
         target.finish().unwrap();
     }
 
-    pub fn begin(primitive_type: PrimitiveType) {
-
+    pub fn begin(&mut self, primitive_type: PrimitiveType) {
+        self.current_primitive = primitive_type;
     }
 
-    pub fn end() {
-
+    pub fn end(&mut self) {
+        self.render();
+        self.current_vertex_state = Vertex::default();
+        self.vertex_buffer.clear();
     }
 
     pub fn vertex(&mut self, coords: Vec3) {
