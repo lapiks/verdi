@@ -26,13 +26,20 @@ impl App {
             let globals = lua_ctx.globals();
 
             lua_ctx.load(&script_code).eval::<()>()?;
-            lua_ctx.load("update()").eval::<()>()?;
+
+            lua_ctx.load("start()").exec()?;
 
             Ok(())
         })?;
 
         event_loop.run(move |ev, _, control_flow| {
-            gpu.render();
+            lua.context(|lua_ctx| {
+                // gestion erreur
+                lua_ctx.load("update()").exec().unwrap();
+                lua_ctx.load("draw()").exec().unwrap();
+            });
+
+            //gpu.render();
 
             let next_frame_time = std::time::Instant::now() +
                 std::time::Duration::from_nanos(16_666_667);
