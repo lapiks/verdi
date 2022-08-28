@@ -1,13 +1,19 @@
 use glium::{glutin, Surface, uniform};
 use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadic};
-use std::{path::Path, fs::File, error::Error, io::Read};
+use std::{path::Path, fs::File, error::Error, io::Read, sync::Mutex};
 
 use verdi_graphics::prelude::*;
 
-pub struct App;
+pub struct App {
+    gpu: &'static Mutex<GraphicsChip>,
+}
 
 impl App {
-    pub fn run() -> Result<()> {
+    pub fn new(gpu: &'static Mutex<GraphicsChip>) -> Self {
+        Self { gpu }
+    }
+
+    pub fn run(&mut self) -> Result<()> {
         let event_loop = glutin::event_loop::EventLoop::new();
         let wb = glutin::window::WindowBuilder::new();
         let cb = glutin::ContextBuilder::new();
@@ -31,7 +37,7 @@ impl App {
             Ok(())
         })?;
 
-        BindGraphicsChip::bind(&lua, &gpu);
+        BindGraphicsChip::bind(&lua, self.gpu);
 
         event_loop.run(move |ev, _, control_flow| {
             lua.context(|lua_ctx| {

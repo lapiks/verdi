@@ -79,4 +79,8 @@ impl GraphicsChip {
             None => return
         };
     }
+    
+    pub fn test() {
+        
+    }
 }
