@@ -1,4 +1,4 @@
-use glium::{glutin, Surface, uniform};
+use glium::{glutin};
 use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadic};
 use std::{path::Path, fs::File, error::Error, io::Read, sync::Mutex};
 
@@ -47,6 +47,7 @@ impl App {
             });
 
             renderer.render(&gpu);
+            gpu.render_passes.clear();
 
             let next_frame_time = std::time::Instant::now() +
                 std::time::Duration::from_nanos(16_666_667);

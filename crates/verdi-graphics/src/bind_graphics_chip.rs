@@ -12,7 +12,7 @@ impl BindGraphicsChip {
             let globals = lua_ctx.globals();
     
             // let begin = lua_ctx.create_function(|_, primitive_type: PrimitiveType| Ok(gpu.begin(primitive_type)))?;
-            // globals.set("begin", begin)?;
+            // globals.set("beginObject", begin)?;
     
             let end = lua_ctx.create_function_mut(|_, ()| Ok(gpu.lock().unwrap().end()))?;
             globals.set("endObject", end)?;
