@@ -4,17 +4,21 @@ use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadi
 
 use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType};
 
-pub fn bind(lua: &mut Lua, gpu: &'static GraphicsChip) -> Result<()> {
-    lua.context(|lua_ctx| {
-        let globals = lua_ctx.globals();
+pub struct BindGraphicsChip;
 
-        // let begin = lua_ctx.create_function(|_, primitive_type: PrimitiveType| Ok(gpu.begin(primitive_type)))?;
-        // globals.set("begin", begin)?;
-
-        let end = lua_ctx.create_function(|_, ()| Ok(gpu.end()))?;
-        globals.set("endObject", end)?;
+impl BindGraphicsChip {
+    pub fn bind(lua: &Lua, gpu: &'static mut GraphicsChip) -> Result<()> {
+        lua.context(|lua_ctx| {
+            let globals = lua_ctx.globals();
+    
+            // let begin = lua_ctx.create_function(|_, primitive_type: PrimitiveType| Ok(gpu.begin(primitive_type)))?;
+            // globals.set("begin", begin)?;
+    
+            let end = lua_ctx.create_function_mut(|_, ()| Ok(gpu.end()))?;
+            globals.set("endObject", end)?;
+            Ok(())
+        })?;
+    
         Ok(())
-    })?;
-
-    Ok(())
+    }
 }

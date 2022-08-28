@@ -13,7 +13,7 @@ impl App {
         let cb = glutin::ContextBuilder::new();
         let display = glium::Display::new(wb, cb, &event_loop).unwrap();
         
-        let mut gpu: GraphicsChip = GraphicsChip::new(&display);
+        let mut gpu: GraphicsChip = GraphicsChip::new();
         let mut renderer = Renderer::new(display).unwrap();
 
         // lua scripting
@@ -30,6 +30,8 @@ impl App {
 
             Ok(())
         })?;
+
+        BindGraphicsChip::bind(&lua, &gpu);
 
         event_loop.run(move |ev, _, control_flow| {
             lua.context(|lua_ctx| {

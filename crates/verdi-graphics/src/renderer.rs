@@ -59,7 +59,7 @@ impl Renderer {
         let vertex_buffer = glium::VertexBuffer::new(&self.display, &shape).unwrap();
         let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
-        for render_pass in gpu.render_passes.lock().unwrap().iter() {
+        for render_pass in gpu.render_passes.iter() {
             target.draw(
                 //&render_pass.vertex_buffer,
                 &vertex_buffer,

@@ -2,10 +2,8 @@ use crate::{vertex::Vertex, render_pass::RenderPass};
 use verdi_math::prelude::*;
 use std::{cell::RefCell, sync::{Arc, Mutex}};
 
-type RenderPasses = Mutex<Vec<RenderPass>>;
-
 pub struct GraphicsChip {
-    pub render_passes: Arc<RenderPasses>
+    pub render_passes: Vec<RenderPass>
 }
 
 pub enum GraphicsChipError {
@@ -20,23 +18,23 @@ pub enum PrimitiveType {
 }
 
 impl GraphicsChip {
-    pub fn new(display: &glium::Display) -> Self {
-        let render_passes = Arc::new(Mutex::new(Vec::new()));
+    pub fn new() -> Self {
+        let render_passes = (Vec::new());
         Self { render_passes }
     }
 
-    pub fn begin(&self, primitive_type: PrimitiveType) {
+    pub fn begin(&mut self, primitive_type: PrimitiveType) {
         let render_pass = RenderPass::new(
             Vec::new(), 
             Vertex::default(), 
             primitive_type
         );
 
-        self.render_passes.lock().unwrap().push(render_pass);
+        self.render_passes.push(render_pass);
     }
 
-    pub fn end(&self) {
-        match self.render_passes.lock().unwrap().last_mut() {
+    pub fn end(&mut self) {
+        match self.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state = Vertex::default();
                 render_pass.vertex_buffer.clear();
@@ -45,8 +43,8 @@ impl GraphicsChip {
         };
     }
 
-    pub fn vertex(&self, coords: Vec3) {
-        match self.render_passes.lock().unwrap().last_mut() {
+    pub fn vertex(&mut self, coords: Vec3) {
+        match self.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state.position = coords.to_array();
                 render_pass.vertex_buffer.push(render_pass.current_vertex_state);
@@ -55,8 +53,8 @@ impl GraphicsChip {
         };
     }
 
-    pub fn normal(&self, coords: Vec3) {
-        match self.render_passes.lock().unwrap().last_mut() {
+    pub fn normal(&mut self, coords: Vec3) {
+        match self.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state.normal = coords.to_array();
             },
@@ -64,8 +62,8 @@ impl GraphicsChip {
         };
     }
 
-    pub fn tex_coord(&self, coords: Vec2) {
-        match self.render_passes.lock().unwrap().last_mut() {
+    pub fn tex_coord(&mut self, coords: Vec2) {
+        match self.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state.uv = coords.to_array();
             },
@@ -73,8 +71,8 @@ impl GraphicsChip {
         };
     }
 
-    pub fn color(&self, coords: Vec4) {
-        match self.render_passes.lock().unwrap().last_mut() {
+    pub fn color(&mut self, coords: Vec4) {
+        match self.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state.color = coords.to_array();
             },

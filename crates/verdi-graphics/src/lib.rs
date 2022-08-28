@@ -5,6 +5,7 @@ pub mod prelude {
     #[doc(hidden)]
     pub use crate::{
         graphics_chip::GraphicsChip,
+        bind_graphics_chip::BindGraphicsChip,
         renderer::Renderer,
     };
 }
