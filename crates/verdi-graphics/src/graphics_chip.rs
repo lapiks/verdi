@@ -45,40 +45,40 @@ impl GraphicsChip {
         };
     }
 
-    // pub fn vertex(&self, coords: Vec3) {
-    //     match self.render_passes.borrow_mut().last_mut() {
-    //         Some(render_pass) => {
-    //             render_pass.current_vertex_state.position = coords.to_array();
-    //             render_pass.vertex_buffer.push(render_pass.current_vertex_state);
-    //         },
-    //         None => return
-    //     };
-    // }
+    pub fn vertex(&self, coords: Vec3) {
+        match self.render_passes.lock().unwrap().last_mut() {
+            Some(render_pass) => {
+                render_pass.current_vertex_state.position = coords.to_array();
+                render_pass.vertex_buffer.push(render_pass.current_vertex_state);
+            },
+            None => return
+        };
+    }
 
-    // pub fn normal(&self, coords: Vec3) {
-    //     match self.render_passes.borrow_mut().last_mut() {
-    //         Some(render_pass) => {
-    //             render_pass.current_vertex_state.normal = coords.to_array();
-    //         },
-    //         None => return
-    //     };
-    // }
+    pub fn normal(&self, coords: Vec3) {
+        match self.render_passes.lock().unwrap().last_mut() {
+            Some(render_pass) => {
+                render_pass.current_vertex_state.normal = coords.to_array();
+            },
+            None => return
+        };
+    }
 
-    // pub fn tex_coord(&self, coords: Vec2) {
-    //     match self.render_passes.borrow_mut().last_mut() {
-    //         Some(render_pass) => {
-    //             render_pass.current_vertex_state.uv = coords.to_array();
-    //         },
-    //         None => return
-    //     };
-    // }
+    pub fn tex_coord(&self, coords: Vec2) {
+        match self.render_passes.lock().unwrap().last_mut() {
+            Some(render_pass) => {
+                render_pass.current_vertex_state.uv = coords.to_array();
+            },
+            None => return
+        };
+    }
 
-    // pub fn color(&self, coords: Vec4) {
-    //     match self.render_passes.borrow_mut().last_mut() {
-    //         Some(render_pass) => {
-    //             render_pass.current_vertex_state.color = coords.to_array();
-    //         },
-    //         None => return
-    //     };
-    // }
+    pub fn color(&self, coords: Vec4) {
+        match self.render_passes.lock().unwrap().last_mut() {
+            Some(render_pass) => {
+                render_pass.current_vertex_state.color = coords.to_array();
+            },
+            None => return
+        };
+    }
 }
