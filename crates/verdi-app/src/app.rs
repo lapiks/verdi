@@ -4,9 +4,7 @@ use std::{path::Path, fs::File, error::Error, io::Read};
 
 use verdi_graphics::prelude::*;
 
-pub struct App {
-
-}
+pub struct App;
 
 impl App {
     pub fn run() -> Result<()> {
@@ -15,7 +13,8 @@ impl App {
         let cb = glutin::ContextBuilder::new();
         let display = glium::Display::new(wb, cb, &event_loop).unwrap();
         
-        let mut gpu = GraphicsChip::new(display).unwrap();
+        let mut gpu: GraphicsChip = GraphicsChip::new(&display);
+        let mut renderer = Renderer::new(display).unwrap();
 
         // lua scripting
         let script_code = App::load_script("./game_example/game.lua");
@@ -39,7 +38,7 @@ impl App {
                 lua_ctx.load("draw()").exec().unwrap();
             });
 
-            //gpu.render();
+            renderer.render(&gpu);
 
             let next_frame_time = std::time::Instant::now() +
                 std::time::Duration::from_nanos(16_666_667);

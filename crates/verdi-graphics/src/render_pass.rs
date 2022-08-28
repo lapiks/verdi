@@ -1,17 +1,17 @@
-use crate::{program::Program, vertex_buffer::VertexBuffer, index_buffer::IndexBuffer};
+use crate::{vertex::Vertex, graphics_chip::PrimitiveType};
 
-pub struct RenderPass<'a> {
-    pub program: &'a Program,
-    pub vertex_buffer: &'a VertexBuffer,
-    pub index_buffer: &'a IndexBuffer
+pub struct RenderPass {
+    pub vertex_buffer: Vec<Vertex>,
+    pub current_vertex_state: Vertex,
+    pub current_primitive: PrimitiveType
 }
 
-impl<'a> RenderPass<'a> {
-    pub fn new(program: &'a Program, vertex_buffer: &'a VertexBuffer, index_buffer: &'a IndexBuffer) -> Self {
-        Self {
-            program, 
+impl RenderPass {
+    pub fn new(vertex_buffer: Vec<Vertex>, current_vertex_state: Vertex, current_primitive: PrimitiveType) -> Self {
+        Self { 
             vertex_buffer, 
-            index_buffer
+            current_vertex_state,
+            current_primitive
         }
     }
 }
