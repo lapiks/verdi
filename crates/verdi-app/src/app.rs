@@ -4,54 +4,45 @@ use std::{path::Path, fs::File, error::Error, io::Read, sync::Mutex};
 
 use verdi_graphics::prelude::*;
 
-pub struct App {
-    gpu: &'static Mutex<GraphicsChip>,
-}
+pub struct App;
 
 impl App {
-    pub fn new(gpu: &'static Mutex<GraphicsChip>) -> Self {
-        Self { gpu }
-    }
-
-    pub fn run(&mut self) -> Result<()> {
+    pub fn run(gpu: &'static Mutex<GraphicsChip>) -> Result<()> {
         let event_loop = glutin::event_loop::EventLoop::new();
         let wb = glutin::window::WindowBuilder::new();
         let cb = glutin::ContextBuilder::new();
         let display = glium::Display::new(wb, cb, &event_loop).unwrap();
         
-        let mut gpu: GraphicsChip = GraphicsChip::new();
         let mut renderer = Renderer::new(display).unwrap();
-
+    
         // lua scripting
         let script_code = App::load_script("./game_example/game.lua");
-
+    
         let lua = Lua::new();
-
-        lua.context(|lua_ctx| {
-            let globals = lua_ctx.globals();
-
+    
+        lua.context(|lua_ctx| {   
             lua_ctx.load(&script_code).eval::<()>()?;
-
+    
             lua_ctx.load("start()").exec()?;
-
+    
             Ok(())
         })?;
-
-        BindGraphicsChip::bind(&lua, self.gpu);
-
+    
+        BindGraphicsChip::bind(&lua, gpu)?;
+    
         event_loop.run(move |ev, _, control_flow| {
             lua.context(|lua_ctx| {
                 // gestion erreur
                 lua_ctx.load("update()").exec().unwrap();
                 lua_ctx.load("draw()").exec().unwrap();
             });
-
-            renderer.render(&gpu);
-            gpu.render_passes.clear();
-
+    
+            renderer.render(&gpu.lock().unwrap());
+            gpu.lock().unwrap().render_passes.clear();
+    
             let next_frame_time = std::time::Instant::now() +
                 std::time::Duration::from_nanos(16_666_667);
-
+    
             *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
             match ev {
                 glutin::event::Event::WindowEvent { event, .. } => match event {
@@ -65,7 +56,7 @@ impl App {
             }
         });
     }
-
+    
     fn load_script<P: AsRef<Path>>(path: P) -> String {
         // todo : gestion d'erreur
         let mut f = File::open(path).unwrap();

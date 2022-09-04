@@ -10,6 +10,5 @@ lazy_static! {
 }
 
 fn main() {
-    let mut app = App::new(&GPU);
-    app.run();
+    App::run(&GPU);
 }

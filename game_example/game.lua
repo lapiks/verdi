@@ -7,5 +7,5 @@ function update()
 end
 
 function draw()
-    endObject()
+    graphics.endObject()
 end

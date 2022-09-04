@@ -1,6 +1,7 @@
 use crate::{vertex::Vertex, render_pass::RenderPass};
 use verdi_math::prelude::*;
 use std::{cell::RefCell, sync::{Arc, Mutex}};
+use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadic};
 
 pub struct GraphicsChip {
     pub render_passes: Vec<RenderPass>
@@ -82,5 +83,13 @@ impl GraphicsChip {
     
     pub fn test() {
         
+    }
+}
+
+impl UserData for GraphicsChip {
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method_mut("endObject", |_, this, _: ()| {
+            Ok(this.end())
+        });
     }
 }
