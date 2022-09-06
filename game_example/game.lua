@@ -1,11 +1,11 @@
-function start()
+function verdi.start()
 
 end
 
-function update()
+function verdi.update()
 
 end
 
-function draw()
+function verdi.draw()
     graphics.endObject()
 end

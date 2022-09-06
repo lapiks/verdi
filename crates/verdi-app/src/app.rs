@@ -17,14 +17,27 @@ impl App {
     
         // lua scripting
         let script_code = App::load_script("./game_example/game.lua");
-    
+        let boot_lua = App::load_script("./crates/verdi-app/src/boot.lua");
+        let run_lua = App::load_script("./crates/verdi-app/src/run.lua");
+
         let lua = Lua::new();
     
         lua.context(|lua_ctx| {   
+            let globals = lua_ctx.globals();
+
+            // create verdi table
+            let verdi_table = lua_ctx.create_table()?;
+            globals.set("verdi", verdi_table)?;
+
+            // load game code
             lua_ctx.load(&script_code).eval::<()>()?;
     
-            lua_ctx.load("start()").exec()?;
-    
+            // load boot code
+            lua_ctx.load(&boot_lua).eval::<()>()?;
+
+            // load run code
+            lua_ctx.load(&run_lua).eval::<()>()?;
+
             Ok(())
         })?;
     
@@ -32,9 +45,8 @@ impl App {
     
         event_loop.run(move |ev, _, control_flow| {
             lua.context(|lua_ctx| {
-                // gestion erreur
-                lua_ctx.load("update()").exec().unwrap();
-                lua_ctx.load("draw()").exec().unwrap();
+                // run callbacks
+                lua_ctx.load("verdi.run()").exec().unwrap();
             });
     
             renderer.render(&gpu.lock().unwrap());
