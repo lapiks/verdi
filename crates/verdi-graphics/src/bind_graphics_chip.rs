@@ -2,6 +2,8 @@ use glium::uniform;
 use std::sync::Mutex;
 use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadic};
 
+use verdi_math::prelude::*;
+
 use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType};
 
 pub struct BindGraphicsChip;
@@ -20,6 +22,22 @@ impl BindGraphicsChip {
         gpu.lock().unwrap().end();
     }
 
+    fn vertex(gpu: &Mutex<GraphicsChip>, x: f32, y: f32, z: f32) {
+        gpu.lock().unwrap().vertex(Vec3::new(x, y, z));
+    }
+
+    fn normal(gpu: &Mutex<GraphicsChip>, x: f32, y: f32, z: f32) {
+        gpu.lock().unwrap().normal(Vec3::new(x, y, z));
+    }
+
+    fn tex_coord(gpu: &Mutex<GraphicsChip>, u: f32, v: f32) {
+        gpu.lock().unwrap().tex_coord(Vec2::new(u, v));
+    }
+
+    fn color(gpu: &Mutex<GraphicsChip>, r: f32, g: f32, b: f32, a: f32) {
+        gpu.lock().unwrap().color(Vec4::new(r, g, b, a));
+    }
+
     pub fn bind(lua: &Lua, gpu: &'static Mutex<GraphicsChip>) -> Result<()> {
         lua.context(|lua_ctx| {
             let globals = lua_ctx.globals();
@@ -36,7 +54,22 @@ impl BindGraphicsChip {
                 let func = lua_ctx.create_function_mut(|_, ()| Ok(BindGraphicsChip::endObject(gpu)))?;
                 module_table.set("endObject", func)?;
             }
-            
+            {
+                let func = lua_ctx.create_function_mut(|_, (x, y ,z): (f32 , f32, f32)| Ok(BindGraphicsChip::vertex(gpu, x, y, z)))?;
+                module_table.set("vertex", func)?;
+            }
+            {
+                let func = lua_ctx.create_function_mut(|_, (x, y ,z): (f32 , f32, f32)| Ok(BindGraphicsChip::normal(gpu, x, y, z)))?;
+                module_table.set("normal", func)?;
+            }
+            {
+                let func = lua_ctx.create_function_mut(|_, (u, v): (f32 , f32)| Ok(BindGraphicsChip::tex_coord(gpu, u, v)))?;
+                module_table.set("tex_coord", func)?;
+            }
+            {
+                let func = lua_ctx.create_function_mut(|_, (r, g, b, a): (f32 , f32, f32, f32)| Ok(BindGraphicsChip::color(gpu, r, g, b, a)))?;
+                module_table.set("color", func)?;
+            }
     
             // add table to globals
             globals.set("graphics", module_table)?;

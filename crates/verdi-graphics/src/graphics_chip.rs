@@ -12,10 +12,19 @@ pub enum GraphicsChipError {
     ShaderParsing,
 }
 
+#[derive(Copy, Clone, PartialEq)]
 pub enum PrimitiveType {
     triangles,
     points,
     lines,
+}
+
+impl From<PrimitiveType> for glium::index::PrimitiveType {
+    fn from(p: PrimitiveType) -> Self {
+        if p == PrimitiveType::triangles { return glium::index::PrimitiveType::TrianglesList; }
+        else if p == PrimitiveType::lines { return glium::index::PrimitiveType::LinesList; }
+        else { return glium::index::PrimitiveType::Points; }
+    }
 }
 
 impl GraphicsChip {
@@ -38,7 +47,7 @@ impl GraphicsChip {
         match self.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state = Vertex::default();
-                render_pass.vertex_buffer.clear();
+                //render_pass.vertex_buffer.clear();
             },
             None => return
         };
@@ -80,16 +89,12 @@ impl GraphicsChip {
             None => return
         };
     }
-    
-    pub fn test() {
-        
-    }
 }
 
-impl UserData for GraphicsChip {
-    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method_mut("endObject", |_, this, _: ()| {
-            Ok(this.end())
-        });
-    }
-}
+// impl UserData for GraphicsChip {
+//     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+//         methods.add_method_mut("endObject", |_, this, _: ()| {
+//             Ok(this.end())
+//         });
+//     }
+// }

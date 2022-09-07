@@ -38,7 +38,7 @@ impl Renderer {
 
     pub fn render(&mut self, gpu: &GraphicsChip) {
         let mut target = self.display.draw();
-        target.clear_color(0.0, 0.0, 1.0, 1.0);
+        target.clear_color(0.0, 0.0, 0.0, 1.0);
 
         // uniforms (à bouger)
         let matrix = [
@@ -51,17 +51,11 @@ impl Renderer {
         // the direction of the light
         let light = [-1.0, 0.4, 0.9f32];
 
-        let vertex1 = Vertex { position: [-0.5, -0.5, 0.0], normal: [0.0, 0.0, 1.0], ..Vertex::default() };
-        let vertex2 = Vertex { position: [ 0.0,  0.5, 0.0], normal: [0.0, 0.0, 1.0], ..Vertex::default()};
-        let vertex3 = Vertex { position: [ 0.5, -0.25, 0.0], normal: [0.0, 0.0, 1.0], ..Vertex::default()};
-        let shape = vec![vertex1, vertex2, vertex3];
-
-        let vertex_buffer = glium::VertexBuffer::new(&self.display, &shape).unwrap();
-        let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-
         for render_pass in gpu.render_passes.iter() {
+            let vertex_buffer = glium::VertexBuffer::new(&self.display, &render_pass.vertex_buffer).unwrap();
+            let indices = glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive));
+            
             target.draw(
-                //&render_pass.vertex_buffer,
                 &vertex_buffer,
                 &indices, 
                 &self.program, 

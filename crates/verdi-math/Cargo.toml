@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 glam = "0.21"
+rlua = "0.19.4"
