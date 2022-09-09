@@ -15,6 +15,7 @@ mod bind_graphics_chip;
 mod vertex;
 mod render_pass;
 mod renderer;
+mod image;
 
 // pub fn run() {
 //     use glium::{glutin, Surface};

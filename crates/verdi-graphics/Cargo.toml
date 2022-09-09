@@ -9,3 +9,4 @@ edition = "2021"
 verdi-math = { path = "../verdi-math" }
 glium = "*"
 rlua = "0.19.4"
+image = "*"
