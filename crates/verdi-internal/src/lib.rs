@@ -10,10 +10,6 @@ pub mod window {
     pub use verdi_window::*;
 }
 
-pub mod renderer {
-    pub use verdi_renderer::*;
-}
-
 pub mod graphics {
     pub use verdi_graphics::*;
 }

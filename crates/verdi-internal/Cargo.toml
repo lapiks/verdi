@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 verdi-app = { path = "../verdi-app" }
 verdi-window = { path = "../verdi-window" }
-verdi-renderer = { path = "../verdi-renderer" }
 verdi-graphics = { path = "../verdi-graphics" }
 verdi-game = { path = "../verdi-game" }
 verdi-ecs = { path = "../verdi-ecs" }

@@ -1,4 +1,4 @@
-use crate::entity::{EntityId, EntityRef, self};
+use crate::entity::{EntityId, EntityRef};
 use crate::component::{ComponentVec};
 
 pub struct World {
