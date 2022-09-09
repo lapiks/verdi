@@ -1,7 +1,5 @@
 use crate::{vertex::Vertex, render_pass::RenderPass, image::Image};
 use verdi_math::prelude::*;
-use std::{cell::RefCell, sync::{Arc, Mutex}};
-use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadic};
 
 pub struct GraphicsChip {
     pub render_passes: Vec<RenderPass>
@@ -90,15 +88,11 @@ impl GraphicsChip {
         };
     }
 
+    pub fn bind_texture(&mut self, image: &Image) {
+
+    }
+
     pub fn new_image(path: &String) -> Image {
         Image::new(path)
     }
 }
-
-// impl UserData for GraphicsChip {
-//     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-//         methods.add_method_mut("endObject", |_, this, _: ()| {
-//             Ok(this.end())
-//         });
-//     }
-// }

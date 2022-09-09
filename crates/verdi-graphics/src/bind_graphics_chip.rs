@@ -4,12 +4,12 @@ use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadi
 
 use verdi_math::prelude::*;
 
-use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType};
+use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType, image::Image};
 
 pub struct BindGraphicsChip;
 
 impl BindGraphicsChip {
-    fn begin_object(gpu: &Mutex<GraphicsChip>, primitive_type: String) {
+    fn begin_object(gpu: &Mutex<GraphicsChip>, primitive_type: &String) {
         let mut enum_val = PrimitiveType::triangles;
         if primitive_type == "triangles" { enum_val = PrimitiveType::triangles; }
         else if primitive_type == "points" { enum_val = PrimitiveType::points; }
@@ -38,8 +38,12 @@ impl BindGraphicsChip {
         gpu.lock().unwrap().color(Vec4::new(r, g, b, a));
     }
 
-    fn new_image(path: String) {
-        GraphicsChip::new_image(&path);
+    fn bind_texture(gpu: &Mutex<GraphicsChip>, image: &Image) {
+        gpu.lock().unwrap().bind_texture(image);
+    }
+
+    fn new_image(path: &String) -> Image {
+        GraphicsChip::new_image(path)
     }
 
     pub fn bind(lua: &Lua, gpu: &'static Mutex<GraphicsChip>) -> Result<()> {
@@ -51,7 +55,7 @@ impl BindGraphicsChip {
             
             // add functions
             {
-                let func = lua_ctx.create_function_mut(|_, primitive_type: String| Ok(BindGraphicsChip::begin_object(gpu, primitive_type)))?;
+                let func = lua_ctx.create_function_mut(|_, primitive_type: String| Ok(BindGraphicsChip::begin_object(gpu, &primitive_type)))?;
                 module_table.set("beginObject", func)?;
             }
             {
@@ -75,8 +79,12 @@ impl BindGraphicsChip {
                 module_table.set("color", func)?;
             }
             {
-                let func = lua_ctx.create_function(|_, path: String| Ok(BindGraphicsChip::new_image(path)))?;
+                let func = lua_ctx.create_function(|_, path: String| Ok(BindGraphicsChip::new_image(&path)))?;
                 module_table.set("newImage", func)?;
+            }
+            {
+                let func = lua_ctx.create_function_mut(|_, image: Image| Ok(BindGraphicsChip::bind_texture(gpu, &image)))?;
+                module_table.set("bindTexture", func)?;
             }
     
             // add table to globals
