@@ -1,4 +1,4 @@
-use crate::{vertex::Vertex, render_pass::RenderPass};
+use crate::{vertex::Vertex, render_pass::RenderPass, image::Image};
 use verdi_math::prelude::*;
 use std::{cell::RefCell, sync::{Arc, Mutex}};
 use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadic};
@@ -88,6 +88,10 @@ impl GraphicsChip {
             },
             None => return
         };
+    }
+
+    pub fn new_image(path: &String) -> Image {
+        Image::new(path)
     }
 }
 

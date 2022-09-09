@@ -22,6 +22,8 @@ impl App {
 
         let lua = Lua::new();
     
+        BindGraphicsChip::bind(&lua, gpu)?;
+
         lua.context(|lua_ctx| {   
             let globals = lua_ctx.globals();
 
@@ -38,10 +40,11 @@ impl App {
             // load run code
             lua_ctx.load(&run_lua).eval::<()>()?;
 
+            // boot
+            lua_ctx.load("verdi.boot()").exec().unwrap();
+
             Ok(())
         })?;
-    
-        BindGraphicsChip::bind(&lua, gpu)?;
     
         event_loop.run(move |ev, _, control_flow| {
             lua.context(|lua_ctx| {
