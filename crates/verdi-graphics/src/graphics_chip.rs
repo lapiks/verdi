@@ -90,7 +90,14 @@ impl GraphicsChip {
     }
 
     pub fn bind_texture(&mut self, image: &ImageRef) {
-
+        let tex = self.assets.get_texture(image.id);
+        // check if tex exists
+        match self.render_passes.last_mut() {
+            Some(render_pass) => {
+                render_pass.current_texture = Some(image.id);
+            },
+            None => return
+        };
     }
 
     pub fn new_image(&mut self, path: &String) -> ImageRef {

@@ -27,7 +27,7 @@ impl Image {
 
 #[derive(Clone)]
 pub struct ImageRef {
-    id: AssetId,
+    pub id: AssetId,
 }
 
 impl ImageRef {
