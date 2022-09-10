@@ -26,12 +26,12 @@ impl Image {
 }
 
 pub struct ImageRef {
-    image: AssetId,
+    id: AssetId,
 }
 
 impl ImageRef {
     pub fn new(id: AssetId) -> Self{
-        Self { image: id }
+        Self { id }
     }
 }
 
