@@ -1,4 +1,4 @@
-use glium::{Surface, uniform};
+use glium::{Surface, uniform, uniforms::EmptyUniforms};
 
 use crate::{vertex::Vertex, render_pass::RenderPass, prelude::GraphicsChip};
 
@@ -55,13 +55,39 @@ impl Renderer {
             let vertex_buffer = glium::VertexBuffer::new(&self.display, &render_pass.vertex_buffer).unwrap();
             let indices = glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive));
             
-            target.draw(
-                &vertex_buffer,
-                &indices, 
-                &self.program, 
-                &uniform! { matrix: matrix, u_light: light },
-                &Default::default()
-            ).unwrap();
+            let use_texture = render_pass.current_texture.is_some();
+            
+            match render_pass.current_texture {
+                Some(tex) => {
+                    let uniforms = uniform! {
+                        matrix: matrix,
+                        u_light: light,
+                        tex: tex,
+                    };
+
+                    target.draw(
+                        &vertex_buffer,
+                        &indices, 
+                        &self.program, 
+                        &uniforms,
+                        &Default::default()
+                    ).unwrap();
+                }
+                None => {
+                    let uniforms = uniform! {
+                        matrix: matrix,
+                        u_light: light,
+                    };
+
+                    target.draw(
+                        &vertex_buffer,
+                        &indices, 
+                        &self.program, 
+                        &uniforms,
+                        &Default::default()
+                    ).unwrap();
+                }
+            }            
         }        
 
         target.finish().unwrap();

@@ -23,6 +23,4 @@ impl Image {
     }
 }
 
-impl UserData for Image {
-
-}
+impl UserData for Image {}

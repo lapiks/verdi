@@ -33,8 +33,6 @@ impl GraphicsChip {
 
     pub fn begin(&mut self, primitive_type: PrimitiveType) {
         let render_pass = RenderPass::new(
-            Vec::new(), 
-            Vertex::default(), 
             primitive_type
         );
 
