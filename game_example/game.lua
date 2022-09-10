@@ -8,7 +8,7 @@ end
 
 function verdi.draw()
     graphics.beginObject("triangles")
-        --graphics.bindTexture(image)
+        graphics.bindTexture(image)
 
         graphics.normal(1.0, 0.0, 0.0)
 

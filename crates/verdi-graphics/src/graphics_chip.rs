@@ -89,9 +89,9 @@ impl GraphicsChip {
         };
     }
 
-    // pub fn bind_texture(&mut self, image: ImageRef) {
+    pub fn bind_texture(&mut self, image: &ImageRef) {
 
-    // }
+    }
 
     pub fn new_image(&mut self, path: &String) -> ImageRef {
         let image = Image::new(path);
