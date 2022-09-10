@@ -1,8 +1,9 @@
-use crate::{vertex::Vertex, render_pass::RenderPass, image::Image};
+use crate::{vertex::Vertex, render_pass::RenderPass, image::{Image, ImageRef}, assets::Assets};
 use verdi_math::prelude::*;
 
 pub struct GraphicsChip {
-    pub render_passes: Vec<RenderPass>
+    pub render_passes: Vec<RenderPass>,
+    pub assets: Assets,
 }
 
 pub enum GraphicsChipError {
@@ -27,8 +28,10 @@ impl From<PrimitiveType> for glium::index::PrimitiveType {
 
 impl GraphicsChip {
     pub fn new() -> Self {
-        let render_passes = (Vec::new());
-        Self { render_passes }
+        Self { 
+            render_passes: Vec::new(),
+            assets: Assets::new(),
+        }
     }
 
     pub fn begin(&mut self, primitive_type: PrimitiveType) {
@@ -86,11 +89,13 @@ impl GraphicsChip {
         };
     }
 
-    pub fn bind_texture(&mut self, image: &Image) {
+    // pub fn bind_texture(&mut self, image: ImageRef) {
 
-    }
+    // }
 
-    pub fn new_image(path: &String) -> Image {
-        Image::new(path)
+    pub fn new_image(&mut self, path: &String) -> ImageRef {
+        let image = Image::new(path);
+
+        self.assets.add_texture(image)
     }
 }

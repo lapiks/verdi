@@ -16,6 +16,7 @@ mod vertex;
 mod render_pass;
 mod renderer;
 mod image;
+mod assets;
 
 // pub fn run() {
 //     use glium::{glutin, Surface};

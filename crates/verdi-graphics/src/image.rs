@@ -2,6 +2,8 @@
 use image::{io::Reader as ImageReader, GenericImageView};
 use rlua::UserData;
 
+use crate::assets::AssetId;
+
 #[derive(Clone)]
 pub struct Image {
     width: u32,
@@ -23,4 +25,14 @@ impl Image {
     }
 }
 
-impl UserData for Image {}
+pub struct ImageRef {
+    image: AssetId,
+}
+
+impl ImageRef {
+    pub fn new(id: AssetId) -> Self{
+        Self { image: id }
+    }
+}
+
+impl UserData for ImageRef {}

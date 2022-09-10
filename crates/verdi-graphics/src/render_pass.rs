@@ -1,11 +1,11 @@
 use glium::texture::SrgbTexture2d;
-use crate::{vertex::Vertex, graphics_chip::PrimitiveType, image::Image};
+use crate::{vertex::Vertex, graphics_chip::PrimitiveType, image::Image, assets::AssetId};
 
 pub struct RenderPass {
     pub vertex_buffer: Vec<Vertex>,
     pub current_vertex_state: Vertex,
     pub current_primitive: PrimitiveType,
-    pub current_texture: Option<SrgbTexture2d>,
+    pub current_texture: Option<AssetId>,
 }
 
 impl RenderPass {

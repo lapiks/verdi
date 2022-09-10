@@ -4,7 +4,7 @@ use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadi
 
 use verdi_math::prelude::*;
 
-use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType, image::Image};
+use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType, image::{Image, ImageRef}};
 
 pub struct BindGraphicsChip;
 
@@ -38,12 +38,12 @@ impl BindGraphicsChip {
         gpu.lock().unwrap().color(Vec4::new(r, g, b, a));
     }
 
-    fn bind_texture(gpu: &Mutex<GraphicsChip>, image: &Image) {
-        gpu.lock().unwrap().bind_texture(image);
-    }
+    // fn bind_texture(gpu: &Mutex<GraphicsChip>, image: &ImageRef) {
+    //     gpu.lock().unwrap().bind_texture(image);
+    // }
 
-    fn new_image(path: &String) -> Image {
-        GraphicsChip::new_image(path)
+    fn new_image(gpu: &Mutex<GraphicsChip>, path: &String) -> ImageRef {
+        gpu.lock().unwrap().new_image(path)
     }
 
     pub fn bind(lua: &Lua, gpu: &'static Mutex<GraphicsChip>) -> Result<()> {
@@ -79,13 +79,13 @@ impl BindGraphicsChip {
                 module_table.set("color", func)?;
             }
             {
-                let func = lua_ctx.create_function(|_, path: String| Ok(BindGraphicsChip::new_image(&path)))?;
+                let func = lua_ctx.create_function(|_, path: String| Ok(BindGraphicsChip::new_image(gpu, &path)))?;
                 module_table.set("newImage", func)?;
             }
-            {
-                let func = lua_ctx.create_function_mut(|_, image: Image| Ok(BindGraphicsChip::bind_texture(gpu, &image)))?;
-                module_table.set("bindTexture", func)?;
-            }
+            // {
+            //     let func = lua_ctx.create_function_mut(|_, image: Image| Ok(BindGraphicsChip::bind_texture(gpu, &image)))?;
+            //     module_table.set("bindTexture", func)?;
+            // }
     
             // add table to globals
             globals.set("graphics", module_table)?;

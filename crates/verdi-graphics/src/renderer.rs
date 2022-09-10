@@ -62,7 +62,7 @@ impl Renderer {
                     let uniforms = uniform! {
                         matrix: matrix,
                         u_light: light,
-                        tex: tex,
+                        //tex: tex,
                     };
 
                     target.draw(
