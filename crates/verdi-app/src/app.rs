@@ -1,6 +1,6 @@
 use glium::{glutin};
-use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadic};
-use std::{path::Path, fs::File, error::Error, io::Read, sync::Mutex};
+use rlua::{Lua, Result};
+use std::{fs::File, sync::Mutex, path::Path, io::Read};
 
 use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
