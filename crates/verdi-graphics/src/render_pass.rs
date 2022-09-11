@@ -21,7 +21,7 @@ impl Default for RenderPass {
         Self {
             vertex_buffer: Vec::new(),
             current_vertex_state: Vertex::default(),
-            current_primitive: PrimitiveType::triangles,
+            current_primitive: PrimitiveType::Triangles,
             current_texture: Option::default()        
         }
     }

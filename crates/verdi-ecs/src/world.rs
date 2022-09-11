@@ -36,7 +36,7 @@ impl World {
     pub fn despawn(&mut self, entity: EntityId) -> EntityResult {
         match self.entity(entity) {
             None => Err(EntityError::UnknownEntity),
-            Some(entity_ref) => {
+            _ => {
                 for component_vec in self.component_vecs.iter_mut() {
                     component_vec.set_none(entity);
                 }

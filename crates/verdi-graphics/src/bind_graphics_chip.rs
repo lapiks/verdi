@@ -1,19 +1,18 @@
-use glium::uniform;
 use std::sync::Mutex;
-use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadic};
+use rlua::{Lua, Result};
 
 use verdi_math::prelude::*;
 
-use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType, image::{Image, ImageRef}};
+use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType, image::ImageRef};
 
 pub struct BindGraphicsChip;
 
 impl BindGraphicsChip {
     fn begin_object(gpu: &Mutex<GraphicsChip>, primitive_type: &String) {
-        let mut enum_val = PrimitiveType::triangles;
-        if primitive_type == "triangles" { enum_val = PrimitiveType::triangles; }
-        else if primitive_type == "points" { enum_val = PrimitiveType::points; }
-        else if primitive_type == "lines" { enum_val = PrimitiveType::lines; }
+        let mut enum_val = PrimitiveType::Triangles;
+        if primitive_type == "triangles" { enum_val = PrimitiveType::Triangles; }
+        else if primitive_type == "points" { enum_val = PrimitiveType::Points; }
+        else if primitive_type == "lines" { enum_val = PrimitiveType::Lines; }
 
         gpu.lock().unwrap().begin(enum_val);
     }

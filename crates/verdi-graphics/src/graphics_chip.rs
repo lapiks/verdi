@@ -6,22 +6,17 @@ pub struct GraphicsChip {
     pub assets: Assets,
 }
 
-pub enum GraphicsChipError {
-    ProgramCreation,
-    ShaderParsing,
-}
-
 #[derive(Copy, Clone, PartialEq)]
 pub enum PrimitiveType {
-    triangles,
-    points,
-    lines,
+    Triangles,
+    Points,
+    Lines,
 }
 
 impl From<PrimitiveType> for glium::index::PrimitiveType {
     fn from(p: PrimitiveType) -> Self {
-        if p == PrimitiveType::triangles { return glium::index::PrimitiveType::TrianglesList; }
-        else if p == PrimitiveType::lines { return glium::index::PrimitiveType::LinesList; }
+        if p == PrimitiveType::Triangles { return glium::index::PrimitiveType::TrianglesList; }
+        else if p == PrimitiveType::Lines { return glium::index::PrimitiveType::LinesList; }
         else { return glium::index::PrimitiveType::Points; }
     }
 }
@@ -90,7 +85,7 @@ impl GraphicsChip {
     }
 
     pub fn bind_texture(&mut self, image: &ImageRef) {
-        let tex = self.assets.get_texture(image.id);
+        //let tex = self.assets.get_texture(image.id);
         // check if tex exists
         match self.render_passes.last_mut() {
             Some(render_pass) => {
