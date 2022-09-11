@@ -1,5 +1,3 @@
-use glium::uniform;
-
 #[allow(missing_docs)]
 pub mod prelude {
     #[doc(hidden)]
