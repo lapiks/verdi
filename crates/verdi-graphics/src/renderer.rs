@@ -1,7 +1,7 @@
-use glium::{Surface, uniform, uniforms::EmptyUniforms};
+use glium::{Surface, uniform};
 use verdi_window::prelude::Window;
 
-use crate::{vertex::Vertex, render_pass::RenderPass, prelude::GraphicsChip};
+use crate::prelude::GraphicsChip;
 
 pub struct Renderer {
     program: glium::Program
