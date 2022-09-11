@@ -11,3 +11,4 @@ verdi-graphics = { path = "../verdi-graphics" }
 glium = "*"
 rlua = "0.19.4"
 lazy_static = "1.4"
+thiserror = "1.0.34"
