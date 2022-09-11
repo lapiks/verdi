@@ -2,18 +2,16 @@ use glium::{glutin};
 use rlua::{Function, Lua, MetaMethod, Result, UserData, UserDataMethods, Variadic};
 use std::{path::Path, fs::File, error::Error, io::Read, sync::Mutex};
 
+use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
 
 pub struct App;
 
 impl App {
     pub fn run(gpu: &'static Mutex<GraphicsChip>) -> Result<()> {
-        let event_loop = glutin::event_loop::EventLoop::new();
-        let wb = glutin::window::WindowBuilder::new();
-        let cb = glutin::ContextBuilder::new();
-        let display = glium::Display::new(wb, cb, &event_loop).unwrap();
+        let mut window = Window::new(1024, 768);
         
-        let mut renderer = Renderer::new(display).unwrap();
+        let mut renderer = Renderer::new(&window).unwrap();
     
         // lua scripting
         let script_code = App::load_script("./game_example/game.lua");
@@ -45,6 +43,8 @@ impl App {
 
             Ok(())
         })?;
+
+        let event_loop = window.take_event_loop().expect("No event loop in the window");
     
         event_loop.run(move |ev, _, control_flow| {
             lua.context(|lua_ctx| {
@@ -52,7 +52,7 @@ impl App {
                 lua_ctx.load("verdi.run()").exec().unwrap();
             });
     
-            renderer.render(&gpu.lock().unwrap());
+            renderer.render(&window, &gpu.lock().unwrap());
             gpu.lock().unwrap().render_passes.clear();
     
             let next_frame_time = std::time::Instant::now() +

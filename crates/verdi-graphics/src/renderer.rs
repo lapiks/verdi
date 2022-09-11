@@ -1,14 +1,14 @@
 use glium::{Surface, uniform, uniforms::EmptyUniforms};
+use verdi_window::prelude::Window;
 
 use crate::{vertex::Vertex, render_pass::RenderPass, prelude::GraphicsChip};
 
 pub struct Renderer {
-    display: glium::Display,
     program: glium::Program
 }
 
 impl Renderer {
-    pub fn new(display: glium::Display) -> Result<Self, std::io::Error> {
+    pub fn new(window: &Window) -> Result<Self, std::io::Error> {
         // TODO gérer erreurs avec GraphicsChipError
         let gouraud_vs = match std::fs::read_to_string( "./crates/verdi-graphics/shaders/gouraud.vs") {
             Ok(gouraud_vs)  => gouraud_vs,
@@ -27,17 +27,17 @@ impl Renderer {
         };
         
         let program = glium::Program::from_source(
-            &display, 
+            window.get_display(), 
             gouraud_vs.as_str(), 
             gouraud_fs.as_str(), 
             None
         ).unwrap();
 
-        Ok(Self { display ,program })
+        Ok(Self { program })
     }
 
-    pub fn render(&mut self, gpu: &GraphicsChip) {
-        let mut target = self.display.draw();
+    pub fn render(&mut self, window: &Window, gpu: &GraphicsChip) {
+        let mut target = window.get_display().draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
 
         // uniforms (à bouger)
@@ -52,11 +52,9 @@ impl Renderer {
         let light = [-1.0, 0.4, 0.9f32];
 
         for render_pass in gpu.render_passes.iter() {
-            let vertex_buffer = glium::VertexBuffer::new(&self.display, &render_pass.vertex_buffer).unwrap();
+            let vertex_buffer = glium::VertexBuffer::new(window.get_display(), &render_pass.vertex_buffer).unwrap();
             let indices = glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive));
-            
-            let use_texture = render_pass.current_texture.is_some();
-            
+        
             match render_pass.current_texture {
                 Some(tex) => {
                     let uniforms = uniform! {
