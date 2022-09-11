@@ -9,6 +9,5 @@ edition = "2021"
 verdi-app = { path = "../verdi-app" }
 verdi-window = { path = "../verdi-window" }
 verdi-graphics = { path = "../verdi-graphics" }
-verdi-game = { path = "../verdi-game" }
 verdi-ecs = { path = "../verdi-ecs" }
 verdi-math = { path = "../verdi-math" }
