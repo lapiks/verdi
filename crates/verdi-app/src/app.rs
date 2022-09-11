@@ -13,7 +13,7 @@ impl App {
     pub fn run(gpu: &'static Mutex<GraphicsChip>) -> Result<(), AppError> {
         let mut window = Window::new(1024, 768);
         
-        let mut renderer = Renderer::new(&window).unwrap();
+        let mut renderer = Renderer::new(&window)?;
     
         let lua = Lua::new();
     
