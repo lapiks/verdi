@@ -4,11 +4,10 @@ use rlua::UserData;
 
 use crate::assets::AssetId;
 
-#[derive(Clone)]
 pub struct Image {
     width: u32,
     height: u32,
-    image: image::DynamicImage
+    image: image::DynamicImage,
 }
 
 impl Image {
