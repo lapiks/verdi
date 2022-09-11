@@ -10,5 +10,5 @@ lazy_static! {
 }
 
 fn main() {
-    App::run(&GPU);
+    App::run(&GPU).expect("Unexpected error");
 }
