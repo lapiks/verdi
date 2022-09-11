@@ -1,5 +1,4 @@
-use glium::texture::SrgbTexture2d;
-use crate::{vertex::Vertex, graphics_chip::PrimitiveType, image::Image, assets::AssetId};
+use crate::{vertex::Vertex, graphics_chip::PrimitiveType, assets::AssetId};
 
 pub struct RenderPass {
     pub vertex_buffer: Vec<Vertex>,
