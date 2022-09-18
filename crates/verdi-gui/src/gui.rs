@@ -15,7 +15,7 @@ impl Gui {
     pub fn run(&mut self, display: &Display) {
         self.egui_glium.run(display, |egui_ctx| {
             egui::SidePanel::left("my_side_panel").show(egui_ctx, |ui| {
-                ui.heading("Hello World!");
+                ui.label("Hello world!");
             });
         });
     }

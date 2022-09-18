@@ -2,7 +2,7 @@ use glium::{
     glutin::{
         event_loop::EventLoop, window::WindowBuilder, ContextBuilder, self
     },
-    Display, Frame, Surface
+    Display
 };
 
 pub struct Window {

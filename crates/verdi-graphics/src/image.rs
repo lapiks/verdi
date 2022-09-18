@@ -1,7 +1,5 @@
 
-use std::{io::Cursor, env};
-
-use image::{io::Reader as ImageReader, GenericImageView, RgbaImage, ImageError};
+use image::{io::Reader as ImageReader, RgbaImage, ImageError};
 use rlua::UserData;
 
 use crate::assets::{AssetId, AssetState};

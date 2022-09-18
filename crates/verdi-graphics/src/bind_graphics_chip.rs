@@ -1,5 +1,5 @@
 use std::sync::Mutex;
-use rlua::{Lua, Result, Value, AnyUserData};
+use rlua::{Lua, Result};
 
 use verdi_math::prelude::*;
 

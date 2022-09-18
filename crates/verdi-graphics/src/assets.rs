@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use glium::Display;
 use uuid::Uuid;
 use crate::image::{Image, ImageRef};
 
