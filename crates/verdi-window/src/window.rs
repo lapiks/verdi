@@ -1,6 +1,6 @@
 use glium::{
     glutin::{
-        event_loop::EventLoop, window::WindowBuilder, ContextBuilder
+        event_loop::EventLoop, window::WindowBuilder, ContextBuilder, self
     },
     Display
 };
@@ -15,7 +15,14 @@ pub struct Window {
 impl Window {
     pub fn new(width: u32, height: u32) -> Self {
         let event_loop = EventLoop::new();
-        let wb = WindowBuilder::new();
+        
+        let wb = WindowBuilder::new()
+            .with_inner_size(glutin::dpi::LogicalSize {
+                width,
+                height,
+            })
+            .with_title("Verdi Engine");
+
         let cb = ContextBuilder::new();
         let display = Display::new(wb, cb, &event_loop).unwrap();
         
