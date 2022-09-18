@@ -1,5 +1,6 @@
 function verdi.start()
     image = graphics.newImage("./game_example/assets/container.png")
+    scene = graphics.newMesh("./game_example/assets/tank.gltf")
 end
 
 function verdi.update()

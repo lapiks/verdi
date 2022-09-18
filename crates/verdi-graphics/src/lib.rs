@@ -15,5 +15,6 @@ mod render_pass;
 mod renderer;
 mod image;
 mod mesh;
+mod scene;
 mod assets;
 mod gpu_assets;
