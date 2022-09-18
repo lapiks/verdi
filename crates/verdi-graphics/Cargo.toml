@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-verdi-window = { path = "../verdi-window" }
 verdi-math = { path = "../verdi-math" }
 glium = "*"
 rlua = "0.19.4"

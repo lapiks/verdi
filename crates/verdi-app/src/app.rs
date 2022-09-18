@@ -1,9 +1,11 @@
-use glium::{glutin};
+use egui_glium::egui_winit::egui;
+use glium::{glutin, Surface};
 use rlua::Lua;
 use std::{sync::Mutex};
 
 use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
+use verdi_gui::prelude::*;
 
 use crate::{error::AppError, lua_context::LuaContext};
 
@@ -13,7 +15,7 @@ impl App {
     pub fn run(gpu: &'static Mutex<GraphicsChip>) -> Result<(), AppError> {
         let mut window = Window::new(1024, 768);
         
-        let mut renderer = Renderer::new(&window)?;
+        let mut renderer = Renderer::new(&window.get_display())?;
     
         let lua = Lua::new();
     
@@ -23,6 +25,9 @@ impl App {
         LuaContext::call_boot(&lua)?;
 
         let event_loop = window.take_event_loop().expect("No event loop in the window");
+
+        let mut egui_glium = egui_glium::EguiGlium::new(&window.get_display(), &event_loop);
+        let mut gui = Gui::new(egui_glium);
 
         let mut last_error: String = String::new();
     
@@ -35,9 +40,20 @@ impl App {
                 }
             }
             
-            renderer.prepare_rendering();
+            // request a new frame
+            let mut target = window.get_display().draw();
+            target.clear_color(0.0, 0.0, 0.0, 1.0);
 
-            renderer.render(&window, &gpu.lock().unwrap());
+            // draw GUI
+            gui.run(window.get_display());
+            gui.render(window.get_display(), &mut target);
+
+            // draw game
+            renderer.render(window.get_display(), &mut target, &gpu.lock().unwrap());
+
+            // ends frame
+            target.finish().unwrap();
+            
             gpu.lock().unwrap().render_passes.clear();
     
             let next_frame_time = std::time::Instant::now() +
