@@ -16,9 +16,6 @@ impl Gui {
         self.egui_glium.run(display, |egui_ctx| {
             egui::SidePanel::left("my_side_panel").show(egui_ctx, |ui| {
                 ui.heading("Hello World!");
-                if ui.button("Quit").clicked() {
-
-                }
             });
         });
     }
