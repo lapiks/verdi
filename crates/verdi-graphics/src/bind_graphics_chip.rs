@@ -1,5 +1,5 @@
 use std::sync::Mutex;
-use rlua::{Lua, Result};
+use rlua::{Lua, Result, Value, AnyUserData};
 
 use verdi_math::prelude::*;
 
@@ -7,7 +7,7 @@ use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType, image::ImageRef
 
 pub struct BindGraphicsChip;
 
-impl BindGraphicsChip {
+impl<'lua> BindGraphicsChip {
     fn begin_object(gpu: &Mutex<GraphicsChip>, primitive_type: &String) {
         let mut enum_val = PrimitiveType::Triangles;
         if primitive_type == "triangles" { enum_val = PrimitiveType::Triangles; }
@@ -42,7 +42,7 @@ impl BindGraphicsChip {
     }
 
     fn new_image(gpu: &Mutex<GraphicsChip>, path: &String) -> ImageRef {
-        gpu.lock().unwrap().new_image(path)
+        gpu.lock().unwrap().new_image(path).unwrap()
     }
 
     pub fn bind(lua: &Lua, gpu: &'static Mutex<GraphicsChip>) -> Result<()> {
@@ -81,7 +81,6 @@ impl BindGraphicsChip {
                 let func = lua_ctx.create_function(|_, path: String| Ok(BindGraphicsChip::new_image(gpu, &path)))?;
                 module_table.set("newImage", func)?;
             }
-
             {
                 let func = lua_ctx.create_function_mut(|_, image: ImageRef| Ok(BindGraphicsChip::bind_texture(gpu, &image)))?;
                 module_table.set("bindTexture", func)?;

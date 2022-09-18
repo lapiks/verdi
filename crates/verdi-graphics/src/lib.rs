@@ -15,3 +15,4 @@ mod render_pass;
 mod renderer;
 mod image;
 mod assets;
+mod gpu_assets;

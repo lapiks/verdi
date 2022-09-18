@@ -1,26 +1,47 @@
 
-use image::{io::Reader as ImageReader, GenericImageView};
+use std::{io::Cursor, env};
+
+use image::{io::Reader as ImageReader, GenericImageView, RgbaImage, ImageError};
 use rlua::UserData;
 
-use crate::assets::AssetId;
+use crate::assets::{AssetId, AssetState};
 
 pub struct Image {
     width: u32,
     height: u32,
-    image: image::DynamicImage,
+    data: RgbaImage,
+    state: AssetState,
 }
 
 impl Image {
-    pub fn new(path: &String) -> Self{
-        let img = ImageReader::open(path).unwrap().decode().unwrap();
+    pub fn new(path: &String) -> Result<Self, ImageError> {
+        let img = ImageReader::open(path)?.decode()?;
+        let img2 = img.to_rgba8();
 
-        let dim = img.dimensions();
+        let dim = img2.dimensions();
 
-        Self { 
+        Ok(Self { 
             width: dim.0, 
             height: dim.1,
-            image: img
-        }
+            data: img2,
+            state: AssetState::Created
+        })
+    }
+
+    pub fn is_loaded(&self) -> bool {
+        self.state == AssetState::Loaded
+    }
+
+    pub fn set_loaded(&mut self) {
+        self.state = AssetState::Loaded
+    }
+
+    pub fn get_data(&self) -> &RgbaImage {
+        &self.data
+    }
+
+    pub fn get_dimensions(&self) -> (u32, u32) {
+        return (self.width, self.height)
     }
 }
 

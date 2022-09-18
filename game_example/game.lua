@@ -1,5 +1,5 @@
 function verdi.start()
-    image = graphics.newImage("C:/Users/Julien/Pictures/container.png")
+    image = graphics.newImage("./game_example/assets/container.png")
 end
 
 function verdi.update()

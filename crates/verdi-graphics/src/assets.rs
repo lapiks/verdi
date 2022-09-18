@@ -1,8 +1,15 @@
 use std::collections::HashMap;
+use glium::Display;
 use uuid::Uuid;
 use crate::image::{Image, ImageRef};
 
 pub type AssetId = Uuid;
+
+#[derive(PartialEq)]
+pub enum AssetState {
+    Created,
+    Loaded,
+}
 
 pub struct Assets {
     textures: HashMap<AssetId, Image>,

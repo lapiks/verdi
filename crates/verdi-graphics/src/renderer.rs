@@ -1,10 +1,12 @@
 use glium::{Surface, uniform};
 use verdi_window::prelude::Window;
+use glium::{texture::SrgbTexture2d as GpuTexture};
 
-use crate::prelude::GraphicsChip;
+use crate::{prelude::GraphicsChip, gpu_assets::GpuAssets};
 
 pub struct Renderer {
-    program: glium::Program
+    program: glium::Program,
+    gpu_assets: GpuAssets,
 }
 
 impl Renderer {
@@ -33,7 +35,14 @@ impl Renderer {
             None
         ).unwrap();
 
-        Ok(Self { program })
+        Ok(Self {
+            program,
+            gpu_assets: GpuAssets::new(),
+        })
+    }
+
+    pub fn prepare_rendering(&self) {
+
     }
 
     pub fn render(&mut self, window: &Window, gpu: &GraphicsChip) {
@@ -54,22 +63,46 @@ impl Renderer {
         for render_pass in gpu.render_passes.iter() {
             let vertex_buffer = glium::VertexBuffer::new(window.get_display(), &render_pass.vertex_buffer).unwrap();
             let indices = glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive));
-        
-            match render_pass.current_texture {
-                Some(tex) => {
-                    let uniforms = uniform! {
-                        matrix: matrix,
-                        u_light: light,
-                        //tex: tex,
-                    };
 
-                    target.draw(
-                        &vertex_buffer,
-                        &indices, 
-                        &self.program, 
-                        &uniforms,
-                        &Default::default()
-                    ).unwrap();
+            match render_pass.current_texture {
+                Some(tex_id) => {
+                    if let Some(tex) = gpu.assets.get_texture(tex_id) {
+                        let gpu_tex: &GpuTexture;
+                        if self.gpu_assets.get_texture(tex_id).is_none() {
+                            gpu_tex = self.gpu_assets.add_texture(window.get_display(), tex_id, tex);
+                        }
+                        else {
+                            gpu_tex = self.gpu_assets.get_texture(tex_id).unwrap();
+                        }
+
+                        let uniforms = uniform! {
+                            matrix: matrix,
+                            u_light: light,
+                            tex: gpu_tex,
+                        };
+
+                        target.draw(
+                            &vertex_buffer,
+                            &indices, 
+                            &self.program, 
+                            &uniforms,
+                            &Default::default()
+                        ).unwrap();
+                    }
+                    else {
+                        let uniforms = uniform! {
+                            matrix: matrix,
+                            u_light: light
+                        };
+    
+                        target.draw(
+                            &vertex_buffer,
+                            &indices, 
+                            &self.program, 
+                            &uniforms,
+                            &Default::default()
+                        ).unwrap();
+                    }   
                 }
                 None => {
                     let uniforms = uniform! {
@@ -85,7 +118,7 @@ impl Renderer {
                         &Default::default()
                     ).unwrap();
                 }
-            }            
+            }        
         }        
 
         target.finish().unwrap();

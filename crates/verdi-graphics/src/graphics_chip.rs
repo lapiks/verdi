@@ -1,4 +1,5 @@
 use crate::{vertex::Vertex, render_pass::RenderPass, image::{Image, ImageRef}, assets::Assets};
+use image::ImageError;
 use verdi_math::prelude::*;
 
 pub struct GraphicsChip {
@@ -85,8 +86,6 @@ impl GraphicsChip {
     }
 
     pub fn bind_texture(&mut self, image: &ImageRef) {
-        //let tex = self.assets.get_texture(image.id);
-        // check if tex exists
         match self.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_texture = Some(image.id);
@@ -95,9 +94,9 @@ impl GraphicsChip {
         };
     }
 
-    pub fn new_image(&mut self, path: &String) -> ImageRef {
-        let image = Image::new(path);
+    pub fn new_image(&mut self, path: &String) -> Result<ImageRef, ImageError> {
+        let image = Image::new(path)?;
 
-        self.assets.add_texture(image)
+        Ok(self.assets.add_texture(image))
     }
 }

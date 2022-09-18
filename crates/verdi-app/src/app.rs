@@ -35,6 +35,8 @@ impl App {
                 }
             }
             
+            renderer.prepare_rendering();
+
             renderer.render(&window, &gpu.lock().unwrap());
             gpu.lock().unwrap().render_passes.clear();
     
