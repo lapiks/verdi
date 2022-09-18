@@ -1,4 +1,4 @@
-use crate::{vertex::Vertex, render_pass::RenderPass, image::{Image, ImageRef}, assets::Assets};
+use crate::{vertex::Vertex, render_pass::RenderPass, image::{Image, ImageRef}, assets::Assets, mesh::{Mesh, MeshRef, MeshError}};
 use image::ImageError;
 use verdi_math::prelude::*;
 
@@ -85,6 +85,12 @@ impl GraphicsChip {
         };
     }
 
+    pub fn new_image(&mut self, path: &String) -> Result<ImageRef, ImageError> {
+        let image = Image::new(path)?;
+
+        Ok(self.assets.add_texture(image))
+    }
+
     pub fn bind_texture(&mut self, image: &ImageRef) {
         match self.render_passes.last_mut() {
             Some(render_pass) => {
@@ -94,9 +100,9 @@ impl GraphicsChip {
         };
     }
 
-    pub fn new_image(&mut self, path: &String) -> Result<ImageRef, ImageError> {
-        let image = Image::new(path)?;
+    pub fn new_mesh(&mut self, path: &String) -> Result<MeshRef, MeshError> {
+        let mesh = Mesh::new(path)?;
 
-        Ok(self.assets.add_texture(image))
+        Ok(self.assets.add_mesh(mesh))
     }
 }

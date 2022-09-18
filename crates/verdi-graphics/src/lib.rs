@@ -14,5 +14,6 @@ mod vertex;
 mod render_pass;
 mod renderer;
 mod image;
+mod mesh;
 mod assets;
 mod gpu_assets;
