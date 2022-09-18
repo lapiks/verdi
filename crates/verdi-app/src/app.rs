@@ -44,12 +44,12 @@ impl App {
             let mut target = window.get_display().draw();
             target.clear_color(0.0, 0.0, 0.0, 1.0);
 
+            // draw game
+            renderer.render(window.get_display(), &mut target, &gpu.lock().unwrap());
+
             // draw GUI
             gui.run(window.get_display());
             gui.render(window.get_display(), &mut target);
-
-            // draw game
-            renderer.render(window.get_display(), &mut target, &gpu.lock().unwrap());
 
             // ends frame
             target.finish().unwrap();
