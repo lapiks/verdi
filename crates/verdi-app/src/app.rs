@@ -59,13 +59,17 @@ impl App {
                 std::time::Duration::from_nanos(16_666_667);
     
             *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
+
+            // events handling
             match ev {
-                glutin::event::Event::WindowEvent { event, .. } => match event {
-                    glutin::event::WindowEvent::CloseRequested => {
+                glutin::event::Event::WindowEvent { event, .. } =>  {
+                    use glutin::event::WindowEvent;
+                    if matches!(event, WindowEvent::CloseRequested | WindowEvent::Destroyed) {
                         *control_flow = glutin::event_loop::ControlFlow::Exit;
-                        return;
-                    },
-                    _ => return,
+                    }
+
+                    // relays events to the gui
+                    gui.on_event(&event);
                 },
                 _ => (),
             }
