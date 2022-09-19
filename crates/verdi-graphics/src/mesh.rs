@@ -1,7 +1,7 @@
 use rlua::UserData;
 use gltf::Mesh as GltfMesh;
 
-use crate::assets::AssetId;
+use crate::{assets::AssetId, vertex::Vertex};
 
 use thiserror::Error;
 
@@ -13,22 +13,27 @@ pub enum MeshError {
     GltfError(#[from] gltf::Error),
 }
 
-pub struct Mesh {
+type VertexBuffer = Vec<Vertex>;
+type Primitives = Vec<VertexBuffer>;
 
+pub struct Mesh {
+    pub primitives: Primitives,
 }
 
 impl Mesh {
-    pub fn new(path: &String) -> Result<Self, MeshError> {
-        Ok(Self {})
+    pub fn new(primitives: Primitives) -> Self {
+        Self {
+            primitives,
+        }
     }
 }
 
-impl From<GltfMesh<'_>> for Mesh {
-    fn from(gltf_mesh: GltfMesh) -> Self {
-        gltf_mesh.primitives();
-        Self { }
-    }
-}
+// impl From<GltfMesh<'_>> for Mesh {
+//     fn from(gltf_mesh: GltfMesh) -> Self {
+        
+//         Self { primitives }
+//     }
+// }
 
 #[derive(Clone)]
 pub struct MeshRef {

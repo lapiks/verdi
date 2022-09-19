@@ -100,9 +100,9 @@ impl GraphicsChip {
         };
     }
 
-    pub fn new_mesh(&mut self, path: &String) -> Result<MeshRef, MeshError> {
-        let mesh = Mesh::new(path)?;
+    // pub fn new_mesh(&mut self, path: &String) -> Result<MeshRef, MeshError> {
+    //     let mesh = Mesh::new(path)?;
 
-        Ok(self.assets.add_mesh(mesh))
-    }
+    //     Ok(self.assets.add_mesh(mesh))
+    // }
 }

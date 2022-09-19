@@ -45,9 +45,9 @@ impl<'lua> BindGraphicsChip {
         gpu.lock().unwrap().new_image(path).unwrap()
     }
 
-    fn new_mesh(gpu: &Mutex<GraphicsChip>, path: &String) -> MeshRef {
-        gpu.lock().unwrap().new_mesh(path).unwrap()
-    }
+    // fn new_mesh(gpu: &Mutex<GraphicsChip>, path: &String) -> MeshRef {
+    //     gpu.lock().unwrap().new_mesh(path).unwrap()
+    // }
 
     pub fn bind(lua: &Lua, gpu: &'static Mutex<GraphicsChip>) -> Result<()> {
         lua.context(|lua_ctx| {
@@ -89,10 +89,10 @@ impl<'lua> BindGraphicsChip {
                 let func = lua_ctx.create_function_mut(|_, image: ImageRef| Ok(BindGraphicsChip::bind_texture(gpu, &image)))?;
                 module_table.set("bindTexture", func)?;
             }
-            {
-                let func = lua_ctx.create_function_mut(|_, path: String| Ok(BindGraphicsChip::new_mesh(gpu, &path)))?;
-                module_table.set("newMesh", func)?;
-            }
+            // {
+            //     let func = lua_ctx.create_function_mut(|_, path: String| Ok(BindGraphicsChip::new_mesh(gpu, &path)))?;
+            //     module_table.set("newMesh", func)?;
+            // }
     
             // add table to globals
             globals.set("graphics", module_table)?;
