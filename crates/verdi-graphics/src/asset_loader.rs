@@ -12,7 +12,7 @@ pub fn load(path: &String, assets: &mut Assets) -> Result<(), gltf::Error> {
 
             let vertex_count = reader.read_positions().unwrap().size_hint();
             let mut vertex_buffer:Vec<Vertex> = Vec::new();
-            vertex_buffer.reserve(vertex_count.0);
+            vertex_buffer.resize(vertex_count.0, Vertex::default());
 
             let i = 0;
             if let Some(positions) = reader.read_positions() {
