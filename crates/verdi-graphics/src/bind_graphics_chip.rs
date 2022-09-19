@@ -3,7 +3,7 @@ use rlua::{Lua, Result};
 
 use verdi_math::prelude::*;
 
-use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType, image::ImageRef, mesh::MeshRef};
+use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType, image::ImageRef, mesh::MeshRef, scene::Scene};
 
 pub struct BindGraphicsChip;
 
@@ -45,8 +45,8 @@ impl<'lua> BindGraphicsChip {
         gpu.lock().unwrap().new_image(path).unwrap()
     }
 
-    fn load_scene(gpu: &Mutex<GraphicsChip>, path: &String) {
-        gpu.lock().unwrap().load_scene(path).unwrap()
+    fn new_scene(gpu: &Mutex<GraphicsChip>, path: &String) -> Scene{
+        gpu.lock().unwrap().new_scene(path).unwrap()
     }
 
     pub fn bind(lua: &Lua, gpu: &'static Mutex<GraphicsChip>) -> Result<()> {
@@ -90,8 +90,8 @@ impl<'lua> BindGraphicsChip {
                 module_table.set("bindTexture", func)?;
             }
             {
-                let func = lua_ctx.create_function_mut(|_, path: String| Ok(BindGraphicsChip::load_scene(gpu, &path)))?;
-                module_table.set("loadScene", func)?;
+                let func = lua_ctx.create_function_mut(|_, path: String| Ok(BindGraphicsChip::new_scene(gpu, &path)))?;
+                module_table.set("newScene", func)?;
             }
     
             // add table to globals

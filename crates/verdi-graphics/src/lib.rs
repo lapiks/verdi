@@ -17,4 +17,5 @@ mod image;
 mod mesh;
 mod asset_loader;
 mod assets;
+mod scene;
 mod gpu_assets;
