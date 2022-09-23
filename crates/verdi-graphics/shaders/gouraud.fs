@@ -11,5 +11,6 @@ uniform vec3 u_light;
 uniform sampler2D tex;
 
 void main() {
-    color = texture(tex, v_uv);
+    //color = texture(tex, v_uv);
+    color = vec4(1.0, 0.0, 0.0, 1.0);
 }

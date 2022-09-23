@@ -1,28 +1,31 @@
-use crate::{vertex::Vertex, graphics_chip::PrimitiveType, assets::AssetId};
+use crate::{vertex::Vertex, graphics_chip::PrimitiveType, mesh::MeshRef, image::ImageRef};
 
 pub struct RenderPass {
-    pub vertex_buffer: Vec<Vertex>,
+    pub mesh: MeshRef,
     pub current_vertex_state: Vertex,
     pub current_primitive: PrimitiveType,
-    pub current_texture: Option<AssetId>,
+    pub current_texture: Option<ImageRef>,
 }
 
 impl RenderPass {
-    pub fn new(current_primitive: PrimitiveType) -> Self {
+    pub fn new(mesh: MeshRef, current_primitive: PrimitiveType) -> Self {
         Self {
-            current_primitive: current_primitive,
-            .. RenderPass::default()
+            mesh,
+            current_vertex_state: Vertex::default(),
+            current_primitive,
+            current_texture: Option::default()       
         }
     }
 }
 
-impl Default for RenderPass {
-    fn default() -> Self {
-        Self {
-            vertex_buffer: Vec::new(),
-            current_vertex_state: Vertex::default(),
-            current_primitive: PrimitiveType::Triangles,
-            current_texture: Option::default()        
-        }
-    }
-}
+// impl Default for RenderPass {
+//     fn default() -> Self {
+//         Self {
+//             mesh: Option::default(),
+//             vertex_buffer: Vec::new(),
+//             current_vertex_state: Vertex::default(),
+//             current_primitive: PrimitiveType::Triangles,
+//             current_texture: Option::default()        
+//         }
+//     }
+// }

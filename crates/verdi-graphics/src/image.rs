@@ -43,7 +43,7 @@ impl Image {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct ImageRef {
     pub id: AssetId,
 }

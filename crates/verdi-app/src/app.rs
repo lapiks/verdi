@@ -43,8 +43,11 @@ impl App {
             let mut target = window.get_display().draw();
             target.clear_color(0.0, 0.0, 0.0, 1.0);
 
+            // prepare assets for rendering
+            renderer.prepare_assets(window.get_display(), &gpu.lock().unwrap());
+            
             // draw game
-            renderer.render(window.get_display(), &mut target, &gpu.lock().unwrap());
+            renderer.render(&mut target, &gpu.lock().unwrap());
 
             // draw GUI
             gui.run(window.get_display());

@@ -1,6 +1,6 @@
 use glium::{Surface, uniform, Frame, Display};
-use glium::{texture::SrgbTexture2d as GpuTexture};
 
+use crate::gpu_mesh::GpuMesh;
 use crate::{prelude::GraphicsChip, gpu_assets::GpuAssets};
 
 pub struct Renderer {
@@ -40,10 +40,48 @@ impl Renderer {
         })
     }
 
-    pub fn render(&mut self, display: &Display, target: &mut Frame, gpu: &GraphicsChip) {
-        // let mut target = window.get_display().draw();
-        // target.clear_color(0.0, 0.0, 0.0, 1.0);
+    pub fn prepare_assets(&mut self, display: &Display, gpu: &GraphicsChip) {
+        for render_pass in gpu.render_passes.iter() {
+            let mesh_ref = render_pass.mesh;
+            if self.gpu_assets.get_mesh(mesh_ref.id).is_none() {
+                if let Some(mesh) = gpu.assets.get_mesh(mesh_ref.id) {
+                    // construct gpu vertex buffers
+                    for primitive in mesh.primitives.iter() {
+                        let vertex_buffer = glium::VertexBuffer::new(display, &primitive.vertex_buffer).unwrap();
 
+                        if let Some(index_buffer) = &primitive.index_buffer {
+                            let indices = glium::IndexBuffer::new(
+                                display, 
+                                glium::index::PrimitiveType::from(render_pass.current_primitive),
+                                index_buffer
+                            ).unwrap();
+
+                            let gpu_mesh = GpuMesh::new(vertex_buffer, Some(indices));
+                            self.gpu_assets.add_mesh(mesh_ref.id, gpu_mesh);
+                        }
+                        else {
+                            // let indices = glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive));
+
+                            let gpu_mesh = GpuMesh::new(vertex_buffer, None);
+                            self.gpu_assets.add_mesh(mesh_ref.id, gpu_mesh);
+                        }
+
+                    }
+                    
+                }                    
+            }
+
+            if let Some(texture_ref) = render_pass.current_texture {
+                if self.gpu_assets.get_texture(texture_ref.id).is_none() {
+                    if let Some(texture) = gpu.assets.get_texture(texture_ref.id) {
+                        self.gpu_assets.add_texture(display, texture_ref.id, texture);
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn render(&mut self, target: &mut Frame, gpu: &GraphicsChip) {
         // uniforms (à bouger)
         let matrix = [
             [1.0, 0.0, 0.0, 0.0],
@@ -56,65 +94,66 @@ impl Renderer {
         let light = [-1.0, 0.4, 0.9f32];
 
         for render_pass in gpu.render_passes.iter() {
-            let vertex_buffer = glium::VertexBuffer::new(display, &render_pass.vertex_buffer).unwrap();
-            let indices = glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive));
+            if self.gpu_assets.get_mesh(render_pass.mesh.id).is_none() {
+                // there sould be a gpu mesh for this id
+                return;
+            }
 
-            match render_pass.current_texture {
-                Some(tex_id) => {
-                    if let Some(tex) = gpu.assets.get_texture(tex_id) {
-                        let gpu_tex: &GpuTexture;
-                        if self.gpu_assets.get_texture(tex_id).is_none() {
-                            gpu_tex = self.gpu_assets.add_texture(display, tex_id, tex);
-                        }
-                        else {
-                            gpu_tex = self.gpu_assets.get_texture(tex_id).unwrap();
-                        }
+            let mesh = self.gpu_assets.get_mesh(render_pass.mesh.id).unwrap();
 
-                        let uniforms = uniform! {
-                            matrix: matrix,
-                            u_light: light,
-                            tex: gpu_tex,
-                        };
+            if let Some(tex_ref) = render_pass.current_texture {
+                if let Some(gpu_tex) = self.gpu_assets.get_texture(tex_ref.id) {
+                    let uniforms = uniform! {
+                        matrix: matrix,
+                        u_light: light,
+                        tex: gpu_tex,
+                    };
 
+                    if let Some(index_buffer) = &mesh.index_buffer {
                         target.draw(
-                            &vertex_buffer,
-                            &indices, 
+                            &mesh.vertex_buffer,
+                            index_buffer, 
                             &self.program, 
                             &uniforms,
                             &Default::default()
                         ).unwrap();
                     }
                     else {
-                        let uniforms = uniform! {
-                            matrix: matrix,
-                            u_light: light
-                        };
-    
                         target.draw(
-                            &vertex_buffer,
-                            &indices, 
+                            &mesh.vertex_buffer,
+                            &glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive)), 
                             &self.program, 
                             &uniforms,
                             &Default::default()
                         ).unwrap();
-                    }   
+                    }
                 }
-                None => {
-                    let uniforms = uniform! {
-                        matrix: matrix,
-                        u_light: light,
-                    };
+            }
+            else {
+                let uniforms = uniform! {
+                    matrix: matrix,
+                    u_light: light,
+                };
 
+                if let Some(index_buffer) = &mesh.index_buffer {
                     target.draw(
-                        &vertex_buffer,
-                        &indices, 
+                        &mesh.vertex_buffer,
+                        index_buffer, 
                         &self.program, 
                         &uniforms,
                         &Default::default()
                     ).unwrap();
                 }
-            }        
-        }        
-        //target.finish().unwrap();
+                else {
+                    target.draw(
+                        &mesh.vertex_buffer,
+                        &glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive)), 
+                        &self.program, 
+                        &uniforms,
+                        &Default::default()
+                    ).unwrap();
+                }
+            }
+        }
     }
 }

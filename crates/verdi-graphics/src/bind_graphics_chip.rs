@@ -3,7 +3,7 @@ use rlua::{Lua, Result};
 
 use verdi_math::prelude::*;
 
-use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType, image::ImageRef, mesh::MeshRef, scene::Scene};
+use crate::{prelude::GraphicsChip, graphics_chip::PrimitiveType, image::ImageRef, scene::Scene};
 
 pub struct BindGraphicsChip;
 
@@ -37,7 +37,7 @@ impl<'lua> BindGraphicsChip {
         gpu.lock().unwrap().color(Vec4::new(r, g, b, a));
     }
 
-    fn bind_texture(gpu: &Mutex<GraphicsChip>, image: &ImageRef) {
+    fn bind_texture(gpu: &Mutex<GraphicsChip>, image: ImageRef) {
         gpu.lock().unwrap().bind_texture(image);
     }
 
@@ -47,6 +47,10 @@ impl<'lua> BindGraphicsChip {
 
     fn new_scene(gpu: &Mutex<GraphicsChip>, path: &String) -> Scene{
         gpu.lock().unwrap().new_scene(path).unwrap()
+    }
+
+    fn draw(gpu: &Mutex<GraphicsChip>, scene: &Scene) {
+        gpu.lock().unwrap().draw(scene)
     }
 
     pub fn bind(lua: &Lua, gpu: &'static Mutex<GraphicsChip>) -> Result<()> {
@@ -86,14 +90,18 @@ impl<'lua> BindGraphicsChip {
                 module_table.set("newImage", func)?;
             }
             {
-                let func = lua_ctx.create_function_mut(|_, image: ImageRef| Ok(BindGraphicsChip::bind_texture(gpu, &image)))?;
+                let func = lua_ctx.create_function_mut(|_, image: ImageRef| Ok(BindGraphicsChip::bind_texture(gpu, image)))?;
                 module_table.set("bindTexture", func)?;
             }
             {
                 let func = lua_ctx.create_function_mut(|_, path: String| Ok(BindGraphicsChip::new_scene(gpu, &path)))?;
                 module_table.set("newScene", func)?;
             }
-    
+            {
+                let func = lua_ctx.create_function_mut(|_, scene: Scene| Ok(BindGraphicsChip::draw(gpu, &scene)))?;
+                module_table.set("draw", func)?;
+            }
+
             // add table to globals
             globals.set("graphics", module_table)?;
     

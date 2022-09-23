@@ -31,11 +31,12 @@ impl GraphicsChip {
     }
 
     pub fn begin(&mut self, primitive_type: PrimitiveType) {
-        let render_pass = RenderPass::new(
-            primitive_type
-        );
+        // let render_pass = RenderPass::new(
+        //     None,
+        //     primitive_type
+        // );
 
-        self.render_passes.push(render_pass);
+        // self.render_passes.push(render_pass);
     }
 
     pub fn end(&mut self) {
@@ -49,13 +50,13 @@ impl GraphicsChip {
     }
 
     pub fn vertex(&mut self, coords: Vec3) {
-        match self.render_passes.last_mut() {
-            Some(render_pass) => {
-                render_pass.current_vertex_state.position = coords.to_array();
-                render_pass.vertex_buffer.push(render_pass.current_vertex_state);
-            },
-            None => return
-        };
+        // match self.render_passes.last_mut() {
+        //     Some(render_pass) => {
+        //         render_pass.current_vertex_state.position = coords.to_array();
+        //         render_pass.vertex_buffer.push(render_pass.current_vertex_state);
+        //     },
+        //     None => return
+        // };
     }
 
     pub fn normal(&mut self, coords: Vec3) {
@@ -91,10 +92,10 @@ impl GraphicsChip {
         Ok(self.assets.add_texture(image))
     }
 
-    pub fn bind_texture(&mut self, image: &ImageRef) {
+    pub fn bind_texture(&mut self, image: ImageRef) {
         match self.render_passes.last_mut() {
             Some(render_pass) => {
-                render_pass.current_texture = Some(image.id);
+                render_pass.current_texture = Some(image);
             },
             None => return
         };
@@ -105,5 +106,16 @@ impl GraphicsChip {
         scene.load(path, &mut self.assets)?;
 
         Ok(scene)
+    }
+
+    pub fn draw(&mut self, scene: &Scene) {
+        for mesh_ref in scene.meshes.iter() {
+            let render_pass = RenderPass::new(
+                *mesh_ref,
+                PrimitiveType::Triangles
+            );
+
+            self.render_passes.push(render_pass);
+        }
     }
 }
