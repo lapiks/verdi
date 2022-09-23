@@ -1,7 +1,6 @@
 use rlua::UserData;
-use gltf::Mesh as GltfMesh;
 
-use crate::{assets::AssetId, vertex::Vertex, prelude::GraphicsChip};
+use crate::{assets::AssetId, vertex::Vertex};
 
 use thiserror::Error;
 

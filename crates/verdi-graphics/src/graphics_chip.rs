@@ -1,4 +1,4 @@
-use crate::{vertex::Vertex, render_pass::RenderPass, image::{Image, ImageRef}, assets::Assets, mesh::{Mesh, MeshRef, MeshError}, asset_loader, scene::Scene};
+use crate::{vertex::Vertex, render_pass::RenderPass, image::{Image, ImageRef}, assets::Assets, scene::Scene};
 use image::ImageError;
 use verdi_math::prelude::*;
 

@@ -1,4 +1,4 @@
-use rlua::{UserData, UserDataMethods};
+use rlua::UserData;
 
 use crate::{mesh::{MeshRef, Mesh, Primitive}, vertex::Vertex, assets::Assets};
 
