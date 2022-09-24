@@ -1,5 +1,6 @@
 use glium::{Surface, uniform, Frame, Display};
 
+use crate::camera::Camera;
 use crate::gpu_mesh::GpuMesh;
 use crate::{prelude::GraphicsChip, gpu_assets::GpuAssets};
 
@@ -94,12 +95,34 @@ impl Renderer {
 
             let mesh = self.gpu_assets.get_mesh(render_pass.node.mesh.unwrap().id).unwrap();
 
-            let matrix = render_pass.node.transform.to_matrix().to_cols_array_2d();
+            let model_matrix = render_pass.node.transform.to_matrix().to_cols_array_2d();
+
+            let view_matrix = Camera::view_matrix(&[2.0, -1.0, 1.0], &[-2.0, 1.0, 1.0], &[0.0, 1.0, 0.0]);
+
+            let perspective_matrix = {
+                let (width, height) = target.get_dimensions();
+                let aspect_ratio = height as f32 / width as f32;
+            
+                let fov: f32 = 3.141592 / 3.0;
+                let zfar = 1024.0;
+                let znear = 0.1;
+            
+                let f = 1.0 / (fov / 2.0).tan();
+            
+                [
+                    [f *   aspect_ratio   ,    0.0,              0.0              ,   0.0],
+                    [         0.0         ,     f ,              0.0              ,   0.0],
+                    [         0.0         ,    0.0,  (zfar+znear)/(zfar-znear)    ,   1.0],
+                    [         0.0         ,    0.0, -(2.0*zfar*znear)/(zfar-znear),   0.0],
+                ]
+            };
 
             if let Some(tex_ref) = render_pass.current_texture {
                 if let Some(gpu_tex) = self.gpu_assets.get_texture(tex_ref.id) {
                     let uniforms = uniform! {
-                        matrix: matrix,
+                        model: model_matrix,
+                        view: view_matrix,
+                        perspective: perspective_matrix,
                         u_light: light,
                         tex: gpu_tex,
                     };
@@ -126,7 +149,9 @@ impl Renderer {
             }
             else {
                 let uniforms = uniform! {
-                    matrix: matrix,
+                    model: model_matrix,
+                    view: view_matrix,
+                    perspective: perspective_matrix,
                     u_light: light,
                 };
 

@@ -9,11 +9,13 @@ out vec3 v_normal;
 out vec4 v_color;
 out vec2 v_uv;
 
-uniform mat4 matrix;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 perspective;
 
 void main() {
-    v_normal = transpose(inverse(mat3(matrix))) * normal;
+    v_normal = transpose(inverse(mat3(view * model))) * normal;
     v_color = color;
     v_uv = uv;
-    gl_Position = matrix * vec4(position, 1.0);
+    gl_Position = perspective * view * model * vec4(position, 1.0);
 }
