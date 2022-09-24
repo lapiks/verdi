@@ -91,10 +91,6 @@ impl Scene {
     
         Ok(())
     }
-
-    pub fn draw(&self) {
-        
-    }
 }
 
 impl UserData for Scene {
