@@ -109,9 +109,13 @@ impl GraphicsChip {
     }
 
     pub fn draw(&mut self, scene: &Scene) {
-        for mesh_ref in scene.meshes.iter() {
+        for node in scene.nodes.iter() {
+            if node.mesh.is_none() {
+                continue;
+            }
+
             let render_pass = RenderPass::new(
-                *mesh_ref,
+                node.mesh.unwrap(),
                 PrimitiveType::Triangles
             );
 

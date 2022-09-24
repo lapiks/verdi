@@ -1,16 +1,17 @@
 use rlua::UserData;
+use verdi_math::Mat4;
 
-use crate::{mesh::{MeshRef, Mesh, Primitive}, vertex::Vertex, assets::Assets};
+use crate::{mesh::{Mesh, Primitive}, vertex::Vertex, assets::Assets, node::Node, transform::Transform};
 
 #[derive(Clone)]
 pub struct Scene {
-    pub meshes: Vec<MeshRef>,
+    pub nodes: Vec<Node>,
 }
 
 impl Scene {
     pub fn new() -> Self {
         Self {
-            meshes: Vec::new(),
+            nodes: Vec::new(),
         }
     }
 
@@ -19,6 +20,7 @@ impl Scene {
 
         let (_, buffers, _) = gltf::import(path)?;
 
+        let mut meshes = vec![];
         for gltf_mesh in gltf.meshes() {
             let mut primitives = Vec::new();
             for gltf_primitive in gltf_mesh.primitives() {
@@ -62,7 +64,6 @@ impl Scene {
                     }
                 }
 
-                // copy ici !!!
                 primitive.vertex_buffer = vertex_buffer;
 
                 if let Some(indices) = reader.read_indices() {
@@ -72,7 +73,20 @@ impl Scene {
                 primitives.push(primitive);
             }
             
-            self.meshes.push(assets.add_mesh(Mesh::new(primitives)));
+            meshes.push(assets.add_mesh(Mesh::new(primitives)));
+        }
+
+        for node in gltf.nodes() {
+            self.nodes.push( 
+                Node {
+                    mesh: node
+                        .mesh()
+                        .map(|mesh| mesh.index())
+                        .and_then(|i| meshes.get(i).cloned()),
+                    transform: Transform::from_matrix(Mat4::from_cols_array_2d(&node.transform().matrix())),
+                    children: vec![],
+                }
+            );
         }
     
         Ok(())
