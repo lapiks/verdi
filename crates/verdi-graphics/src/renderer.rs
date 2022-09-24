@@ -42,7 +42,7 @@ impl Renderer {
 
     pub fn prepare_assets(&mut self, display: &Display, gpu: &GraphicsChip) {
         for render_pass in gpu.render_passes.iter() {
-            let mesh_ref = render_pass.mesh;
+            let mesh_ref = render_pass.node.mesh.unwrap();
             if self.gpu_assets.get_mesh(mesh_ref.id).is_none() {
                 if let Some(mesh) = gpu.assets.get_mesh(mesh_ref.id) {
                     // construct gpu vertex buffers
@@ -94,12 +94,12 @@ impl Renderer {
         let light = [-1.0, 0.4, 0.9f32];
 
         for render_pass in gpu.render_passes.iter() {
-            if self.gpu_assets.get_mesh(render_pass.mesh.id).is_none() {
+            if self.gpu_assets.get_mesh(render_pass.node.mesh.unwrap().id).is_none() {
                 // there sould be a gpu mesh for this id
                 return;
             }
 
-            let mesh = self.gpu_assets.get_mesh(render_pass.mesh.id).unwrap();
+            let mesh = self.gpu_assets.get_mesh(render_pass.node.mesh.unwrap().id).unwrap();
 
             if let Some(tex_ref) = render_pass.current_texture {
                 if let Some(gpu_tex) = self.gpu_assets.get_texture(tex_ref.id) {

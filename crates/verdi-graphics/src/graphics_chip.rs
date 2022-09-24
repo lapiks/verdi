@@ -115,7 +115,7 @@ impl GraphicsChip {
             }
 
             let render_pass = RenderPass::new(
-                node.mesh.unwrap(),
+                node.clone(),
                 PrimitiveType::Triangles
             );
 
