@@ -82,24 +82,19 @@ impl Renderer {
     }
 
     pub fn render(&mut self, target: &mut Frame, gpu: &GraphicsChip) {
-        // uniforms (à bouger)
-        let matrix = [
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0, 1.0f32]
-        ];
-
         // the direction of the light
         let light = [-1.0, 0.4, 0.9f32];
 
         for render_pass in gpu.render_passes.iter() {
             if self.gpu_assets.get_mesh(render_pass.node.mesh.unwrap().id).is_none() {
                 // there sould be a gpu mesh for this id
+                // todo: return error
                 return;
             }
 
             let mesh = self.gpu_assets.get_mesh(render_pass.node.mesh.unwrap().id).unwrap();
+
+            let matrix = render_pass.node.transform.to_matrix().to_cols_array_2d();
 
             if let Some(tex_ref) = render_pass.current_texture {
                 if let Some(gpu_tex) = self.gpu_assets.get_texture(tex_ref.id) {

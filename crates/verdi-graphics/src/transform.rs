@@ -2,9 +2,9 @@ use verdi_math::{Vec3, Quat, Mat4};
 
 #[derive(Clone)]
 pub struct Transform {
-    translation: Vec3,
-    rotation: Quat,
-    scale: Vec3,
+    pub translation: Vec3,
+    pub rotation: Quat,
+    pub scale: Vec3,
 }
 
 impl Transform {
@@ -24,6 +24,10 @@ impl Transform {
             rotation,
             scale,
         }
+    }
+
+    pub fn to_matrix(&self) -> Mat4 {
+        Mat4::from_scale_rotation_translation(self.scale, self.rotation, self.translation)
     }
 }
 
