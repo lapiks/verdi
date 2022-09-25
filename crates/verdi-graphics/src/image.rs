@@ -13,15 +13,33 @@ pub struct Image {
 
 impl Image {
     pub fn new(path: &String) -> Result<Self, ImageError> {
-        let img = ImageReader::open(path)?.decode()?;
-        let img2 = img.to_rgba8();
+        let dyn_img = ImageReader::open(path)?.decode()?;
+        let rgba8_img = dyn_img.to_rgba8();
 
-        let dim = img2.dimensions();
+        let dim = rgba8_img.dimensions();
 
         Ok(Self { 
             width: dim.0, 
             height: dim.1,
-            data: img2,
+            data: rgba8_img,
+            state: AssetState::Created
+        })
+    }
+
+    pub fn from_buffer(buffer: &[u8]) -> Result<Self, ImageError> {
+        let mut reader = image::io::Reader::new(std::io::Cursor::new(buffer));
+        reader.set_format(::image::ImageFormat::Png);
+        reader.no_limits();
+
+        let dyn_img = reader.decode()?;
+        let rgba8_img = dyn_img.to_rgba8();
+
+        let dim = rgba8_img.dimensions();
+        
+        Ok(Self { 
+            width: dim.0, 
+            height: dim.1,
+            data: rgba8_img,
             state: AssetState::Created
         })
     }

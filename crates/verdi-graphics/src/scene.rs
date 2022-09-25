@@ -1,3 +1,4 @@
+use gltf::buffer::Data;
 use ::image::ImageError;
 use rlua::UserData;
 use verdi_math::Mat4;
@@ -10,7 +11,7 @@ use crate::{
     assets::Assets, 
     node::Node, 
     transform::Transform, 
-    image::Image
+    image::{Image, ImageRef}
 };
 
 #[derive(Error, Debug)]
@@ -26,12 +27,14 @@ pub enum GltfError {
 #[derive(Clone)]
 pub struct Scene {
     pub nodes: Vec<Node>,
+    pub textures: Vec<ImageRef>,
 }
 
 impl Scene {
     pub fn new() -> Self {
         Self {
             nodes: Vec::new(),
+            textures: Vec::new(),
         }
     }
 
@@ -42,71 +45,20 @@ impl Scene {
 
         let mut meshes = vec![];
         for gltf_mesh in gltf.meshes() {
-            let mut primitives = Vec::new();
-            for gltf_primitive in gltf_mesh.primitives() {
-                let reader = gltf_primitive.reader(|buffer| Some(&buffers[buffer.index()]));
-
-                let mut primitive = Primitive::new();
-
-                let vertex_count = reader.read_positions().unwrap().size_hint();
-                let mut vertex_buffer:Vec<Vertex> = Vec::new();
-                vertex_buffer.resize(vertex_count.0, Vertex::default());
-
-                let mut i = 0;
-                if let Some(positions) = reader.read_positions() {
-                    for pos in positions {
-                        vertex_buffer[i].position = pos;
-                        i += 1;
-                    }
-                }
-
-                let mut i = 0;
-                if let Some(normals) = reader.read_normals() {
-                    for normal in normals {
-                        vertex_buffer[i].normal = normal;
-                        i += 1;
-                    }
-                }
-
-                let mut i = 0;
-                if let Some(colors) = reader.read_colors(0) {
-                    for color in colors.into_rgba_f32() {
-                        vertex_buffer[i].color = color;
-                        i += 1;
-                    }
-                }
-
-                let mut i = 0;
-                if let Some(uvs) = reader.read_tex_coords(0) {
-                    for uv in uvs.into_f32() {
-                        vertex_buffer[i].uv = uv;
-                        i += 1;
-                    }
-                }
-
-                primitive.vertex_buffer = vertex_buffer;
-
-                if let Some(indices) = reader.read_indices() {
-                    primitive.index_buffer = Some(indices.into_u32().collect());
-                };
-
-                primitives.push(primitive);
-            }
-            
-            meshes.push(assets.add_mesh(Mesh::new(primitives)));
+            meshes.push(
+                assets.add_mesh(
+                    Scene::load_mesh(gltf_mesh, &buffers)?
+                )
+            );
         }
 
-        let mut textures = vec![];
-        for texture in gltf.textures() {
-            let source = match texture.source().source() {
-                gltf::image::Source::View { view, mime_type } => {
-
-                }
-                gltf::image::Source::Uri { uri, mime_type } => {
-                    let image = Image::new(&uri.to_string())?;
-                    textures.push(assets.add_texture(image));
-                }
-            };
+        for gltf_texture in gltf.textures() {
+            self.textures.push(
+                assets.add_texture(
+                    Scene::load_texture(gltf_texture, &buffers)?
+                )
+            );
+            // todo read sampler infos
         }
 
         for node in gltf.nodes() {
@@ -123,6 +75,83 @@ impl Scene {
         }
 
         Ok(())
+    }
+
+    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>) -> Result<Mesh, GltfError> {
+        let mut primitives = Vec::new();
+        for gltf_primitive in gltf_mesh.primitives() {
+            let reader = gltf_primitive.reader(|buffer| Some(&buffers[buffer.index()]));
+
+            let mut primitive = Primitive::new();
+
+            let vertex_count = reader.read_positions().unwrap().size_hint();
+            let mut vertex_buffer:Vec<Vertex> = Vec::new();
+            vertex_buffer.resize(vertex_count.0, Vertex::default());
+
+            let mut i = 0;
+            if let Some(positions) = reader.read_positions() {
+                for pos in positions {
+                    vertex_buffer[i].position = pos;
+                    i += 1;
+                }
+            }
+
+            let mut i = 0;
+            if let Some(normals) = reader.read_normals() {
+                for normal in normals {
+                    vertex_buffer[i].normal = normal;
+                    i += 1;
+                }
+            }
+
+            let mut i = 0;
+            if let Some(colors) = reader.read_colors(0) {
+                for color in colors.into_rgba_f32() {
+                    vertex_buffer[i].color = color;
+                    i += 1;
+                }
+            }
+
+            let mut i = 0;
+            if let Some(uvs) = reader.read_tex_coords(0) {
+                for uv in uvs.into_f32() {
+                    vertex_buffer[i].uv = uv;
+                    i += 1;
+                }
+            }
+
+            primitive.vertex_buffer = vertex_buffer;
+
+            if let Some(indices) = reader.read_indices() {
+                primitive.index_buffer = Some(indices.into_u32().collect());
+            };
+
+            let texture_info = gltf_primitive.material().pbr_metallic_roughness().base_color_texture();
+            if texture_info.is_some() {
+                let gltf_texture = texture_info.unwrap().texture();
+            }
+            
+            primitives.push(primitive);
+        }
+
+        Ok(Mesh::new(primitives))
+    }
+
+    fn load_texture(gltf_texture: gltf::Texture, buffers: &Vec<Data>) -> Result<Image, ImageError> {
+        let source = match gltf_texture.source().source() {
+            gltf::image::Source::View { view, mime_type } => {
+                let start = view.offset() as usize;
+                let end = (view.offset() + view.length()) as usize;
+                let buffer = &buffers[view.buffer().index()][start..end];
+                Image::from_buffer(buffer)?
+            }
+            gltf::image::Source::Uri { uri, mime_type } => {
+                Image::new(&uri.to_string())?
+                //self.textures.push(assets.add_texture(image));
+            }
+        };
+
+        Ok(source)
     }
 }
 
