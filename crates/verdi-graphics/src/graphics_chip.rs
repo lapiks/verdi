@@ -1,4 +1,11 @@
-use crate::{vertex::Vertex, render_pass::RenderPass, image::{Image, ImageRef}, assets::Assets, scene::Scene};
+use crate::{
+    vertex::Vertex, 
+    render_pass::RenderPass, 
+    image::{Image, ImageRef}, 
+    assets::Assets, 
+    scene::{Scene, GltfError}
+};
+
 use image::ImageError;
 use verdi_math::prelude::*;
 
@@ -101,7 +108,7 @@ impl GraphicsChip {
         };
     }
 
-    pub fn new_scene(&mut self, path: &String) -> Result<Scene, gltf::Error> {
+    pub fn new_scene(&mut self, path: &String) -> Result<Scene, GltfError> {
         let mut scene = Scene::new();
         scene.load(path, &mut self.assets)?;
 

@@ -97,7 +97,7 @@ impl Renderer {
 
             let model_matrix = render_pass.node.transform.to_matrix().to_cols_array_2d();
 
-            let view_matrix = Camera::view_matrix(&[2.0, -1.0, 1.0], &[-2.0, 1.0, 1.0], &[0.0, 1.0, 0.0]);
+            let view_matrix = Camera::view_matrix(&[0.0, 0.0, 5.0], &[0.0, 0.0, -1.0], &[0.0, 1.0, 0.0]);
 
             let perspective_matrix = {
                 let (width, height) = target.get_dimensions();

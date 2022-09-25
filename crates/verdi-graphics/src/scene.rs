@@ -1,7 +1,27 @@
+use ::image::ImageError;
 use rlua::UserData;
 use verdi_math::Mat4;
 
-use crate::{mesh::{Mesh, Primitive}, vertex::Vertex, assets::Assets, node::Node, transform::Transform};
+use thiserror::Error;
+
+use crate::{
+    mesh::{Mesh, Primitive}, 
+    vertex::Vertex, 
+    assets::Assets, 
+    node::Node, 
+    transform::Transform, 
+    image::Image
+};
+
+#[derive(Error, Debug)]
+pub enum GltfError {
+    #[error("Reading gltf file failed")]
+    IoError(#[from] std::io::Error),
+    #[error("GLTF error")]
+    GltfError(#[from] gltf::Error),
+    #[error("Image loading eror")]
+    ImageError(#[from] ImageError),
+}
 
 #[derive(Clone)]
 pub struct Scene {
@@ -15,7 +35,7 @@ impl Scene {
         }
     }
 
-    pub fn load(&mut self, path: &String, assets: &mut Assets) -> Result<(), gltf::Error> {
+    pub fn load(&mut self, path: &String, assets: &mut Assets) -> Result<(), GltfError> {
         let gltf = gltf::Gltf::open(path)?;
 
         let (_, buffers, _) = gltf::import(path)?;
@@ -76,6 +96,19 @@ impl Scene {
             meshes.push(assets.add_mesh(Mesh::new(primitives)));
         }
 
+        let mut textures = vec![];
+        for texture in gltf.textures() {
+            let source = match texture.source().source() {
+                gltf::image::Source::View { view, mime_type } => {
+
+                }
+                gltf::image::Source::Uri { uri, mime_type } => {
+                    let image = Image::new(&uri.to_string())?;
+                    textures.push(assets.add_texture(image));
+                }
+            };
+        }
+
         for node in gltf.nodes() {
             self.nodes.push( 
                 Node {
@@ -88,7 +121,7 @@ impl Scene {
                 }
             );
         }
-    
+
         Ok(())
     }
 }
