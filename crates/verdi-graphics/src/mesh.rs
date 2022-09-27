@@ -1,6 +1,6 @@
 use rlua::UserData;
 
-use crate::{assets::AssetId, vertex::Vertex};
+use crate::{assets::AssetId, vertex::Vertex, material::Material};
 
 use thiserror::Error;
 
@@ -18,6 +18,7 @@ type IndexBuffer = Vec<u32>;
 pub struct Primitive {
     pub vertex_buffer: VertexBuffer,
     pub index_buffer: Option<IndexBuffer>,
+    pub material: Material,
 }
 
 impl Primitive {
@@ -25,6 +26,7 @@ impl Primitive {
         Self {
             vertex_buffer: VertexBuffer::new(),
             index_buffer: Option::default(),
+            material: Material::default(),
         }
     }
 }

@@ -23,3 +23,4 @@ mod gpu_mesh;
 mod node;
 mod transform;
 mod camera;
+mod material;

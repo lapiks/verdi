@@ -11,7 +11,8 @@ use crate::{
     assets::Assets, 
     node::Node, 
     transform::Transform, 
-    image::{Image, ImageRef}
+    image::{Image, ImageRef}, 
+    material::Material
 };
 
 #[derive(Error, Debug)]
@@ -27,14 +28,12 @@ pub enum GltfError {
 #[derive(Clone)]
 pub struct Scene {
     pub nodes: Vec<Node>,
-    pub textures: Vec<ImageRef>,
 }
 
 impl Scene {
     pub fn new() -> Self {
         Self {
             nodes: Vec::new(),
-            textures: Vec::new(),
         }
     }
 
@@ -43,22 +42,23 @@ impl Scene {
 
         let (_, buffers, _) = gltf::import(path)?;
 
-        let mut meshes = vec![];
-        for gltf_mesh in gltf.meshes() {
-            meshes.push(
-                assets.add_mesh(
-                    Scene::load_mesh(gltf_mesh, &buffers)?
-                )
-            );
-        }
-
+        let mut textures = vec![];
         for gltf_texture in gltf.textures() {
-            self.textures.push(
+            textures.push(
                 assets.add_texture(
                     Scene::load_texture(gltf_texture, &buffers)?
                 )
             );
             // todo read sampler infos
+        }
+
+        let mut meshes = vec![];
+        for gltf_mesh in gltf.meshes() {
+            meshes.push(
+                assets.add_mesh(
+                    Scene::load_mesh(gltf_mesh, &buffers, &textures)?
+                )
+            );
         }
 
         for node in gltf.nodes() {
@@ -68,7 +68,11 @@ impl Scene {
                         .mesh()
                         .map(|mesh| mesh.index())
                         .and_then(|i| meshes.get(i).cloned()),
-                    transform: Transform::from_matrix(Mat4::from_cols_array_2d(&node.transform().matrix())),
+                    transform: Transform::from_matrix(
+                        Mat4::from_cols_array_2d(
+                            &node.transform().matrix()
+                        )
+                    ),
                     children: vec![],
                 }
             );
@@ -77,7 +81,7 @@ impl Scene {
         Ok(())
     }
 
-    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>) -> Result<Mesh, GltfError> {
+    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>, textures: &Vec<ImageRef>) -> Result<Mesh, GltfError> {
         let mut primitives = Vec::new();
         for gltf_primitive in gltf_mesh.primitives() {
             let reader = gltf_primitive.reader(|buffer| Some(&buffers[buffer.index()]));
@@ -126,10 +130,16 @@ impl Scene {
                 primitive.index_buffer = Some(indices.into_u32().collect());
             };
 
-            let texture_info = gltf_primitive.material().pbr_metallic_roughness().base_color_texture();
-            if texture_info.is_some() {
-                let gltf_texture = texture_info.unwrap().texture();
-            }
+            let material = Material {
+                texture: gltf_primitive
+                    .material()
+                    .pbr_metallic_roughness()
+                    .base_color_texture()
+                    .map(|info| info.texture().index())
+                    .and_then(|i| textures.get(i).cloned()),
+            };
+
+            primitive.material = material;
             
             primitives.push(primitive);
         }
@@ -147,7 +157,6 @@ impl Scene {
             }
             gltf::image::Source::Uri { uri, mime_type } => {
                 Image::new(&uri.to_string())?
-                //self.textures.push(assets.add_texture(image));
             }
         };
 
