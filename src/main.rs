@@ -6,7 +6,7 @@ use std::sync::Mutex;
 extern crate lazy_static;
 
 lazy_static! {
-    static ref GPU: Mutex<GraphicsChip> = Mutex::new(GraphicsChip::new());
+    static ref GPU: Mutex<GraphicsChip> = Mutex::new(GraphicsChip::new().expect("GraphicsChip initialisation failed"));
 }
 
 fn main() {

@@ -1,16 +1,33 @@
-use crate::{shader::Shader};
+use crate::{
+    shader::Shader, 
+    assets::AssetId
+};
 
 pub struct Program {
-    pub internal_program: glium::Program
+    pub vs: AssetId,
+    pub fs: AssetId,
 }
 
 impl Program {
+    pub fn new(vs: AssetId, fs: AssetId) -> Self {
+        Self {
+            vs,
+            fs,
+        }
+    }
+}
+
+pub struct GpuProgram {
+    pub gl: glium::Program
+}
+
+impl GpuProgram {
     pub fn new(display: &glium::Display, vs: &Shader, fs: &Shader) -> Self {
         Self {
-            internal_program: glium::Program::from_source(
+            gl: glium::Program::from_source(
                 display, 
-                vs.src.as_str(), 
-                fs.src.as_str(), 
+                vs.get_source(), 
+                fs.get_source(), 
                 None
             ).unwrap()
         } 

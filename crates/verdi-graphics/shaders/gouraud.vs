@@ -10,13 +10,13 @@ out vec2 v_uv;
 
 uniform vec3 u_light;
 
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 perspective;
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_projection;
 
 void main() {
-    vec3 v_pos = vec3(view * model * vec4(position, 1.0));
-    vec3 v_normal = transpose(inverse(mat3(view * model))) * normal;
+    vec3 v_pos = vec3(u_view * u_model * vec4(position, 1.0));
+    vec3 v_normal = transpose(inverse(mat3(u_view * u_model))) * normal;
 
     vec3 lighting_dir = normalize(u_light - v_pos);
     float distance = length(u_light - v_pos);
@@ -35,5 +35,5 @@ void main() {
     v_color = vec4((ambient + diffuse) * object_color, 1.0);
     v_uv = uv;
 
-    gl_Position = perspective * view * model * vec4(position, 1.0);
+    gl_Position = u_projection * u_view * u_model * vec4(position, 1.0);
 }

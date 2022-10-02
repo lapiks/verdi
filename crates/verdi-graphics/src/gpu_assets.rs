@@ -1,12 +1,21 @@
 use std::collections::HashMap;
 
-use glium::{texture::SrgbTexture2d as GpuTexture, Display};
+use glium::{
+    texture::SrgbTexture2d as GpuTexture, 
+    Display,
+};
 
-use crate::{assets::AssetId, image::Image, gpu_mesh::GpuMesh};
+use crate::{
+    assets::AssetId, 
+    image::Image, 
+    gpu_mesh::GpuMesh, 
+    program::GpuProgram
+};
 
 pub struct GpuAssets {
     meshes: HashMap<AssetId, GpuMesh>,
     textures: HashMap<AssetId, GpuTexture>,
+    programs: HashMap<AssetId, GpuProgram>,
 }
 
 impl GpuAssets {
@@ -14,6 +23,7 @@ impl GpuAssets {
         Self { 
             meshes: HashMap::default(),
             textures: HashMap::default(),
+            programs: HashMap::default(),
         }
     }
 
@@ -35,5 +45,13 @@ impl GpuAssets {
 
     pub fn get_mesh(&self, id: AssetId) -> Option<&GpuMesh> {
         self.meshes.get(&id)
+    }
+
+    pub fn add_program(&mut self, id: AssetId, program: GpuProgram) {
+        self.programs.insert(id, program);
+    }
+
+    pub fn get_program(&self, id: AssetId) -> Option<&GpuProgram> {
+        self.programs.get(&id)
     }
 }

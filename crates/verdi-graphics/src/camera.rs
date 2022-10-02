@@ -1,9 +1,11 @@
+use verdi_math::Mat4;
+
 pub struct Camera {
 
 }
 
 impl Camera {
-    pub fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4]; 4] {
+    pub fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> Mat4 {
         let f = {
             let f = direction;
             let len = f[0] * f[0] + f[1] * f[1] + f[2] * f[2];
@@ -29,11 +31,34 @@ impl Camera {
                  -position[0] * u[0] - position[1] * u[1] - position[2] * u[2],
                  -position[0] * f[0] - position[1] * f[1] - position[2] * f[2]];
     
-        [
-            [s_norm[0], u[0], f[0], 0.0],
-            [s_norm[1], u[1], f[1], 0.0],
-            [s_norm[2], u[2], f[2], 0.0],
-            [p[0], p[1], p[2], 1.0],
-        ]
+        
+
+        Mat4::from_cols_array_2d(
+            &[
+                [s_norm[0], u[0], f[0], 0.0],
+                [s_norm[1], u[1], f[1], 0.0],
+                [s_norm[2], u[2], f[2], 0.0],
+                [p[0], p[1], p[2], 1.0],
+            ]
+        )
+    }
+
+    pub fn perspective_matrix(width: u32, height: u32) -> Mat4 {
+        let aspect_ratio = height as f32 / width as f32;
+    
+        let fov: f32 = 3.141592 / 3.0;
+        let zfar = 1024.0;
+        let znear = 0.1;
+    
+        let f = 1.0 / (fov / 2.0).tan();
+        
+        Mat4::from_cols_array_2d(
+            &[
+                [f *   aspect_ratio   ,    0.0,              0.0              ,   0.0],
+                [         0.0         ,     f ,              0.0              ,   0.0],
+                [         0.0         ,    0.0,  (zfar+znear)/(zfar-znear)    ,   1.0],
+                [         0.0         ,    0.0, -(2.0*zfar*znear)/(zfar-znear),   0.0],
+            ]
+        )
     }
 }

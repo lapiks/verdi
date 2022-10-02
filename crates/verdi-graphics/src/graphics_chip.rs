@@ -3,15 +3,20 @@ use crate::{
     render_pass::RenderPass, 
     image::{Image, ImageRef}, 
     assets::Assets, 
-    scene::{Scene, GltfError}
+    scene::{Scene, GltfError}, 
+    prelude::GlobalShaders, 
+    render_pipeline::RenderPipeline, 
+    uniforms::Uniforms
 };
 
 use image::ImageError;
 use verdi_math::prelude::*;
 
 pub struct GraphicsChip {
-    pub render_passes: Vec<RenderPass>,
+    pub pipeline: RenderPipeline,
     pub assets: Assets,
+    pub globals: GlobalShaders,
+    pub uniforms: Uniforms
 }
 
 #[derive(Copy, Clone, PartialEq)]
@@ -30,11 +35,18 @@ impl From<PrimitiveType> for glium::index::PrimitiveType {
 }
 
 impl GraphicsChip {
-    pub fn new() -> Self {
-        Self { 
-            render_passes: Vec::new(),
-            assets: Assets::new(),
-        }
+    pub fn new() -> Result<Self, std::io::Error> {
+        let mut assets = Assets::new();
+        let mut uniforms = Uniforms::default();
+        let pipeline = RenderPipeline::new(&mut uniforms);
+        let globals = GlobalShaders::new(&mut assets, &pipeline)?;
+
+        Ok(Self { 
+            pipeline,
+            assets,
+            globals,
+            uniforms,
+        })
     }
 
     pub fn begin(&mut self, primitive_type: PrimitiveType) {
@@ -47,7 +59,7 @@ impl GraphicsChip {
     }
 
     pub fn end(&mut self) {
-        match self.render_passes.last_mut() {
+        match self.pipeline.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state = Vertex::default();
                 //render_pass.vertex_buffer.clear();
@@ -67,7 +79,7 @@ impl GraphicsChip {
     }
 
     pub fn normal(&mut self, coords: Vec3) {
-        match self.render_passes.last_mut() {
+        match self.pipeline.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state.normal = coords.to_array();
             },
@@ -76,7 +88,7 @@ impl GraphicsChip {
     }
 
     pub fn tex_coord(&mut self, coords: Vec2) {
-        match self.render_passes.last_mut() {
+        match self.pipeline.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state.uv = coords.to_array();
             },
@@ -85,7 +97,7 @@ impl GraphicsChip {
     }
 
     pub fn color(&mut self, coords: Vec4) {
-        match self.render_passes.last_mut() {
+        match self.pipeline.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state.color = coords.to_array();
             },
@@ -100,7 +112,7 @@ impl GraphicsChip {
     }
 
     pub fn bind_texture(&mut self, image: ImageRef) {
-        match self.render_passes.last_mut() {
+        match self.pipeline.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_texture = Some(image);
             },
@@ -110,7 +122,7 @@ impl GraphicsChip {
 
     pub fn new_scene(&mut self, path: &String) -> Result<Scene, GltfError> {
         let mut scene = Scene::new();
-        scene.load(path, &mut self.assets)?;
+        scene.load(path, self)?;
 
         Ok(scene)
     }
@@ -126,7 +138,7 @@ impl GraphicsChip {
                 PrimitiveType::Triangles
             );
 
-            self.render_passes.push(render_pass);
+            self.pipeline.render_passes.push(render_pass);
         }
     }
 }

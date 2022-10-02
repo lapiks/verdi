@@ -8,11 +8,10 @@ use thiserror::Error;
 use crate::{
     mesh::{Mesh, Primitive}, 
     vertex::Vertex, 
-    assets::Assets, 
     node::Node, 
     transform::Transform, 
     image::{Image, ImageRef}, 
-    material::Material
+    prelude::GraphicsChip
 };
 
 #[derive(Error, Debug)]
@@ -37,7 +36,7 @@ impl Scene {
         }
     }
 
-    pub fn load(&mut self, path: &String, assets: &mut Assets) -> Result<(), GltfError> {
+    pub fn load(&mut self, path: &String, gpu: &mut GraphicsChip) -> Result<(), GltfError> {
         let gltf = gltf::Gltf::open(path)?;
 
         let (_, buffers, _) = gltf::import(path)?;
@@ -45,7 +44,7 @@ impl Scene {
         let mut textures = vec![];
         for gltf_texture in gltf.textures() {
             textures.push(
-                assets.add_texture(
+                gpu.assets.add_texture(
                     Scene::load_texture(gltf_texture, &buffers)?
                 )
             );
@@ -55,22 +54,31 @@ impl Scene {
         let mut meshes = vec![];
         for gltf_mesh in gltf.meshes() {
             meshes.push(
-                assets.add_mesh(
-                    Scene::load_mesh(gltf_mesh, &buffers, &textures)?
+                gpu.assets.add_mesh(
+                    Scene::load_mesh(gltf_mesh, &buffers, &textures, gpu)?
                 )
             );
         }
 
-        for node in gltf.nodes() {
+        for gltf_node in gltf.nodes() {
+            // if let Some(camera) = gltf_node.camera()
+            // {
+            //     self.nodes.push(
+            //         Node {
+
+            //         }
+            //     );
+            // }
+
             self.nodes.push( 
                 Node {
-                    mesh: node
+                    mesh: gltf_node
                         .mesh()
                         .map(|mesh| mesh.index())
                         .and_then(|i| meshes.get(i).cloned()),
                     transform: Transform::from_matrix(
                         Mat4::from_cols_array_2d(
-                            &node.transform().matrix()
+                            &gltf_node.transform().matrix()
                         )
                     ),
                     children: vec![],
@@ -81,12 +89,10 @@ impl Scene {
         Ok(())
     }
 
-    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>, textures: &Vec<ImageRef>) -> Result<Mesh, GltfError> {
+    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>, textures: &Vec<ImageRef>, gpu: &GraphicsChip) -> Result<Mesh, GltfError> {
         let mut primitives = Vec::new();
         for gltf_primitive in gltf_mesh.primitives() {
             let reader = gltf_primitive.reader(|buffer| Some(&buffers[buffer.index()]));
-
-            let mut primitive = Primitive::new();
 
             let vertex_count = reader.read_positions().unwrap().size_hint();
             let mut vertex_buffer:Vec<Vertex> = Vec::new();
@@ -124,22 +130,23 @@ impl Scene {
                 }
             }
 
-            primitive.vertex_buffer = vertex_buffer;
-
+            let mut index_buffer = None;
             if let Some(indices) = reader.read_indices() {
-                primitive.index_buffer = Some(indices.into_u32().collect());
+                index_buffer = Some(indices.into_u32().collect());
             };
 
-            let material = Material {
-                texture: gltf_primitive
-                    .material()
-                    .pbr_metallic_roughness()
-                    .base_color_texture()
-                    .map(|info| info.texture().index())
-                    .and_then(|i| textures.get(i).cloned()),
-            };
+            let gltf_material = gltf_primitive.material();
+            let tex_ref = gltf_material
+                .pbr_metallic_roughness()
+                .base_color_texture()
+                .map(|info| info.texture().index())
+                .and_then(|i| textures.get(i).cloned());
 
-            primitive.material = material;
+            let primitive = Primitive {
+                vertex_buffer,
+                index_buffer,
+                material: gpu.globals.standard_material,
+            };
             
             primitives.push(primitive);
         }

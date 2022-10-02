@@ -6,7 +6,10 @@ use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
 use verdi_gui::prelude::*;
 
-use crate::{error::AppError, lua_context::LuaContext};
+use crate::{
+    error::AppError, 
+    lua_context::LuaContext
+};
 
 pub struct App;
 
@@ -14,7 +17,7 @@ impl App {
     pub fn run(gpu: &'static Mutex<GraphicsChip>) -> Result<(), AppError> {
         let mut window = Window::new(1024, 768);
         
-        let mut renderer = Renderer::new(&window.get_display())?;
+        let mut renderer = Renderer::new();
     
         let lua = Lua::new();
     
@@ -47,7 +50,7 @@ impl App {
             renderer.prepare_assets(window.get_display(), &gpu.lock().unwrap());
             
             // draw game
-            renderer.render(&mut target, &gpu.lock().unwrap());
+            renderer.render(&mut target, &mut gpu.lock().unwrap());
 
             // draw GUI
             gui.run(window.get_display());
@@ -56,7 +59,7 @@ impl App {
             // ends frame
             target.finish().unwrap();
             
-            gpu.lock().unwrap().render_passes.clear();
+            gpu.lock().unwrap().pipeline.render_passes.clear();
     
             let next_frame_time = std::time::Instant::now() +
                 std::time::Duration::from_nanos(16_666_667);

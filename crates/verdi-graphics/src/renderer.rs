@@ -1,48 +1,27 @@
-use glium::{Surface, uniform, Frame, Display};
+use glium::{Surface, Frame, Display};
 
-use crate::camera::Camera;
-use crate::gpu_mesh::GpuMesh;
-use crate::{prelude::GraphicsChip, gpu_assets::GpuAssets};
+use crate::{
+    camera::Camera,
+    gpu_mesh::GpuMesh,
+    prelude::GraphicsChip, 
+    gpu_assets::GpuAssets, 
+    program::GpuProgram
+};
 
 pub struct Renderer {
-    program: glium::Program,
     gpu_assets: GpuAssets,
 }
 
 impl Renderer {
-    pub fn new(display: &Display) -> Result<Self, std::io::Error> {
-        // TODO gérer erreurs avec GraphicsChipError
-        let gouraud_vs = match std::fs::read_to_string( "./crates/verdi-graphics/shaders/gouraud.vs") {
-            Ok(gouraud_vs)  => gouraud_vs,
-            Err(e) => {
-                println!("{}", e);
-                return Err(e);
-            }
-        };
-
-        let gouraud_fs = match std::fs::read_to_string("./crates/verdi-graphics/shaders/gouraud.fs") {
-            Ok(gouraud_fs)  => gouraud_fs,
-            Err(e) => {
-                println!("{}", e);
-                return Err(e);
-            }
-        };
-        
-        let program = glium::Program::from_source(
-            display, 
-            gouraud_vs.as_str(), 
-            gouraud_fs.as_str(), 
-            None
-        ).unwrap();
-
-        Ok(Self {
-            program,
+    pub fn new() -> Self {
+        Self {
             gpu_assets: GpuAssets::new(),
-        })
+        }
     }
 
     pub fn prepare_assets(&mut self, display: &Display, gpu: &GraphicsChip) {
-        for render_pass in gpu.render_passes.iter() {
+        // à rendre générique
+        for render_pass in gpu.pipeline.render_passes.iter() {
             let mesh_ref = render_pass.node.mesh.unwrap();
             if self.gpu_assets.get_mesh(mesh_ref.id).is_none() {
                 if let Some(mesh) = gpu.assets.get_mesh(mesh_ref.id) {
@@ -67,6 +46,7 @@ impl Renderer {
                             self.gpu_assets.add_mesh(mesh_ref.id, gpu_mesh);
                         }
 
+                        //primitive.material;
                     }
                     
                 }                    
@@ -80,96 +60,73 @@ impl Renderer {
                 }
             }
         }
+
+        if self.gpu_assets.get_program(gpu.globals.gouraud).is_none() {
+            if let Some(program) = gpu.assets.get_program(gpu.globals.gouraud) {
+                if let Some(vs) = gpu.assets.get_shader(program.vs) {
+                    if let Some(fs) = gpu.assets.get_shader(program.fs) {
+                        let gpu_program = GpuProgram::new(display, vs, fs);
+                        self.gpu_assets.add_program(gpu.globals.gouraud, gpu_program);
+                    }
+                    
+                }
+                
+            }   
+        }
     }
 
-    pub fn render(&mut self, target: &mut Frame, gpu: &GraphicsChip) {
+    pub fn render(&mut self, target: &mut Frame, gpu: &mut GraphicsChip) {
         // the direction of the light
         let light = [-1.0, 0.4, 0.9f32];
 
-        for render_pass in gpu.render_passes.iter() {
-            if self.gpu_assets.get_mesh(render_pass.node.mesh.unwrap().id).is_none() {
-                // there sould be a gpu mesh for this id
-                // todo: return error
-                return;
-            }
+        // view matrix
+        let view_matrix = Camera::view_matrix(&[0.0, 0.0, 5.0], &[0.0, 0.0, -1.0], &[0.0, 1.0, 0.0]);
+        *gpu.uniforms
+            .get_mat4_mut(gpu.pipeline.view_matrix)
+            .expect("View matrix uniform missing") = view_matrix;
 
-            let mesh = self.gpu_assets.get_mesh(render_pass.node.mesh.unwrap().id).unwrap();
+        // perspective matrix
+        let perspective_matrix = Camera::perspective_matrix(
+            target.get_dimensions().0, 
+            target.get_dimensions().1
+        );
+        *gpu.uniforms
+            .get_mat4_mut(gpu.pipeline.perspective_matrix)
+            .expect("Perspective matrix uniform missing") = perspective_matrix;
 
-            let model_matrix = render_pass.node.transform.to_matrix().to_cols_array_2d();
+        for render_pass in gpu.pipeline.render_passes.iter() {
+            // model matrix
+            let model_matrix = render_pass.node.transform.to_matrix();
+            *gpu.uniforms
+                .get_mat4_mut(gpu.pipeline.model_matrix)
+                .expect("Model matrix uniform missing") = model_matrix;
 
-            let view_matrix = Camera::view_matrix(&[0.0, 0.0, 5.0], &[0.0, 0.0, -1.0], &[0.0, 1.0, 0.0]);
+            let mesh_ref = render_pass.node.mesh.unwrap();
+            let mesh = gpu.assets.get_mesh(mesh_ref.id).unwrap();
+            let gpu_mesh = self.gpu_assets.get_mesh(mesh_ref.id).unwrap();
 
-            let perspective_matrix = {
-                let (width, height) = target.get_dimensions();
-                let aspect_ratio = height as f32 / width as f32;
-            
-                let fov: f32 = 3.141592 / 3.0;
-                let zfar = 1024.0;
-                let znear = 0.1;
-            
-                let f = 1.0 / (fov / 2.0).tan();
-            
-                [
-                    [f *   aspect_ratio   ,    0.0,              0.0              ,   0.0],
-                    [         0.0         ,     f ,              0.0              ,   0.0],
-                    [         0.0         ,    0.0,  (zfar+znear)/(zfar-znear)    ,   1.0],
-                    [         0.0         ,    0.0, -(2.0*zfar*znear)/(zfar-znear),   0.0],
-                ]
-            };
+            for primitive in mesh.primitives.iter() {
+                let material = gpu.assets.get_material(primitive.material).expect("Material not found");
+                let material_ref = material.get_ref(&gpu.uniforms, &self.gpu_assets).expect("Program not found");
 
-            if let Some(tex_ref) = render_pass.current_texture {
-                if let Some(gpu_tex) = self.gpu_assets.get_texture(tex_ref.id) {
-                    let uniforms = uniform! {
-                        model: model_matrix,
-                        view: view_matrix,
-                        perspective: perspective_matrix,
-                        u_light: light,
-                        tex: gpu_tex,
-                    };
+                let program = self.gpu_assets.get_program(gpu.globals.gouraud).expect("Gouraud program not found");
 
-                    if let Some(index_buffer) = &mesh.index_buffer {
-                        target.draw(
-                            &mesh.vertex_buffer,
-                            index_buffer, 
-                            &self.program, 
-                            &uniforms,
-                            &Default::default()
-                        ).unwrap();
-                    }
-                    else {
-                        target.draw(
-                            &mesh.vertex_buffer,
-                            &glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive)), 
-                            &self.program, 
-                            &uniforms,
-                            &Default::default()
-                        ).unwrap();
-                    }
-                }
-            }
-            else {
-                let uniforms = uniform! {
-                    model: model_matrix,
-                    view: view_matrix,
-                    perspective: perspective_matrix,
-                    u_light: light,
-                };
-
-                if let Some(index_buffer) = &mesh.index_buffer {
+                let vertex_buffer = &gpu_mesh.vertex_buffer;
+                if let Some(index_buffer) = &gpu_mesh.index_buffer {
                     target.draw(
-                        &mesh.vertex_buffer,
-                        index_buffer, 
-                        &self.program, 
-                        &uniforms,
+                        vertex_buffer,
+                        index_buffer,
+                        &program.gl, 
+                        &material_ref,
                         &Default::default()
                     ).unwrap();
                 }
                 else {
                     target.draw(
-                        &mesh.vertex_buffer,
-                        &glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive)), 
-                        &self.program, 
-                        &uniforms,
+                        vertex_buffer,
+                        glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
+                        &program.gl, 
+                        &material_ref,
                         &Default::default()
                     ).unwrap();
                 }
