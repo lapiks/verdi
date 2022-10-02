@@ -5,7 +5,7 @@ use crate::{
     gpu_mesh::GpuMesh,
     prelude::GraphicsChip, 
     gpu_assets::GpuAssets, 
-    program::GpuProgram
+    program::GpuProgram, gpu_image::GpuImage
 };
 
 pub struct Renderer {
@@ -55,7 +55,8 @@ impl Renderer {
             if let Some(texture_ref) = render_pass.current_texture {
                 if self.gpu_assets.get_texture(texture_ref.id).is_none() {
                     if let Some(texture) = gpu.assets.get_texture(texture_ref.id) {
-                        self.gpu_assets.add_texture(display, texture_ref.id, texture);
+                        let gpu_image = GpuImage::new(display, texture);
+                        self.gpu_assets.add_texture(display, texture_ref.id, gpu_image);
                     }
                 }
             }

@@ -38,7 +38,7 @@ impl Default for Uniforms {
 }
 
 impl Uniforms {
-    pub fn get_value(&self, id: UniformId, gpu_assets: &GpuAssets) -> Option<UniformValue> {
+    pub fn get_value<'a>(&'a self, id: UniformId, gpu_assets: &'a GpuAssets) -> Option<UniformValue> {
         match id {
             UniformId::Float(id) => {
                 self.floats
@@ -56,11 +56,12 @@ impl Uniforms {
                     .map(|&value| UniformValue::Mat4(value.to_cols_array_2d()))
             }
             UniformId::Texture(id) => {
-                // let gpu_tex = gpu_assets.get_texture(id)?;
-                // self.textures
-                //     .get(&id)
-                //     .map(|&value| UniformValue::SrgbTexture2d(&gpu_tex, None))
-                None
+                let gpu_tex = gpu_assets.get_texture(id)?;
+                self.textures
+                    .get(&id)
+                    .map(|_| {
+                        UniformValue::Texture2d(&gpu_tex.gl, None)
+                    })
             }
         }
     }
