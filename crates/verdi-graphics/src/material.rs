@@ -66,12 +66,6 @@ pub struct MaterialRef<'a> {
     uniform_values: [Option<(&'static str, UniformValue<'a>)>; MAX_UNIFORMS],
 }
 
-impl<'a> MaterialRef<'a> {
-    pub fn add_uniform<T: AsUniformValue>(&mut self, name: &str, value: &T) {
-
-    }
-}
-
 impl<'material> GliumUniforms for MaterialRef<'material> {
     fn visit_values<'a, F>(&'a self, mut set_uniform: F)
     where
