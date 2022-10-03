@@ -20,7 +20,7 @@ mod mesh;
 mod scene;
 mod assets;
 mod gpu_assets;
-mod gpu_mesh;
+mod gpu_primitive;
 mod gpu_image;
 mod node;
 mod transform;

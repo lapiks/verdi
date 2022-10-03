@@ -1,11 +1,16 @@
+use glium::Display;
+use uuid::Uuid;
+
 use crate::{
     shader::Shader, 
-    assets::AssetId
+    assets::{AssetId, Assets}, 
+    gpu_assets::{GpuAssets}
 };
 
 pub struct Program {
     pub vs: AssetId,
     pub fs: AssetId,
+    pub id: AssetId,
 }
 
 impl Program {
@@ -13,6 +18,16 @@ impl Program {
         Self {
             vs,
             fs,
+            id: Uuid::nil(),
+        }
+    }
+
+    pub fn prepare_rendering(&self, display: &Display, assets: &Assets, gpu_assets: &mut GpuAssets) {
+        if let Some(vs) = assets.get_shader(self.vs) {
+            if let Some(fs) = assets.get_shader(self.fs) {
+                let gpu_program = GpuProgram::new(display, vs, fs);
+                gpu_assets.add_program(self.id, gpu_program);
+            }
         }
     }
 }

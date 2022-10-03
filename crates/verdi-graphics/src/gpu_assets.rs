@@ -4,13 +4,13 @@ use glium::Display;
 
 use crate::{
     assets::AssetId, 
-    gpu_mesh::GpuMesh, 
+    gpu_primitive::GpuPrimitive, 
     program::GpuProgram, 
     gpu_image::GpuImage
 };
 
 pub struct GpuAssets {
-    meshes: HashMap<AssetId, GpuMesh>,
+    primitives: HashMap<AssetId, GpuPrimitive>,
     textures: HashMap<AssetId, GpuImage>,
     programs: HashMap<AssetId, GpuProgram>,
 }
@@ -18,7 +18,7 @@ pub struct GpuAssets {
 impl GpuAssets {
     pub fn new() -> Self {
         Self { 
-            meshes: HashMap::default(),
+            primitives: HashMap::default(),
             textures: HashMap::default(),
             programs: HashMap::default(),
         }
@@ -32,12 +32,12 @@ impl GpuAssets {
         self.textures.get(&id)
     }
 
-    pub fn add_mesh(&mut self, id: AssetId, gpu_mesh: GpuMesh) {
-        self.meshes.insert(id, gpu_mesh);
+    pub fn add_primitive(&mut self, id: AssetId, gpu_mesh: GpuPrimitive) {
+        self.primitives.insert(id, gpu_mesh);
     }
 
-    pub fn get_mesh(&self, id: AssetId) -> Option<&GpuMesh> {
-        self.meshes.get(&id)
+    pub fn get_primitive(&self, id: AssetId) -> Option<&GpuPrimitive> {
+        self.primitives.get(&id)
     }
 
     pub fn add_program(&mut self, id: AssetId, program: GpuProgram) {

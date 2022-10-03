@@ -1,11 +1,11 @@
-use glium::uniforms::{
+use glium::{uniforms::{
     UniformValue, 
     Uniforms as GliumUniforms, 
-    AsUniformValue
-};
+}, Display};
+use uuid::Uuid;
 
 use crate::{
-    assets::AssetId,
+    assets::{AssetId, Assets},
     uniforms::{UniformId, Uniforms}, 
     gpu_assets::{GpuAssets},
 };
@@ -15,6 +15,7 @@ const MAX_UNIFORMS: usize = 64;
 pub struct Material {
     program: AssetId,
     uniforms: [Option<(&'static str, UniformId)>; MAX_UNIFORMS],
+    pub id: AssetId,
 }
 
 impl Material {
@@ -22,6 +23,7 @@ impl Material {
         Self {
             program,
             uniforms: [None; MAX_UNIFORMS],
+            id: Uuid::nil(),
         }
     }
 
@@ -58,6 +60,10 @@ impl Material {
             //program, 
             uniform_values 
         })
+    }
+
+    pub fn prepare_rendering(&self, display: &Display, assets: &Assets, gpu_assets: &GpuAssets) {
+
     }
 }
 

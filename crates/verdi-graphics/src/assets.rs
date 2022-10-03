@@ -36,8 +36,9 @@ impl Assets {
         }
     }
 
-    pub fn add_texture(&mut self, image: Image) -> ImageRef {
+    pub fn add_texture(&mut self, mut image: Image) -> ImageRef {
         let id = Uuid::new_v4();
+        image.id = id;
         self.textures.insert(id, image);
 
         ImageRef::new(id)
@@ -47,8 +48,9 @@ impl Assets {
         self.textures.get(&id)
     }
 
-    pub fn add_mesh(&mut self, mesh: Mesh) -> MeshRef {
+    pub fn add_mesh(&mut self, mut mesh: Mesh) -> MeshRef {
         let id = Uuid::new_v4();
+        mesh.id = id;
         self.meshes.insert(id, mesh);
 
         MeshRef::new(id)
@@ -58,8 +60,9 @@ impl Assets {
         self.meshes.get(&id)
     }
 
-    pub fn add_material(&mut self, material: Material) -> AssetId {
+    pub fn add_material(&mut self, mut material: Material) -> AssetId {
         let id = Uuid::new_v4();
+        material.id = id;
         self.materials.insert(id, material);
 
         id
@@ -70,8 +73,9 @@ impl Assets {
         self.materials.get(&id)
     }
 
-    pub fn add_shader(&mut self, shader: Shader) -> AssetId {
+    pub fn add_shader(&mut self, mut shader: Shader) -> AssetId {
         let id = Uuid::new_v4();
+        shader.id = id;
         self.shaders.insert(id, shader);
 
         id
@@ -81,8 +85,9 @@ impl Assets {
         self.shaders.get(&id)
     }
 
-    pub fn add_program(&mut self, program: Program) -> AssetId {
+    pub fn add_program(&mut self, mut program: Program) -> AssetId {
         let id = Uuid::new_v4();
+        program.id = id;
         self.programs.insert(id, program);
 
         id

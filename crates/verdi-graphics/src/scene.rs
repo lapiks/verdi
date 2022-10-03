@@ -43,11 +43,12 @@ impl Scene {
 
         let mut textures = vec![];
         for gltf_texture in gltf.textures() {
-            textures.push(
-                gpu.assets.add_texture(
-                    Scene::load_texture(gltf_texture, &buffers)?
-                )
+            let image_ref = gpu.assets.add_texture(
+                Scene::load_texture(gltf_texture, &buffers)?
             );
+            gpu.uniforms.add_texture(image_ref.id);
+
+            textures.push(image_ref);
             // todo read sampler infos
         }
 
@@ -90,7 +91,7 @@ impl Scene {
     }
 
     fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>, textures: &Vec<ImageRef>, gpu: &GraphicsChip) -> Result<Mesh, GltfError> {
-        let mut primitives = Vec::new();
+        let mut mesh = Mesh::new();
         for gltf_primitive in gltf_mesh.primitives() {
             let reader = gltf_primitive.reader(|buffer| Some(&buffers[buffer.index()]));
 
@@ -145,13 +146,15 @@ impl Scene {
             let primitive = Primitive {
                 vertex_buffer,
                 index_buffer,
+                primitive_type: crate::graphics_chip::PrimitiveType::Triangles,
                 material: gpu.globals.standard_material,
+                id: uuid::Uuid::new_v4(),
             };
             
-            primitives.push(primitive);
+            mesh.add_primitive(primitive);
         }
 
-        Ok(Mesh::new(primitives))
+        Ok(mesh)
     }
 
     fn load_texture(gltf_texture: gltf::Texture, buffers: &Vec<Data>) -> Result<Image, ImageError> {

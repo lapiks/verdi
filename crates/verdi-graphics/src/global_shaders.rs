@@ -40,6 +40,7 @@ impl GlobalShaders {
         material.add_uniform("u_model", pipeline.model_matrix);
         material.add_uniform("u_view", pipeline.view_matrix);
         material.add_uniform("u_projection", pipeline.perspective_matrix);
+        //material.add_uniform("u_texture", crate::uniforms::UniformId::Texture(uuid::Uuid::nil()));
         
         Ok(Self {
             gouraud: gouraud_program,

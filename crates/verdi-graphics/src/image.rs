@@ -1,14 +1,21 @@
 
+use glium::Display;
 use image::{io::Reader as ImageReader, RgbaImage, ImageError};
 use rlua::UserData;
+use uuid::Uuid;
 
-use crate::assets::{AssetId, AssetState};
+use crate::{
+    assets::{AssetId, AssetState, Assets}, 
+    gpu_assets::GpuAssets, 
+    gpu_image::GpuImage
+};
 
 pub struct Image {
     width: u32,
     height: u32,
     data: RgbaImage,
     state: AssetState,
+    pub id: AssetId,
 }
 
 impl Image {
@@ -22,7 +29,8 @@ impl Image {
             width: dim.0, 
             height: dim.1,
             data: rgba8_img,
-            state: AssetState::Created
+            state: AssetState::Created,
+            id: Uuid::nil(),
         })
     }
 
@@ -40,7 +48,8 @@ impl Image {
             width: dim.0, 
             height: dim.1,
             data: rgba8_img,
-            state: AssetState::Created
+            state: AssetState::Created,
+            id: Uuid::nil(),
         })
     }
 
@@ -58,6 +67,11 @@ impl Image {
 
     pub fn get_dimensions(&self) -> (u32, u32) {
         return (self.width, self.height)
+    }
+
+    pub fn prepare_rendering(&self, display: &Display, assets: &Assets, gpu_assets: &mut GpuAssets) {
+        let gpu_image = GpuImage::new(display, self);
+        gpu_assets.add_texture(display, self.id, gpu_image);
     }
 }
 

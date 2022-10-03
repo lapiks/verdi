@@ -2,7 +2,7 @@ use glium::{Surface, Frame, Display};
 
 use crate::{
     camera::Camera,
-    gpu_mesh::GpuMesh,
+    gpu_primitive::GpuPrimitive,
     prelude::GraphicsChip, 
     gpu_assets::GpuAssets, 
     program::GpuProgram, gpu_image::GpuImage
@@ -22,56 +22,34 @@ impl Renderer {
     pub fn prepare_assets(&mut self, display: &Display, gpu: &GraphicsChip) {
         // à rendre générique
         for render_pass in gpu.pipeline.render_passes.iter() {
-            let mesh_ref = render_pass.node.mesh.unwrap();
-            if self.gpu_assets.get_mesh(mesh_ref.id).is_none() {
-                if let Some(mesh) = gpu.assets.get_mesh(mesh_ref.id) {
-                    // construct gpu vertex buffers
-                    for primitive in mesh.primitives.iter() {
-                        let vertex_buffer = glium::VertexBuffer::new(display, &primitive.vertex_buffer).unwrap();
+            if let Some(mesh_ref) = render_pass.node.mesh {
+                let mesh = gpu.assets.get_mesh(mesh_ref.id).expect("Missing mesh asset");
+                // construct gpu primitives
+                for primitive in mesh.primitives.iter() {
+                    if self.gpu_assets.get_primitive(primitive.id).is_none() {
+                        primitive.prepare_rendering(display, &gpu.assets, &mut self.gpu_assets);
 
-                        if let Some(index_buffer) = &primitive.index_buffer {
-                            let indices = glium::IndexBuffer::new(
-                                display, 
-                                glium::index::PrimitiveType::from(render_pass.current_primitive),
-                                index_buffer
-                            ).unwrap();
-
-                            let gpu_mesh = GpuMesh::new(vertex_buffer, Some(indices));
-                            self.gpu_assets.add_mesh(mesh_ref.id, gpu_mesh);
+                        if let Some(material) = gpu.assets.get_material(primitive.material) {
+                            material.prepare_rendering(display, &gpu.assets, &self.gpu_assets);
                         }
-                        else {
-                            // let indices = glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive));
-
-                            let gpu_mesh = GpuMesh::new(vertex_buffer, None);
-                            self.gpu_assets.add_mesh(mesh_ref.id, gpu_mesh);
-                        }
-
-                        //primitive.material;
-                    }
-                    
-                }                    
+                    }               
+                }   
             }
 
+            // construct gpu textures
             if let Some(texture_ref) = render_pass.current_texture {
                 if self.gpu_assets.get_texture(texture_ref.id).is_none() {
                     if let Some(texture) = gpu.assets.get_texture(texture_ref.id) {
-                        let gpu_image = GpuImage::new(display, texture);
-                        self.gpu_assets.add_texture(display, texture_ref.id, gpu_image);
+                        texture.prepare_rendering(display, &gpu.assets, &mut self.gpu_assets);
                     }
                 }
             }
         }
-
+        
+        // construct gpu programs
         if self.gpu_assets.get_program(gpu.globals.gouraud).is_none() {
             if let Some(program) = gpu.assets.get_program(gpu.globals.gouraud) {
-                if let Some(vs) = gpu.assets.get_shader(program.vs) {
-                    if let Some(fs) = gpu.assets.get_shader(program.fs) {
-                        let gpu_program = GpuProgram::new(display, vs, fs);
-                        self.gpu_assets.add_program(gpu.globals.gouraud, gpu_program);
-                    }
-                    
-                }
-                
+                program.prepare_rendering(display, &gpu.assets, &mut self.gpu_assets)
             }   
         }
     }
@@ -104,16 +82,16 @@ impl Renderer {
 
             let mesh_ref = render_pass.node.mesh.unwrap();
             let mesh = gpu.assets.get_mesh(mesh_ref.id).unwrap();
-            let gpu_mesh = self.gpu_assets.get_mesh(mesh_ref.id).unwrap();
 
             for primitive in mesh.primitives.iter() {
+                let gpu_primitive = self.gpu_assets.get_primitive(primitive.id).unwrap();
                 let material = gpu.assets.get_material(primitive.material).expect("Material not found");
                 let material_ref = material.get_ref(&gpu.uniforms, &self.gpu_assets).expect("Program not found");
 
                 let program = self.gpu_assets.get_program(gpu.globals.gouraud).expect("Gouraud program not found");
 
-                let vertex_buffer = &gpu_mesh.vertex_buffer;
-                if let Some(index_buffer) = &gpu_mesh.index_buffer {
+                let vertex_buffer = &gpu_primitive.vertex_buffer;
+                if let Some(index_buffer) = &gpu_primitive.index_buffer {
                     target.draw(
                         vertex_buffer,
                         index_buffer,
