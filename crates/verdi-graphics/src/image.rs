@@ -5,7 +5,7 @@ use rlua::UserData;
 use uuid::Uuid;
 
 use crate::{
-    assets::{AssetId, AssetState, Assets}, 
+    assets::{AssetId, AssetState}, 
     gpu_assets::GpuAssets, 
     gpu_image::GpuImage
 };
