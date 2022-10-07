@@ -65,18 +65,16 @@ impl Scene {
         }
 
         let mut materials = vec![];
-        for gltf_mesh in gltf.meshes() {
-            for gltf_primitive in gltf_mesh.primitives() {
-                materials.push(
-                    gpu.assets.add_material(
-                        Scene::load_material(
-                            gltf_primitive.material(),
-                            &texture_uniforms, 
-                            gpu
-                        )
+        for gltf_material in gltf.materials() {
+            materials.push(
+                gpu.assets.add_material(
+                    Scene::load_material(
+                        gltf_material,
+                        &texture_uniforms, 
+                        gpu
                     )
                 )
-            }
+            )
         }
 
         let mut meshes = vec![];
@@ -86,8 +84,7 @@ impl Scene {
                     Scene::load_mesh(
                         gltf_mesh, 
                         &buffers, 
-                        &materials, 
-                        gpu
+                        &materials
                     )?
                 )
             );
@@ -122,7 +119,7 @@ impl Scene {
         Ok(())
     }
 
-    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>, materials: &Vec<AssetId>, gpu: &GraphicsChip) -> Result<Mesh, GltfError> {
+    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>, materials: &Vec<AssetId>) -> Result<Mesh, GltfError> {
         let mut mesh = Mesh::new();
         for gltf_primitive in gltf_mesh.primitives() {
             let reader = gltf_primitive.reader(|buffer| Some(&buffers[buffer.index()]));
@@ -186,6 +183,7 @@ impl Scene {
     }
 
     fn load_texture(gltf_texture: gltf::Texture, buffers: &Vec<Data>) -> Result<Image, ImageError> {
+        gltf_texture.sampler();
         let source = match gltf_texture.source().source() {
             gltf::image::Source::View { view, mime_type } => {
                 let start = view.offset() as usize;

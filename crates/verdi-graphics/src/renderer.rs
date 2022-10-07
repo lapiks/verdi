@@ -54,7 +54,7 @@ impl Renderer {
         let light = [-1.0, 0.4, 0.9f32];
 
         // view matrix
-        let view_matrix = Camera::view_matrix(&[0.0, 0.0, 5.0], &[0.0, 0.0, -1.0], &[0.0, 1.0, 0.0]);
+        let view_matrix = Camera::view_matrix(&[-2.5, 10.0, 15.0], &[0.0, -0.5, -1.0], &[0.0, 1.0, 0.0]);
         *gpu.uniforms
             .get_mat4_mut(gpu.pipeline.view_matrix)
             .expect("View matrix uniform missing") = view_matrix;

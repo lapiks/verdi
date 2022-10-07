@@ -1,5 +1,5 @@
 function verdi.start()
-    image = graphics.newImage("./game_example/assets/container.png")
+    --image = graphics.newImage("./game_example/assets/container.png")
     scene = graphics.newScene("./game_example/assets/tank.gltf")
 end
 
