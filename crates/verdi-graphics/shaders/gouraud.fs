@@ -8,6 +8,7 @@ out vec4 color;
 uniform sampler2D u_texture;
 
 void main() {
-    color = texture(u_texture, vec2(v_uv.x, 1.0 - v_uv.y)); // y inversion ?
+    color = v_color * texture(u_texture, vec2(v_uv.x, 1.0 - v_uv.y));
+    //color = v_color * texture(u_texture, vec2(v_uv.x, 1.0 - v_uv.y));
     //color = v_color;
 }

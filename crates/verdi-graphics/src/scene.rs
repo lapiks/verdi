@@ -56,13 +56,9 @@ impl Scene {
 
             texture_uniforms.push(
                 gpu.uniforms.add_texture(
-                    TextureUniform { 
-                        id: image_ref.id, 
-                        sampler: None // todo read sampler infos
-                    }
+                    TextureUniform::new(image_ref.id)
                 )
             );
-            //textures.push(image_ref);
         }
 
         let mut materials = vec![];

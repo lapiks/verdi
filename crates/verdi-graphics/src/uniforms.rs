@@ -1,6 +1,11 @@
 use std::collections::HashMap;
 
-use glium::uniforms::{UniformValue, SamplerBehavior};
+use glium::uniforms::{
+    UniformValue, 
+    SamplerBehavior, 
+    MinifySamplerFilter,
+    MagnifySamplerFilter
+};
 use uuid::Uuid;
 use verdi_math::{Mat4, Vec2};
 
@@ -26,7 +31,22 @@ pub struct Uniforms {
 
 pub struct TextureUniform {
     pub id: AssetId,
-    pub sampler: Option<SamplerBehavior>,
+    pub sampler: SamplerBehavior,
+}
+
+impl TextureUniform {
+    pub fn new(id: AssetId) -> Self{
+        let sampler = SamplerBehavior {
+            minify_filter: MinifySamplerFilter::Nearest,
+            magnify_filter: MagnifySamplerFilter::Nearest,
+            .. Default::default()
+        };
+        
+        Self {
+            id,
+            sampler,
+        }
+    }
 }
 
 type UniformList<T> = HashMap<AssetId, T>;
@@ -63,7 +83,7 @@ impl Uniforms {
             UniformId::Texture(uniform_id) => {
                 if let Some(uniform_texture) = self.textures.get(&uniform_id) {
                     let gpu_tex = gpu_assets.get_texture(uniform_texture.id)?;
-                    Some(UniformValue::SrgbTexture2d(&gpu_tex.gl, uniform_texture.sampler))
+                    Some(UniformValue::SrgbTexture2d(&gpu_tex.gl, Some(uniform_texture.sampler)))
                 }
                 else {
                     None
