@@ -62,8 +62,23 @@ impl Material {
         })
     }
 
-    pub fn prepare_rendering(&self, display: &Display, assets: &Assets, gpu_assets: &GpuAssets) {
-
+    pub fn prepare_rendering(&self, display: &Display, uniforms: &Uniforms, assets: &Assets, gpu_assets: &mut GpuAssets) {
+        for uniform_id in self.uniforms {
+            if uniform_id.is_some() {
+                match uniform_id.unwrap().1 {
+                    UniformId::Texture(id) => {
+                        if let Some(texture_uniform) = uniforms.get_texture(id) {
+                            if let Some(texture) = assets.get_texture(texture_uniform.id) {
+                                texture.prepare_rendering(display, gpu_assets);
+                            }
+                        }
+                    },
+                    _ => {
+                        continue;
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -3,7 +3,7 @@ use glium::Display;
 use crate::image::Image;
 
 pub struct GpuImage {
-    pub gl: glium::texture::Texture2d,
+    pub gl: glium::texture::SrgbTexture2d,
 }
 
 impl GpuImage {
@@ -12,7 +12,7 @@ impl GpuImage {
             &image.get_data().as_raw(), 
             image.get_dimensions()
         );
-        let texture = glium::texture::Texture2d::new(
+        let texture = glium::texture::SrgbTexture2d::new(
             display, 
             raw_image
         ).unwrap();

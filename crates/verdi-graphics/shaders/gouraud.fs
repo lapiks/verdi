@@ -5,9 +5,9 @@ in vec2 v_uv;
 
 out vec4 color;
 
-uniform sampler2D tex;
+uniform sampler2D u_texture;
 
 void main() {
-    //color = texture(tex, v_uv);
-    color = v_color;
+    color = texture(u_texture, v_uv);
+    //color = v_color;
 }

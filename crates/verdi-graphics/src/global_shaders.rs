@@ -2,12 +2,11 @@ use crate::{
     assets::{AssetId, Assets}, 
     shader::Shader, 
     program::Program, 
-    material::Material, render_pipeline::RenderPipeline
+    render_pipeline::RenderPipeline
 };
 
 pub struct GlobalShaders {
     pub gouraud: AssetId,
-    pub standard_material: AssetId,
 }
 
 impl GlobalShaders {
@@ -35,16 +34,9 @@ impl GlobalShaders {
         let fs_id = assets.add_shader(gouraud_fs);
 
         let gouraud_program = assets.add_program(Program::new(vs_id, fs_id));
-
-        let mut material = Material::new(gouraud_program);
-        material.add_uniform("u_model", pipeline.model_matrix);
-        material.add_uniform("u_view", pipeline.view_matrix);
-        material.add_uniform("u_projection", pipeline.perspective_matrix);
-        //material.add_uniform("u_texture", crate::uniforms::UniformId::Texture(uuid::Uuid::nil()));
         
         Ok(Self {
             gouraud: gouraud_program,
-            standard_material: assets.add_material(material),
         })
     }
 }

@@ -2,10 +2,8 @@ use glium::{Surface, Frame, Display};
 
 use crate::{
     camera::Camera,
-    gpu_primitive::GpuPrimitive,
     prelude::GraphicsChip, 
     gpu_assets::GpuAssets, 
-    program::GpuProgram, gpu_image::GpuImage
 };
 
 pub struct Renderer {
@@ -26,24 +24,21 @@ impl Renderer {
                 let mesh = gpu.assets.get_mesh(mesh_ref.id).expect("Missing mesh asset");
                 // construct gpu primitives
                 for primitive in mesh.primitives.iter() {
-                    if self.gpu_assets.get_primitive(primitive.id).is_none() {
-                        primitive.prepare_rendering(display, &gpu.assets, &mut self.gpu_assets);
+                    primitive.prepare_rendering(display, &mut self.gpu_assets);
 
-                        if let Some(material) = gpu.assets.get_material(primitive.material) {
-                            material.prepare_rendering(display, &gpu.assets, &self.gpu_assets);
-                        }
-                    }               
+                    // construct gpu objects needed by the material
+                    if let Some(material) = gpu.assets.get_material(primitive.material) {
+                        material.prepare_rendering(display, &gpu.uniforms, &gpu.assets, &mut self.gpu_assets);
+                    }             
                 }   
             }
 
-            // construct gpu textures
-            if let Some(texture_ref) = render_pass.current_texture {
-                if self.gpu_assets.get_texture(texture_ref.id).is_none() {
-                    if let Some(texture) = gpu.assets.get_texture(texture_ref.id) {
-                        texture.prepare_rendering(display, &gpu.assets, &mut self.gpu_assets);
-                    }
-                }
-            }
+            // // construct gpu textures
+            // if let Some(texture_ref) = render_pass.current_texture {
+            //     if let Some(texture) = gpu.assets.get_texture(texture_ref.id) {
+            //         texture.prepare_rendering(display, &gpu.assets, &mut self.gpu_assets);
+            //     }
+            // }
         }
         
         // construct gpu programs
@@ -86,7 +81,7 @@ impl Renderer {
             for primitive in mesh.primitives.iter() {
                 let gpu_primitive = self.gpu_assets.get_primitive(primitive.id).unwrap();
                 let material = gpu.assets.get_material(primitive.material).expect("Material not found");
-                let material_ref = material.get_ref(&gpu.uniforms, &self.gpu_assets).expect("Program not found");
+                let material_ref = material.get_ref(&gpu.uniforms, &self.gpu_assets).expect("Unable to create MaterialRef from uniforms");
 
                 let program = self.gpu_assets.get_program(gpu.globals.gouraud).expect("Gouraud program not found");
 

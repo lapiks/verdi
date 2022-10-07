@@ -23,10 +23,12 @@ impl Program {
     }
 
     pub fn prepare_rendering(&self, display: &Display, assets: &Assets, gpu_assets: &mut GpuAssets) {
-        if let Some(vs) = assets.get_shader(self.vs) {
-            if let Some(fs) = assets.get_shader(self.fs) {
-                let gpu_program = GpuProgram::new(display, vs, fs);
-                gpu_assets.add_program(self.id, gpu_program);
+        if gpu_assets.get_program(self.id).is_none() {
+            if let Some(vs) = assets.get_shader(self.vs) {
+                if let Some(fs) = assets.get_shader(self.fs) {
+                    let gpu_program = GpuProgram::new(display, vs, fs);
+                    gpu_assets.add_program(self.id, gpu_program);
+                }
             }
         }
     }

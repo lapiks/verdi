@@ -32,24 +32,26 @@ pub struct Primitive {
 }
 
 impl Primitive {
-    pub fn prepare_rendering(&self, display: &Display, assets: &Assets, gpu_assets: &mut GpuAssets) {
-        let vertex_buffer = glium::VertexBuffer::new(display, &self.vertex_buffer).unwrap();
+    pub fn prepare_rendering(&self, display: &Display, gpu_assets: &mut GpuAssets) {
+        if gpu_assets.get_primitive(self.id).is_none() {
+            let vertex_buffer = glium::VertexBuffer::new(display, &self.vertex_buffer).unwrap();
 
-        if let Some(index_buffer) = &self.index_buffer {
-            let indices = glium::IndexBuffer::new(
-                display, 
-                glium::index::PrimitiveType::from(self.primitive_type),
-                index_buffer
-            ).unwrap();
+            if let Some(index_buffer) = &self.index_buffer {
+                let indices = glium::IndexBuffer::new(
+                    display, 
+                    glium::index::PrimitiveType::from(self.primitive_type),
+                    index_buffer
+                ).unwrap();
 
-            let gpu_mesh = GpuPrimitive::new(vertex_buffer, Some(indices));
-            gpu_assets.add_primitive(self.id, gpu_mesh);
-        }
-        else {
-            // let indices = glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive));
+                let gpu_mesh = GpuPrimitive::new(vertex_buffer, Some(indices));
+                gpu_assets.add_primitive(self.id, gpu_mesh);
+            }
+            else {
+                // let indices = glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive));
 
-            let gpu_mesh = GpuPrimitive::new(vertex_buffer, None);
-            gpu_assets.add_primitive(self.id, gpu_mesh);
+                let gpu_mesh = GpuPrimitive::new(vertex_buffer, None);
+                gpu_assets.add_primitive(self.id, gpu_mesh);
+            }
         }
     }
 }

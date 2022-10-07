@@ -11,7 +11,10 @@ use crate::{
     node::Node, 
     transform::Transform, 
     image::{Image, ImageRef}, 
-    prelude::GraphicsChip
+    prelude::GraphicsChip, 
+    material::Material, 
+    uniforms::{UniformId, TextureUniform}, 
+    assets::AssetId
 };
 
 #[derive(Error, Debug)]
@@ -41,22 +44,51 @@ impl Scene {
 
         let (_, buffers, _) = gltf::import(path)?;
 
-        let mut textures = vec![];
+        let mut texture_uniforms = vec![];
         for gltf_texture in gltf.textures() {
             let image_ref = gpu.assets.add_texture(
-                Scene::load_texture(gltf_texture, &buffers)?
+                Scene::load_texture(
+                    gltf_texture, 
+                    &buffers
+                )?
             );
-            gpu.uniforms.add_texture(image_ref.id);
 
-            textures.push(image_ref);
-            // todo read sampler infos
+            texture_uniforms.push(
+                gpu.uniforms.add_texture(
+                    TextureUniform { 
+                        id: image_ref.id, 
+                        sampler: None // todo read sampler infos
+                    }
+                )
+            );
+            //textures.push(image_ref);
+        }
+
+        let mut materials = vec![];
+        for gltf_mesh in gltf.meshes() {
+            for gltf_primitive in gltf_mesh.primitives() {
+                materials.push(
+                    gpu.assets.add_material(
+                        Scene::load_material(
+                            gltf_primitive.material(),
+                            &texture_uniforms, 
+                            gpu
+                        )
+                    )
+                )
+            }
         }
 
         let mut meshes = vec![];
         for gltf_mesh in gltf.meshes() {
             meshes.push(
                 gpu.assets.add_mesh(
-                    Scene::load_mesh(gltf_mesh, &buffers, &textures, gpu)?
+                    Scene::load_mesh(
+                        gltf_mesh, 
+                        &buffers, 
+                        &materials, 
+                        gpu
+                    )?
                 )
             );
         }
@@ -90,7 +122,7 @@ impl Scene {
         Ok(())
     }
 
-    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>, textures: &Vec<ImageRef>, gpu: &GraphicsChip) -> Result<Mesh, GltfError> {
+    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>, materials: &Vec<AssetId>, gpu: &GraphicsChip) -> Result<Mesh, GltfError> {
         let mut mesh = Mesh::new();
         for gltf_primitive in gltf_mesh.primitives() {
             let reader = gltf_primitive.reader(|buffer| Some(&buffers[buffer.index()]));
@@ -136,18 +168,14 @@ impl Scene {
                 index_buffer = Some(indices.into_u32().collect());
             };
 
-            let gltf_material = gltf_primitive.material();
-            let tex_ref = gltf_material
-                .pbr_metallic_roughness()
-                .base_color_texture()
-                .map(|info| info.texture().index())
-                .and_then(|i| textures.get(i).cloned());
+            let material_id = gltf_primitive.material().index()
+                .and_then(|i| materials.get(i).cloned()).unwrap(); // unwrap ??
 
             let primitive = Primitive {
                 vertex_buffer,
                 index_buffer,
                 primitive_type: crate::graphics_chip::PrimitiveType::Triangles,
-                material: gpu.globals.standard_material,
+                material: material_id,
                 id: uuid::Uuid::new_v4(),
             };
             
@@ -171,6 +199,24 @@ impl Scene {
         };
 
         Ok(source)
+    }
+
+    fn load_material(gltf_material: gltf::Material, textures: &Vec<UniformId>, gpu: &GraphicsChip) -> Material {
+        let uniform_id = gltf_material
+            .pbr_metallic_roughness()
+            .base_color_texture()
+            .map(|info| info.texture().index())
+            .and_then(|i| textures.get(i).cloned());
+
+        let mut material = Material::new(gpu.globals.gouraud);
+        material.add_uniform("u_model", gpu.pipeline.model_matrix);
+        material.add_uniform("u_view", gpu.pipeline.view_matrix);
+        material.add_uniform("u_projection", gpu.pipeline.perspective_matrix);
+        if let Some(id) = uniform_id {
+            material.add_uniform("u_texture", id)
+        }
+
+        material
     }
 }
 

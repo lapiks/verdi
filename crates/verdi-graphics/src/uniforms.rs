@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use glium::uniforms::UniformValue;
+use glium::uniforms::{UniformValue, SamplerBehavior};
 use uuid::Uuid;
 use verdi_math::{Mat4, Vec2};
 
@@ -21,7 +21,12 @@ pub struct Uniforms {
     floats: UniformList<f32>,
     vec2s: UniformList<Vec2>,
     mat4s: UniformList<Mat4>,
-    textures: UniformList<AssetId>,
+    textures: UniformList<TextureUniform>,
+}
+
+pub struct TextureUniform {
+    pub id: AssetId,
+    pub sampler: Option<SamplerBehavior>,
 }
 
 type UniformList<T> = HashMap<AssetId, T>;
@@ -38,30 +43,31 @@ impl Default for Uniforms {
 }
 
 impl Uniforms {
-    pub fn get_value<'a>(&'a self, id: UniformId, gpu_assets: &'a GpuAssets) -> Option<UniformValue> {
-        match id {
-            UniformId::Float(id) => {
+    pub fn get_value<'a>(&'a self, uniform_id: UniformId, gpu_assets: &'a GpuAssets) -> Option<UniformValue> {
+        match uniform_id {
+            UniformId::Float(uniform_id) => {
                 self.floats
-                    .get(&id)
+                    .get(&uniform_id)
                     .map(|&value| UniformValue::Float(value))
             }
-            UniformId::Vec2(id) => {
+            UniformId::Vec2(uniform_id) => {
                 self.vec2s
-                    .get(&id)
+                    .get(&uniform_id)
                     .map(|&value| UniformValue::Vec2(value.to_array()))
             }
-            UniformId::Mat4(id) => {
+            UniformId::Mat4(uniform_id) => {
                 self.mat4s
-                    .get(&id)
+                    .get(&uniform_id)
                     .map(|&value| UniformValue::Mat4(value.to_cols_array_2d()))
             }
-            UniformId::Texture(id) => {
-                let gpu_tex = gpu_assets.get_texture(id)?;
-                self.textures
-                    .get(&id)
-                    .map(|_| {
-                        UniformValue::Texture2d(&gpu_tex.gl, None)
-                    })
+            UniformId::Texture(uniform_id) => {
+                if let Some(uniform_texture) = self.textures.get(&uniform_id) {
+                    let gpu_tex = gpu_assets.get_texture(uniform_texture.id)?;
+                    Some(UniformValue::SrgbTexture2d(&gpu_tex.gl, uniform_texture.sampler))
+                }
+                else {
+                    None
+                }
             }
         }
     }
@@ -107,14 +113,18 @@ impl Uniforms {
         }
     }
 
-    pub fn add_texture(&mut self, value: AssetId) -> UniformId {
+    pub fn add_texture(&mut self, value: TextureUniform) -> UniformId {
         let id = Uuid::new_v4();
         self.textures.insert(id, value);
 
         UniformId::Texture(id)
     }
 
-    pub fn get_texture_mut(&mut self, id: AssetId) -> Option<&mut AssetId> {
+    pub fn get_texture(&self, id: AssetId) -> Option<&TextureUniform> {
+        self.textures.get(&id)
+    }
+
+    pub fn get_texture_mut(&mut self, id: AssetId) -> Option<&mut TextureUniform> {
         self.textures.get_mut(&id)
     }
 }

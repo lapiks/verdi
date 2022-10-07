@@ -69,9 +69,11 @@ impl Image {
         return (self.width, self.height)
     }
 
-    pub fn prepare_rendering(&self, display: &Display, assets: &Assets, gpu_assets: &mut GpuAssets) {
-        let gpu_image = GpuImage::new(display, self);
-        gpu_assets.add_texture(display, self.id, gpu_image);
+    pub fn prepare_rendering(&self, display: &Display, gpu_assets: &mut GpuAssets) {
+        if gpu_assets.get_texture(self.id).is_none() {
+            let gpu_image = GpuImage::new(display, self);
+            gpu_assets.add_texture(display, self.id, gpu_image);
+        }
     }
 }
 
