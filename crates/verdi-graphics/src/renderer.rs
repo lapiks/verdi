@@ -90,6 +90,7 @@ impl Renderer {
                         write: true,
                         .. Default::default()
                     },
+                    blend: glium::draw_parameters::Blend::alpha_blending(),
                     .. Default::default()
                 };
 
