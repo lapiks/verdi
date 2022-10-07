@@ -32,13 +32,6 @@ impl Renderer {
                     }             
                 }   
             }
-
-            // // construct gpu textures
-            // if let Some(texture_ref) = render_pass.current_texture {
-            //     if let Some(texture) = gpu.assets.get_texture(texture_ref.id) {
-            //         texture.prepare_rendering(display, &gpu.assets, &mut self.gpu_assets);
-            //     }
-            // }
         }
         
         // construct gpu programs
@@ -76,10 +69,10 @@ impl Renderer {
                 .expect("Model matrix uniform missing") = model_matrix;
 
             let mesh_ref = render_pass.node.mesh.unwrap();
-            let mesh = gpu.assets.get_mesh(mesh_ref.id).unwrap();
+            let mesh = gpu.assets.get_mesh(mesh_ref.id).expect("Mesh asset not found");
 
             for primitive in mesh.primitives.iter() {
-                let gpu_primitive = self.gpu_assets.get_primitive(primitive.id).unwrap();
+                let gpu_primitive = self.gpu_assets.get_primitive(primitive.id).expect("Gpu primitive not found");
                 let material = gpu.assets.get_material(primitive.material).expect("Material not found");
                 let material_ref = material.get_ref(&gpu.uniforms, &self.gpu_assets).expect("Unable to create MaterialRef from uniforms");
 
