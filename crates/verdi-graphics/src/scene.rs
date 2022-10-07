@@ -10,11 +10,12 @@ use crate::{
     vertex::Vertex, 
     node::Node, 
     transform::Transform, 
-    image::{Image, ImageRef}, 
+    image::{Image}, 
     prelude::GraphicsChip, 
     material::Material, 
     uniforms::{UniformId, TextureUniform}, 
-    assets::AssetId
+    assets::AssetId, 
+    graphics_chip::PrimitiveType
 };
 
 #[derive(Error, Debug)]
@@ -171,7 +172,7 @@ impl Scene {
             let primitive = Primitive {
                 vertex_buffer,
                 index_buffer,
-                primitive_type: crate::graphics_chip::PrimitiveType::Triangles,
+                primitive_type: PrimitiveType::Triangles,
                 material: material_id,
                 id: uuid::Uuid::new_v4(),
             };

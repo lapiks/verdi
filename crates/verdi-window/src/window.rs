@@ -23,7 +23,9 @@ impl Window {
             })
             .with_title("Verdi Engine");
 
-        let cb = ContextBuilder::new();
+        let cb = ContextBuilder::new()
+            .with_depth_buffer(24);
+            
         let display = Display::new(wb, cb, &event_loop).unwrap();
         
         Self {

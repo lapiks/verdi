@@ -86,13 +86,23 @@ impl Renderer {
                 let program = self.gpu_assets.get_program(gpu.globals.gouraud).expect("Gouraud program not found");
 
                 let vertex_buffer = &gpu_primitive.vertex_buffer;
+
+                let draw_params = glium::DrawParameters {
+                    depth: glium::Depth {
+                        test: glium::draw_parameters::DepthTest::IfLess,
+                        write: true,
+                        .. Default::default()
+                    },
+                    .. Default::default()
+                };
+
                 if let Some(index_buffer) = &gpu_primitive.index_buffer {
                     target.draw(
                         vertex_buffer,
                         index_buffer,
                         &program.gl, 
                         &material_ref,
-                        &Default::default()
+                        &draw_params
                     ).unwrap();
                 }
                 else {
@@ -101,7 +111,7 @@ impl Renderer {
                         glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
                         &program.gl, 
                         &material_ref,
-                        &Default::default()
+                        &draw_params
                     ).unwrap();
                 }
             }
