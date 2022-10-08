@@ -48,6 +48,31 @@ pub enum Key {
     X,
     Y,
     Z,
+    Escape,
+    F1,
+    F2,
+    F3,
+    F4,
+    F5,
+    F6,
+    F7,
+    F8,
+    F9,
+    F10,
+    F11,
+    F12,
+    F13,
+    F14,
+    F15,
+    F16,
+    F17,
+    F18,
+    F19,
+    F20,
+    F21,
+    F22,
+    F23,
+    F24,
     Space,
 }
 
@@ -92,6 +117,31 @@ impl From<String> for Key {
         else if s == "y" { Key::Y }
         else if s == "z" { Key::Z }
         else if s == " " { Key::Space}
+        else if s == "escape" { Key::Escape }
+        else if s == "f1" { Key::F1 }
+        else if s == "f2" { Key::F2 }
+        else if s == "f3" { Key::F3 }
+        else if s == "f4" { Key::F4 }
+        else if s == "f5" { Key::F5 }
+        else if s == "f6" { Key::F6 }
+        else if s == "f7" { Key::F7 }
+        else if s == "f8" { Key::F8 }
+        else if s == "f9" { Key::F9 }
+        else if s == "f10" { Key::F10 }
+        else if s == "f11" { Key::F11 }
+        else if s == "f12" { Key::F12 }
+        else if s == "f13" { Key::F13 }
+        else if s == "f14" { Key::F14 }
+        else if s == "f15" { Key::F15 }
+        else if s == "f16" { Key::F16 }
+        else if s == "f17" { Key::F17 }
+        else if s == "f18" { Key::F18 }
+        else if s == "f19" { Key::F19 }
+        else if s == "f20" { Key::F20 }
+        else if s == "f21" { Key::F21 }
+        else if s == "f22" { Key::F22 }
+        else if s == "f23" { Key::F23 }
+        else if s == "f24" { Key::F24 }
         else { Key::Unknown }
     }
 }
@@ -135,31 +185,31 @@ impl From<VirtualKeyCode> for Key {
             VirtualKeyCode::X => Key::X,
             VirtualKeyCode::Y => Key::Y,
             VirtualKeyCode::Z => Key::Z,
-            VirtualKeyCode::Escape => Key::D,
-            VirtualKeyCode::F1 => Key::D,
-            VirtualKeyCode::F2 => Key::D,
-            VirtualKeyCode::F3 => Key::D,
-            VirtualKeyCode::F4 => Key::D,
-            VirtualKeyCode::F5 => Key::D,
-            VirtualKeyCode::F6 => Key::D,
-            VirtualKeyCode::F7 => Key::D,
-            VirtualKeyCode::F8 => Key::D,
-            VirtualKeyCode::F9 => Key::D,
-            VirtualKeyCode::F10 => Key::D,
-            VirtualKeyCode::F11 => Key::D,
-            VirtualKeyCode::F12 => Key::D,
-            VirtualKeyCode::F13 => Key::D,
-            VirtualKeyCode::F14 => Key::D,
-            VirtualKeyCode::F15 => Key::D,
-            VirtualKeyCode::F16 => Key::D,
-            VirtualKeyCode::F17 => Key::D,
-            VirtualKeyCode::F18 => Key::D,
-            VirtualKeyCode::F19 => Key::D,
-            VirtualKeyCode::F20 => Key::D,
-            VirtualKeyCode::F21 => Key::D,
-            VirtualKeyCode::F22 => Key::D,
-            VirtualKeyCode::F23 => Key::D,
-            VirtualKeyCode::F24 => Key::D,
+            VirtualKeyCode::Escape => Key::Escape,
+            VirtualKeyCode::F1 => Key::F1,
+            VirtualKeyCode::F2 => Key::F2,
+            VirtualKeyCode::F3 => Key::F3,
+            VirtualKeyCode::F4 => Key::F4,
+            VirtualKeyCode::F5 => Key::F5,
+            VirtualKeyCode::F6 => Key::F6,
+            VirtualKeyCode::F7 => Key::F7,
+            VirtualKeyCode::F8 => Key::F8,
+            VirtualKeyCode::F9 => Key::F9,
+            VirtualKeyCode::F10 => Key::F10,
+            VirtualKeyCode::F11 => Key::F11,
+            VirtualKeyCode::F12 => Key::F12,
+            VirtualKeyCode::F13 => Key::F13,
+            VirtualKeyCode::F14 => Key::F14,
+            VirtualKeyCode::F15 => Key::F15,
+            VirtualKeyCode::F16 => Key::F16,
+            VirtualKeyCode::F17 => Key::F17,
+            VirtualKeyCode::F18 => Key::F18,
+            VirtualKeyCode::F19 => Key::F19,
+            VirtualKeyCode::F20 => Key::F20,
+            VirtualKeyCode::F21 => Key::F21,
+            VirtualKeyCode::F22 => Key::F22,
+            VirtualKeyCode::F23 => Key::F23,
+            VirtualKeyCode::F24 => Key::F24,
             VirtualKeyCode::Snapshot => Key::D,
             VirtualKeyCode::Scroll => Key::D,
             VirtualKeyCode::Pause => Key::D,
