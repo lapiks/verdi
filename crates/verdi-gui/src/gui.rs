@@ -28,7 +28,7 @@ impl Gui {
         self.egui_glium.paint(&display, target);
     }
 
-    pub fn on_event(&mut self, event: &WindowEvent) {
-        self.egui_glium.on_event(event);
+    pub fn on_event(&mut self, event: &WindowEvent) -> bool {
+        self.egui_glium.on_event(event)
     }
 }

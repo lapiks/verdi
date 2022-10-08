@@ -8,13 +8,15 @@ use verdi_gui::prelude::*;
 
 use crate::{
     error::AppError, 
-    lua_context::LuaContext
+    lua_context::LuaContext, 
+    inputs::Inputs, 
+    bind_inputs::BindInputs
 };
 
 pub struct App;
 
 impl App {
-    pub fn run(gpu: &'static Mutex<GraphicsChip>) -> Result<(), AppError> {
+    pub fn run(gpu: &'static Mutex<GraphicsChip>, inputs: &'static Mutex<Inputs>) -> Result<(), AppError> {
         let mut window = Window::new(1024, 768);
         
         let mut renderer = Renderer::new();
@@ -22,6 +24,7 @@ impl App {
         let lua = Lua::new();
     
         BindGraphicsChip::bind(&lua, gpu)?;
+        BindInputs::bind(&lua, inputs)?;
 
         LuaContext::load_scipts(&lua)?;
         LuaContext::call_boot(&lua)?;
@@ -75,7 +78,12 @@ impl App {
                     }
 
                     // relays events to the gui
-                    gui.on_event(&event);
+                    if(gui.on_event(&event)) {
+                        
+                    }
+                    else {
+                        inputs.lock().unwrap().process(&event)
+                    }
                 },
                 _ => (),
             }

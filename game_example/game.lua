@@ -10,6 +10,10 @@ end
 function verdi.draw()
     graphics.draw(scene)
 
+    if input.getKeyDown("z") then
+
+    end
+
     --graphics.beginObject("triangles")
         --graphics.bindTexture(image)
 
