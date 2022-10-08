@@ -18,6 +18,10 @@ function verdi.draw()
         print("left mouse button is down")
     end
 
+    if input.getKeyDown(" ") then
+        print("space is down")
+    end
+
     --graphics.beginObject("triangles")
         --graphics.bindTexture(image)
 

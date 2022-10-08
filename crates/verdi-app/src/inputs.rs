@@ -12,6 +12,16 @@ use rlua::UserData;
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]
 pub enum Key {
     Unknown,
+    Key1,
+    Key2,
+    Key3,
+    Key4,
+    Key5,
+    Key6,
+    Key7,
+    Key8,
+    Key9,
+    Key0,
     A,
     B,
     C,
@@ -38,13 +48,24 @@ pub enum Key {
     X,
     Y,
     Z,
+    Space,
 }
 
 impl UserData for Key {}
 
 impl From<String> for Key {
     fn from(s: String) -> Self {
-        if s == "a" { Key::A }
+        if s == "1" { Key::Key1 }
+        else if s == "2" { Key::Key2 }
+        else if s == "3" { Key::Key3 }
+        else if s == "4" { Key::Key4 }
+        else if s == "5" { Key::Key5 }
+        else if s == "6" { Key::Key6 }
+        else if s == "7" { Key::Key7 }
+        else if s == "8" { Key::Key8 }
+        else if s == "9" { Key::Key9 }
+        else if s == "0" { Key::Key0 }
+        else if s == "a" { Key::A }
         else if s == "b" { Key::B }
         else if s == "c" { Key::C }
         else if s == "d" { Key::D }
@@ -70,6 +91,7 @@ impl From<String> for Key {
         else if s == "x" { Key::X }
         else if s == "y" { Key::Y }
         else if s == "z" { Key::Z }
+        else if s == " " { Key::Space}
         else { Key::Unknown }
     }
 }
@@ -77,16 +99,16 @@ impl From<String> for Key {
 impl From<VirtualKeyCode> for Key {
     fn from(k: VirtualKeyCode) -> Self {
         match k {
-            VirtualKeyCode::Key1 => Key::D,
-            VirtualKeyCode::Key2 => Key::D,
-            VirtualKeyCode::Key3 => Key::D,
-            VirtualKeyCode::Key4 => Key::D,
-            VirtualKeyCode::Key5 => Key::D,
-            VirtualKeyCode::Key6 => Key::D,
-            VirtualKeyCode::Key7 => Key::D,
-            VirtualKeyCode::Key8 => Key::D,
-            VirtualKeyCode::Key9 => Key::D,
-            VirtualKeyCode::Key0 => Key::D,
+            VirtualKeyCode::Key1 => Key::Key1,
+            VirtualKeyCode::Key2 => Key::Key2,
+            VirtualKeyCode::Key3 => Key::Key3,
+            VirtualKeyCode::Key4 => Key::Key4,
+            VirtualKeyCode::Key5 => Key::Key5,
+            VirtualKeyCode::Key6 => Key::Key6,
+            VirtualKeyCode::Key7 => Key::Key7,
+            VirtualKeyCode::Key8 => Key::Key8,
+            VirtualKeyCode::Key9 => Key::Key9,
+            VirtualKeyCode::Key0 => Key::Key0,
             VirtualKeyCode::A => Key::A,
             VirtualKeyCode::B => Key::B,
             VirtualKeyCode::C => Key::C,
@@ -153,7 +175,7 @@ impl From<VirtualKeyCode> for Key {
             VirtualKeyCode::Down => Key::D,
             VirtualKeyCode::Back => Key::D,
             VirtualKeyCode::Return => Key::D,
-            VirtualKeyCode::Space => Key::D,
+            VirtualKeyCode::Space => Key::Space,
             VirtualKeyCode::Compose => Key::D,
             VirtualKeyCode::Caret => Key::D,
             VirtualKeyCode::Numlock => Key::D,
