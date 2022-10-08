@@ -78,7 +78,7 @@ impl App {
                     }
 
                     // relays events to the gui
-                    if(gui.on_event(&event)) {
+                    if gui.on_event(&event) {
                         
                     }
                     else {

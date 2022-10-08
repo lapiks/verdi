@@ -3,7 +3,7 @@ use rlua::UserData;
 use uuid::Uuid;
 
 use crate::{
-    assets::{AssetId, Assets}, 
+    assets::{AssetId}, 
     vertex::Vertex, 
     gpu_assets::GpuAssets, 
     graphics_chip::PrimitiveType, 

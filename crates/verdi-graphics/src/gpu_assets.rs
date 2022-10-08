@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use glium::Display;
-
 use crate::{
     assets::AssetId, 
     gpu_primitive::GpuPrimitive, 
@@ -24,7 +22,7 @@ impl GpuAssets {
         }
     }
 
-    pub fn add_texture(&mut self, display: &Display, id: AssetId, gpu_image: GpuImage) {
+    pub fn add_texture(&mut self, id: AssetId, gpu_image: GpuImage) {
         self.textures.insert(id, gpu_image);
     }
 
