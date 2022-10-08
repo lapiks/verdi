@@ -14,6 +14,10 @@ function verdi.draw()
         print("z is down")
     end
 
+    if input.getButtonDown("l") then
+        print("left mouse button is down")
+    end
+
     --graphics.beginObject("triangles")
         --graphics.bindTexture(image)
 

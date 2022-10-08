@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
-use glium::glutin::{self, event::VirtualKeyCode};
+use glium::glutin::{
+    self, 
+    event::{
+        VirtualKeyCode, 
+        MouseButton as GlutinMouseButton
+    }
+};
 use rlua::UserData;
-
-pub struct Inputs {
-    keys: HashMap<Key, bool>
-}
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]
 pub enum Key {
@@ -198,28 +200,72 @@ impl From<VirtualKeyCode> for Key {
     }
 }
 
+#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+pub enum MouseButton {
+    Unknown,
+    Right,
+    Left,
+    Middle,
+}
+
+impl From<String> for MouseButton {
+    fn from(s: String) -> Self {
+        if s == "r" { MouseButton::Right }
+        else if s == "l" { MouseButton::Left }
+        else if s == "m" { MouseButton::Middle }
+        else { MouseButton::Unknown }
+    }
+}
+
+impl From<GlutinMouseButton> for MouseButton {
+    fn from(b: GlutinMouseButton) -> Self {
+        match b {
+            GlutinMouseButton::Left => MouseButton::Left,
+            GlutinMouseButton::Right => MouseButton::Right,
+            GlutinMouseButton::Middle => MouseButton::Middle,
+            GlutinMouseButton::Other(_) => MouseButton::Unknown,
+        }
+    }
+}
+
+pub struct Inputs {
+    keys: HashMap<Key, bool>,
+    mouse: HashMap<MouseButton, bool>,
+}
+
 impl Inputs {
     pub fn new() -> Self {
         Self {
             keys: HashMap::default(),
+            mouse: HashMap::default(),
         }
     } 
 
     pub fn process(&mut self, event: &glutin::event::WindowEvent) {
-        let input = match *event {
-            glutin::event::WindowEvent::KeyboardInput { input, .. } => input,
+        match *event {
+            glutin::event::WindowEvent::KeyboardInput { input, .. } => {
+                let pressed = input.state == glutin::event::ElementState::Pressed;
+                let key = match input.virtual_keycode {
+                    Some(key) => key,
+                    None => return,
+                };
+   
+                self.keys.insert(Key::from(key), pressed);
+            },
+            glutin::event::WindowEvent::MouseInput { button, state, .. } => {
+                let pressed = state == glutin::event::ElementState::Pressed;
+                self.mouse.insert(MouseButton::from(button), pressed);
+            }
             _ => return,
         };
-        let pressed = input.state == glutin::event::ElementState::Pressed;
-        let key = match input.virtual_keycode {
-            Some(key) => key,
-            None => return,
-        };
-
-        self.keys.insert(Key::from(key), pressed);
+        
     }
 
     pub fn get_key_down(&mut self, key: Key) -> bool {
         *self.keys.get(&key).unwrap_or(&false)
+    }
+
+    pub fn get_button_down(&mut self, button: MouseButton) -> bool {
+        *self.mouse.get(&button).unwrap_or(&false)
     }
 }
