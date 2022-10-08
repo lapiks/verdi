@@ -12,6 +12,7 @@ pub mod prelude {
 mod graphics_chip;
 mod bind_graphics_chip;
 mod vertex;
+mod sprite_vertex;
 mod render_pipeline;
 mod render_pass;
 mod renderer;
@@ -30,3 +31,4 @@ mod uniforms;
 mod global_shaders;
 mod program;
 mod shader;
+mod screen_quad;
