@@ -11,7 +11,7 @@ function verdi.draw()
     graphics.draw(scene)
 
     if input.getKeyDown("z") then
-
+        print("z is down")
     end
 
     --graphics.beginObject("triangles")
