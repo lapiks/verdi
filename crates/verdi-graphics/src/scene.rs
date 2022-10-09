@@ -1,4 +1,4 @@
-use rlua::UserData;
+use rlua::{UserData, UserDataMethods};
 
 use crate::{
     node::Node, 
@@ -18,12 +18,9 @@ impl Scene {
 }
 
 impl UserData for Scene {
-    // fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-    //     methods.add_method("draw", |_, scene, ()| {
-    //         //draw
-    //         // ajouter une render pass par mesh à rendre dans le graphics chip
-    //         // scene aurait une ref vers GraphicsChip ?
-    //         Ok(())
-    //     });
-    // }
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method("getNumNodes", |_, scene, ()| {
+            Ok(scene.nodes.len())
+        });
+    }
 }

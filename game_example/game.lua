@@ -1,6 +1,7 @@
 function verdi.start()
     --image = graphics.newImage("./game_example/assets/container.png")
     scene = graphics.newScene("./game_example/assets/tank.gltf")
+    print(scene:getNumNodes())
 end
 
 function verdi.update()
@@ -8,6 +9,8 @@ function verdi.update()
 end
 
 function verdi.draw()
+
+
     graphics.draw(scene)
 
     if input.getKeyDown("z") then
