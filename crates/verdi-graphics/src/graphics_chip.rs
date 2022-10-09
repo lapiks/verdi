@@ -26,6 +26,15 @@ pub enum PrimitiveType {
     Lines,
 }
 
+impl From<String> for PrimitiveType {
+    fn from(string: String) -> Self {
+        if string == "triangles" { PrimitiveType::Triangles }
+        else if string == "points" { PrimitiveType::Points }
+        else if string == "lines" { PrimitiveType::Lines }
+        else { PrimitiveType::Triangles }
+    }
+}
+
 impl From<PrimitiveType> for glium::index::PrimitiveType {
     fn from(p: PrimitiveType) -> Self {
         if p == PrimitiveType::Triangles { return glium::index::PrimitiveType::TrianglesList; }

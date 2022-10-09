@@ -9,11 +9,7 @@ pub struct BindGraphicsChip;
 
 impl<'lua> BindGraphicsChip {
     fn begin_object(gpu: &Mutex<GraphicsChip>, primitive_type: &String) {
-        let mut enum_val = PrimitiveType::Triangles;
-        if primitive_type == "triangles" { enum_val = PrimitiveType::Triangles; }
-        else if primitive_type == "points" { enum_val = PrimitiveType::Points; }
-        else if primitive_type == "lines" { enum_val = PrimitiveType::Lines; }
-
+        let enum_val = PrimitiveType::from(primitive_type.clone());
         gpu.lock().unwrap().begin(enum_val);
     }
 
