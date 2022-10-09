@@ -7,9 +7,7 @@ use glium::{
 use crate::{
     camera::Camera,
     prelude::GraphicsChip, 
-    gpu_assets::GpuAssets, 
-    renderable::Renderable, 
-    vertex::Vertex, 
+    gpu_assets::GpuAssets,
 };
 
 pub struct Renderer {

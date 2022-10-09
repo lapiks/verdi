@@ -33,3 +33,4 @@ mod global_shaders;
 mod program;
 mod shader;
 mod screen_quad;
+mod gltf_loader;

@@ -3,10 +3,10 @@ use crate::{
     render_pass::RenderPass, 
     image::{Image, ImageRef}, 
     assets::Assets, 
-    scene::{Scene, GltfError}, 
+    scene::{Scene}, 
     prelude::GlobalShaders, 
     render_pipeline::RenderPipeline, 
-    uniforms::Uniforms
+    uniforms::Uniforms, gltf_loader::{GltfError, GltfLoader}
 };
 
 use image::ImageError;
@@ -130,10 +130,7 @@ impl GraphicsChip {
     }
 
     pub fn new_scene(&mut self, path: &String) -> Result<Scene, GltfError> {
-        let mut scene = Scene::new();
-        scene.load(path, self)?;
-
-        Ok(scene)
+        GltfLoader::load(path, self)
     }
 
     pub fn draw(&mut self, scene: &Scene) {
