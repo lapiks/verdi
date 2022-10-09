@@ -16,6 +16,7 @@ mod sprite_vertex;
 mod render_pipeline;
 mod render_pass;
 mod renderer;
+mod renderable;
 mod image;
 mod mesh;
 mod scene;

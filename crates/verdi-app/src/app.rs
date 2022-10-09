@@ -51,6 +51,9 @@ impl App {
 
             // prepare assets for rendering
             renderer.prepare_assets(window.get_display(), &gpu.lock().unwrap());
+
+            // prepare renderer for rendering
+            //renderer.prepare_rendering(&target, &mut gpu.lock().unwrap());
             
             // draw game
             renderer.render(&mut target, &mut gpu.lock().unwrap());

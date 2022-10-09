@@ -8,6 +8,8 @@ use crate::{
     camera::Camera,
     prelude::GraphicsChip, 
     gpu_assets::GpuAssets, 
+    renderable::Renderable, 
+    vertex::Vertex, 
 };
 
 pub struct Renderer {
@@ -45,6 +47,67 @@ impl Renderer {
             }   
         }
     }
+
+    // pub fn prepare_rendering<'a>(&'a self, target: &Frame, gpu: &'a mut GraphicsChip) -> Vec<Renderable<'a, Vertex>> {
+    //     // view matrix
+    //     let view_matrix = Camera::view_matrix(&[-5.0, 2.5, -10.0], &[0.0, -0.1, 1.0], &[0.0, 1.0, 0.0]);
+    //     *gpu.uniforms
+    //         .get_mat4_mut(gpu.pipeline.view_matrix)
+    //         .expect("View matrix uniform missing") = view_matrix;
+
+    //     // perspective matrix
+    //     let perspective_matrix = Camera::perspective_matrix(
+    //         target.get_dimensions().0, 
+    //         target.get_dimensions().1
+    //     );
+    //     *gpu.uniforms
+    //         .get_mat4_mut(gpu.pipeline.perspective_matrix)
+    //         .expect("Perspective matrix uniform missing") = perspective_matrix;
+
+    //     let mut renderables: Vec<Renderable<Vertex>> = Vec::with_capacity(gpu.pipeline.render_passes.len());
+    //     for render_pass in gpu.pipeline.render_passes.iter() {
+    //         // model matrix
+    //         let model_matrix = render_pass.node.transform.to_matrix();
+    //         *gpu.uniforms
+    //             .get_mat4_mut(gpu.pipeline.model_matrix)
+    //             .expect("Model matrix uniform missing") = model_matrix;
+
+    //         let mesh_ref = render_pass.node.mesh.unwrap();
+    //         let mesh = gpu.assets.get_mesh(mesh_ref.id).expect("Mesh asset not found");
+
+    //         for primitive in mesh.primitives.iter() {
+    //             let gpu_primitive = self.gpu_assets.get_primitive(primitive.id).expect("Gpu primitive not found");
+    //             let material = gpu.assets.get_material(primitive.material).expect("Material not found");
+    //             let material_ref = material.get_ref(&gpu.uniforms, &self.gpu_assets).expect("Unable to create MaterialRef from uniforms");
+
+    //             let program = self.gpu_assets.get_program(gpu.globals.gouraud).expect("Gouraud program not found");
+
+    //             let vertex_buffer = &gpu_primitive.vertex_buffer;
+
+    //             let draw_parameters = glium::DrawParameters {
+    //                 depth: glium::Depth {
+    //                     test: glium::draw_parameters::DepthTest::IfLess,
+    //                     write: true,
+    //                     .. Default::default()
+    //                 },
+    //                 blend: glium::draw_parameters::Blend::alpha_blending(),
+    //                 .. Default::default()
+    //             };
+
+    //             renderables.push(
+    //                 Renderable {
+    //                     vertex_buffer,
+    //                     index_buffer: gpu_primitive.index_buffer.as_ref(),
+    //                     program: &program.gl,
+    //                     material_ref,
+    //                     draw_parameters,
+    //                 }
+    //             );
+    //         }
+    //     }
+
+    //     renderables
+    // }
 
     pub fn render(&mut self, target: &mut Frame, gpu: &mut GraphicsChip) {
         // the direction of the light

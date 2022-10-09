@@ -41,7 +41,7 @@ impl<'lua> BindGraphicsChip {
         gpu.lock().unwrap().new_image(path).unwrap()
     }
 
-    fn new_scene(gpu: &Mutex<GraphicsChip>, path: &String) -> Scene{
+    fn new_scene(gpu: &Mutex<GraphicsChip>, path: &String) -> Scene {
         gpu.lock().unwrap().new_scene(path).unwrap()
     }
 
