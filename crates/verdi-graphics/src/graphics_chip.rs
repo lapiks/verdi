@@ -3,10 +3,11 @@ use crate::{
     render_pass::RenderPass, 
     image::{Image, ImageRef}, 
     assets::Assets, 
-    scene::{Scene}, 
+    scene::{Scene, SceneRef}, 
     prelude::GlobalShaders, 
     render_pipeline::RenderPipeline, 
-    uniforms::Uniforms, gltf_loader::{GltfError, GltfLoader}
+    uniforms::Uniforms, 
+    gltf_loader::{GltfError, GltfLoader}
 };
 
 use image::ImageError;
@@ -129,11 +130,8 @@ impl GraphicsChip {
         };
     }
 
-    pub fn new_scene(&mut self, path: &String) -> Result<Scene, GltfError> {
-        GltfLoader::load(path, self)
-    }
-
-    pub fn draw(&mut self, scene: &Scene) {
+    pub fn draw(&mut self, scene_ref: SceneRef) {
+        let scene = self.assets.get_scene(scene_ref.id).unwrap(); // unwrap !!
         for node in scene.nodes.iter() {
             if node.mesh.is_none() {
                 continue;
@@ -146,5 +144,11 @@ impl GraphicsChip {
 
             self.pipeline.render_passes.push(render_pass);
         }
+    }
+
+    pub fn new_scene(&mut self, path: &String) -> Result<&Scene, GltfError>{
+        let scene = GltfLoader::load(path, self)?;
+        let id = self.assets.add_scene(scene);
+        Ok(self.assets.get_scene(id).unwrap())
     }
 }

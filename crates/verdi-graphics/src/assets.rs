@@ -6,7 +6,7 @@ use crate::{
     mesh::{Mesh, MeshRef}, 
     material::Material, 
     shader::Shader, 
-    program::Program
+    program::Program, scene::Scene
 };
 
 pub type AssetId = Uuid;
@@ -23,6 +23,7 @@ pub struct Assets {
     materials: HashMap<AssetId, Material>,
     shaders: HashMap<AssetId, Shader>,
     programs: HashMap<AssetId, Program>,
+    scenes: HashMap<AssetId, Scene>,
 }
 
 impl Assets {
@@ -33,6 +34,7 @@ impl Assets {
             materials: HashMap::default(),
             shaders: HashMap::default(),
             programs: HashMap::default(),
+            scenes: HashMap::default(),
         }
     }
 
@@ -95,5 +97,17 @@ impl Assets {
 
     pub fn get_program(&self, id: AssetId) -> Option<&Program> {
         self.programs.get(&id)
+    }
+
+    pub fn add_scene(&mut self, mut scene: Scene) -> AssetId {
+        let id = Uuid::new_v4();
+        scene.id = id;
+        self.scenes.insert(id, scene);
+
+        id
+    }
+
+    pub fn get_scene(&self, id: AssetId) -> Option<&Scene> {
+        self.scenes.get(&id)
     }
 }

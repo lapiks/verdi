@@ -1,6 +1,6 @@
 use glium::{glutin, Surface};
 use rlua::Lua;
-use std::{sync::Mutex};
+use std::{sync::{Mutex, Arc}};
 
 use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
@@ -16,14 +16,21 @@ use crate::{
 pub struct App;
 
 impl App {
-    pub fn run(gpu: &'static Mutex<GraphicsChip>, inputs: &'static Mutex<Inputs>) -> Result<(), AppError> {
+    pub fn run(inputs: &'static Mutex<Inputs>) -> Result<(), AppError> {
         let mut window = Window::new(1024, 768);
         
+        let gpu = Arc::new(
+            Mutex::new(
+                GraphicsChip::new()
+                    .expect("GraphicsChip initialisation failed")
+            )
+        );
+
         let mut renderer = Renderer::new();
     
         let lua = Lua::new();
     
-        BindGraphicsChip::bind(&lua, gpu)?;
+        BindGraphicsChip::bind(&lua, gpu.clone())?;
         BindInputs::bind(&lua, inputs)?;
 
         LuaContext::load_scipts(&lua)?;
