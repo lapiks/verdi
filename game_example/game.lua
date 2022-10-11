@@ -1,6 +1,6 @@
 function verdi.start()
     scene = graphics.newScene("./game_example/assets/tank.gltf")
-    --print(scene:getNumNodes())
+    print(scene:getNumNodes())
 end
 
 function verdi.update()

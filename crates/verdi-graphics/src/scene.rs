@@ -67,22 +67,23 @@ impl SceneRef {
     //     )
     // }
 
-    // pub fn get_len(&self) -> Option<u64> {
-    //     let scene = self.get_scene()?;
-    //     Some(scene.nodes.len() as u64)
-    // }
-    
+    pub fn get_len(&self) -> Option<u64> {
+        let gpu = self.gpu.lock().unwrap();
+        let scene = gpu.assets.get_scene(self.id).unwrap();
+        Some(scene.nodes.len() as u64)
+    }
+
 }
 
 impl UserData for SceneRef {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        // methods.add_method("getNumNodes", |_, scene, ()| {
-        //     Ok(scene.get_len())
-        // });
+        methods.add_method("getNumNodes", |_, scene, ()| {
+            Ok(scene.get_len())
+        });
 
-        // methods.add_method("getNode", |_, scene, index: usize| {
-        //     Ok(scene.get_node(index))
-        // });
+        methods.add_method("getNode", |_, scene, index: usize| {
+            Ok(scene.get_node(index))
+        });
 
         methods.add_method("getNode", |_, scene, index: usize| {
             Ok(scene.get_node(index))

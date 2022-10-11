@@ -16,7 +16,7 @@ use crate::{
 pub struct App;
 
 impl App {
-    pub fn run(inputs: &'static Mutex<Inputs>) -> Result<(), AppError> {
+    pub fn run() -> Result<(), AppError> {
         let mut window = Window::new(1024, 768);
         
         let gpu = Arc::new(
@@ -26,12 +26,18 @@ impl App {
             )
         );
 
+        let inputs = Arc::new(
+            Mutex::new(
+                Inputs::new()
+            )
+        );
+
         let mut renderer = Renderer::new();
     
         let lua = Lua::new();
     
         BindGraphicsChip::bind(&lua, gpu.clone())?;
-        BindInputs::bind(&lua, inputs)?;
+        BindInputs::bind(&lua, inputs.clone())?;
 
         LuaContext::load_scipts(&lua)?;
         LuaContext::call_boot(&lua)?;
