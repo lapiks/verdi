@@ -5,7 +5,7 @@ use rlua::{Lua, Result};
 pub struct LuaContext {}
 
 impl LuaContext {
-    pub fn load_scipts(lua: &Lua) -> Result<()> {
+    pub fn load_scripts(lua: &Lua) -> Result<()> {
         let script_code = LuaContext::load_script("./game_example/game.lua").unwrap();
         let boot_lua = LuaContext::load_script("./crates/verdi-app/src/boot.lua").unwrap();
         let run_lua = LuaContext::load_script("./crates/verdi-app/src/run.lua").unwrap();

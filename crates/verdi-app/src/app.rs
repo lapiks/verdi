@@ -39,7 +39,7 @@ impl App {
         BindGraphicsChip::bind(&lua, gpu.clone())?;
         BindInputs::bind(&lua, inputs.clone())?;
 
-        LuaContext::load_scipts(&lua)?;
+        LuaContext::load_scripts(&lua)?;
         LuaContext::call_boot(&lua)?;
 
         let event_loop = window.take_event_loop().expect("No event loop in the window");
