@@ -85,10 +85,6 @@ impl UserData for SceneRef {
             Ok(scene.get_node(index))
         });
 
-        methods.add_method("getNode", |_, scene, index: usize| {
-            Ok(scene.get_node(index))
-        });
-
         methods.add_method("draw", |_, scene, ()| {
             Ok(scene.draw())
         });
