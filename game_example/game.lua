@@ -10,6 +10,11 @@ end
 function verdi.draw()
     scene:draw()
 
+    -- for i = 0, scene:getNumNodes() do
+    --     local node = scene:getNode(i) 
+    --     node:draw()
+    -- end
+
     if input.getKeyDown("z") then
         print("z is down")
     end

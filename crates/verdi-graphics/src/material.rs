@@ -1,29 +1,38 @@
-use glium::{uniforms::{
-    UniformValue, 
-    Uniforms as GliumUniforms, 
-}, Display};
-use uuid::Uuid;
+use glium::{
+    uniforms::{
+        UniformValue, 
+        Uniforms as GliumUniforms, 
+    },
+    Display
+};
+
+use slotmap::{new_key_type, Key};
 
 use crate::{
-    assets::{AssetId, Assets},
+    assets::Assets,
     uniforms::{UniformId, Uniforms}, 
-    gpu_assets::{GpuAssets},
+    gpu_assets::{GpuAssets}, 
+    program::ProgramId,
 };
 
 const MAX_UNIFORMS: usize = 64;
 
+new_key_type! {
+    pub struct MaterialId;
+}
+
 pub struct Material {
-    program: AssetId,
+    program: ProgramId,
     uniforms: [Option<(&'static str, UniformId)>; MAX_UNIFORMS],
-    pub id: AssetId,
+    pub id: MaterialId,
 }
 
 impl Material {
-    pub fn new(program: AssetId) -> Self {
+    pub fn new(program: ProgramId) -> Self {
         Self {
             program,
             uniforms: [None; MAX_UNIFORMS],
-            id: Uuid::nil(),
+            id: MaterialId::null(),
         }
     }
 
@@ -36,7 +45,7 @@ impl Material {
         }
     }
 
-    pub fn get_ref<'a>(&self, uniforms: &'a Uniforms, gpu_assets: &'a GpuAssets) -> Option<MaterialRef<'a>> {
+    pub fn get_uniform_values<'a>(&self, uniforms: &'a Uniforms, gpu_assets: &'a GpuAssets) -> Option<UniformValues<'a>> {
         // construct uniform values from the material uniforms description 
         let mut uniform_values = [None; MAX_UNIFORMS];
         for (uniform_value, uniform_id) in uniform_values.iter_mut().zip(self.uniforms) {
@@ -56,7 +65,7 @@ impl Material {
 
         //let program = gpu_assets.get_program(self.program)?;
 
-        Some(MaterialRef { 
+        Some(UniformValues { 
             //program, 
             uniform_values 
         })
@@ -82,12 +91,23 @@ impl Material {
     }
 }
 
-pub struct MaterialRef<'a> {
+#[derive(Clone, Copy)]
+pub struct MaterialRef {
+    pub id: MaterialId,
+}
+
+impl MaterialRef {
+    pub fn new(id: MaterialId) -> Self{
+        Self { id }
+    }
+}
+
+pub struct UniformValues<'a> {
     //program: &'a GpuProgram,
     uniform_values: [Option<(&'static str, UniformValue<'a>)>; MAX_UNIFORMS],
 }
 
-impl<'material> GliumUniforms for MaterialRef<'material> {
+impl<'material> GliumUniforms for UniformValues<'material> {
     fn visit_values<'a, F>(&'a self, mut set_uniform: F)
     where
         F: FnMut(&str, UniformValue<'a>),

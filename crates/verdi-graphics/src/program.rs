@@ -1,24 +1,29 @@
 use glium::Display;
-use uuid::Uuid;
+use slotmap::{new_key_type, Key};
 
 use crate::{
-    shader::Shader, 
-    assets::{AssetId, Assets}, 
-    gpu_assets::{GpuAssets}
+    shader::ShaderId, 
+    assets::Assets, 
+    gpu_assets::GpuAssets, 
+    gpu_program::GpuProgram
 };
 
+new_key_type! {
+    pub struct ProgramId;
+}
+
 pub struct Program {
-    pub vs: AssetId,
-    pub fs: AssetId,
-    pub id: AssetId,
+    pub vs: ShaderId,
+    pub fs: ShaderId,
+    pub id: ProgramId,
 }
 
 impl Program {
-    pub fn new(vs: AssetId, fs: AssetId) -> Self {
+    pub fn new(vs: ShaderId, fs: ShaderId) -> Self {
         Self {
             vs,
             fs,
-            id: Uuid::nil(),
+            id: ProgramId::null(),
         }
     }
 
@@ -34,19 +39,13 @@ impl Program {
     }
 }
 
-pub struct GpuProgram {
-    pub gl: glium::Program
+#[derive(Clone, Copy)]
+pub struct ProgramRef {
+    pub id: ProgramId,
 }
 
-impl GpuProgram {
-    pub fn new(display: &glium::Display, vs: &Shader, fs: &Shader) -> Self {
-        Self {
-            gl: glium::Program::from_source(
-                display, 
-                vs.get_source(), 
-                fs.get_source(), 
-                None
-            ).unwrap()
-        } 
+impl ProgramRef {
+    pub fn new(id: ProgramId) -> Self{
+        Self { id }
     }
 }

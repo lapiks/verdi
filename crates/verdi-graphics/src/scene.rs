@@ -1,14 +1,16 @@
 use std::sync::{Mutex, Arc};
 
 use rlua::{UserData, UserDataMethods};
+use slotmap::{new_key_type, Key};
 
 use crate::{
     node::{Node, NodeRef}, 
-    assets::AssetId, 
     graphics_chip::GraphicsChip
 };
 
-pub type SceneId = AssetId;
+new_key_type! {
+    pub struct SceneId;
+}
 
 #[derive(Clone)]
 pub struct Scene {
@@ -20,7 +22,17 @@ impl Scene {
     pub fn new() -> Self {
         Self {
             nodes: Vec::new(),
-            id: uuid::Uuid::nil(),
+            id: SceneId::null(),
+        }
+    }
+
+    pub fn get_node(&self, index: u64) -> Option<&Node> {
+        self.nodes.get(index as usize)
+    }
+
+    pub fn draw(&self, gpu: Arc<Mutex<GraphicsChip>>) {
+        for node in self.nodes.iter() {
+            node.draw(gpu.clone());
         }
     }
 }
@@ -40,32 +52,15 @@ impl SceneRef {
     }
 
     pub fn draw(&self) {
-        self.gpu.lock().unwrap().draw(self.clone());
+        self.gpu.lock().unwrap().draw(self.id);
     }
 
     pub fn get_node(&self, index: usize) -> NodeRef {
-        let gpu = self.gpu.lock().unwrap();
-        let scene = gpu.assets.get_scene(self.id).unwrap();
-        let node = scene.nodes.get(index).unwrap();
         NodeRef {
             scene: self.clone(),
             node_index: index as u64,
         }
     }
-
-    // pub fn get_node(&self, index: usize) -> Option<NodeRef> {
-    //     let scene = self.get_scene()?;
-    //     scene.nodes.get(index)
-    //         .and_then(|node| {
-    //             Some(
-    //                 NodeRef::new(
-    //                     *self,
-    //                     index as u64
-    //                 )
-    //             )
-    //         }
-    //     )
-    // }
 
     pub fn get_len(&self) -> Option<u64> {
         let gpu = self.gpu.lock().unwrap();

@@ -18,7 +18,7 @@ impl GpuImage {
         ).unwrap();
 
         Self {
-            gl: texture
+            gl: texture,
         }
     }
 }

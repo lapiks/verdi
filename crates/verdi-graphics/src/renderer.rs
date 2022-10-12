@@ -24,15 +24,30 @@ impl Renderer {
     pub fn prepare_assets(&mut self, display: &Display, gpu: &GraphicsChip) {
         // à rendre générique
         for render_pass in gpu.pipeline.render_passes.iter() {
-            if let Some(mesh_ref) = render_pass.node.mesh {
-                let mesh = gpu.assets.get_mesh(mesh_ref.id).expect("Missing mesh asset");
+            if let Some(mesh_id) = render_pass.node.mesh {
+                let mesh = gpu.assets
+                    .get_mesh(mesh_id)
+                    .expect("Missing mesh asset");
+
                 // construct gpu primitives
-                for primitive in mesh.primitives.iter() {
-                    primitive.prepare_rendering(display, &mut self.gpu_assets);
+                for primitive_id in mesh.primitives.iter() {
+                    let primitive = gpu.assets
+                        .get_primitive(*primitive_id)
+                        .expect("Missing primitive asset");
+
+                    primitive.prepare_rendering(
+                        display, 
+                        &mut self.gpu_assets
+                    );
 
                     // construct gpu objects needed by the material
                     if let Some(material) = gpu.assets.get_material(primitive.material) {
-                        material.prepare_rendering(display, &gpu.uniforms, &gpu.assets, &mut self.gpu_assets);
+                        material.prepare_rendering(
+                            display,
+                            &gpu.uniforms, 
+                            &gpu.assets,
+                            &mut self.gpu_assets
+                        );
                     }             
                 }   
             }
@@ -41,7 +56,11 @@ impl Renderer {
         // construct gpu programs
         if self.gpu_assets.get_program(gpu.globals.gouraud).is_none() {
             if let Some(program) = gpu.assets.get_program(gpu.globals.gouraud) {
-                program.prepare_rendering(display, &gpu.assets, &mut self.gpu_assets)
+                program.prepare_rendering(
+                    display, 
+                    &gpu.assets, 
+                    &mut self.gpu_assets
+                )
             }   
         }
     }
@@ -133,15 +152,31 @@ impl Renderer {
                 .get_mat4_mut(gpu.pipeline.model_matrix)
                 .expect("Model matrix uniform missing") = model_matrix;
 
-            let mesh_ref = render_pass.node.mesh.unwrap();
-            let mesh = gpu.assets.get_mesh(mesh_ref.id).expect("Mesh asset not found");
+            let mesh_id = render_pass.node.mesh.unwrap();
+            let mesh = gpu.assets
+                .get_mesh(mesh_id)
+                .expect("Mesh asset not found");
 
-            for primitive in mesh.primitives.iter() {
-                let gpu_primitive = self.gpu_assets.get_primitive(primitive.id).expect("Gpu primitive not found");
-                let material = gpu.assets.get_material(primitive.material).expect("Material not found");
-                let material_ref = material.get_ref(&gpu.uniforms, &self.gpu_assets).expect("Unable to create MaterialRef from uniforms");
+            for primitive_id in mesh.primitives.iter() {
+                let primitive = gpu.assets
+                    .get_primitive(*primitive_id)
+                    .expect("Primitive asset not found");
 
-                let program = self.gpu_assets.get_program(gpu.globals.gouraud).expect("Gouraud program not found");
+                let gpu_primitive = self.gpu_assets
+                    .get_primitive(*primitive_id)
+                    .expect("Gpu primitive not found");
+
+                let material = gpu.assets
+                    .get_material(primitive.material)
+                    .expect("Material not found");
+
+                let uniform_values = material
+                    .get_uniform_values(&gpu.uniforms, &self.gpu_assets)
+                    .expect("Unable to generate uniform values");
+
+                let program = self.gpu_assets
+                    .get_program(gpu.globals.gouraud)
+                    .expect("Gouraud program not found");
 
                 let vertex_buffer = &gpu_primitive.vertex_buffer;
 
@@ -160,7 +195,7 @@ impl Renderer {
                         vertex_buffer,
                         index_buffer,
                         &program.gl, 
-                        &material_ref,
+                        &uniform_values,
                         &draw_params
                     ).unwrap();
                 }
@@ -169,7 +204,7 @@ impl Renderer {
                         vertex_buffer,
                         glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
                         &program.gl, 
-                        &material_ref,
+                        &uniform_values,
                         &draw_params
                     ).unwrap();
                 }

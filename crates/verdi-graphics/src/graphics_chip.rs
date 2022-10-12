@@ -1,13 +1,14 @@
 use crate::{
     vertex::Vertex, 
     render_pass::RenderPass, 
-    image::{Image, ImageRef}, 
+    image::{Image, ImageRef, ImageId}, 
     assets::Assets, 
-    scene::{Scene, SceneRef}, 
+    scene::{Scene, SceneId}, 
     prelude::GlobalShaders, 
     render_pipeline::RenderPipeline, 
     uniforms::Uniforms, 
-    gltf_loader::{GltfError, GltfLoader}
+    gltf_loader::{GltfError, GltfLoader}, 
+    node::Node
 };
 
 use image::ImageError;
@@ -115,7 +116,7 @@ impl GraphicsChip {
         };
     }
 
-    pub fn new_image(&mut self, path: &String) -> Result<ImageRef, ImageError> {
+    pub fn new_image(&mut self, path: &String) -> Result<ImageId, ImageError> {
         let image = Image::new(path)?;
 
         Ok(self.assets.add_texture(image))
@@ -130,25 +131,38 @@ impl GraphicsChip {
         };
     }
 
-    pub fn draw(&mut self, scene_ref: SceneRef) {
-        let scene = self.assets.get_scene(scene_ref.id).unwrap(); // unwrap !!
+    pub fn draw(&mut self, scene_id: SceneId) {
+        let scene = self.assets.get_scene(scene_id).unwrap();
         for node in scene.nodes.iter() {
             if node.mesh.is_none() {
                 continue;
             }
-
+    
             let render_pass = RenderPass::new(
                 node.clone(),
                 PrimitiveType::Triangles
             );
-
+    
             self.pipeline.render_passes.push(render_pass);
         }
     }
 
-    pub fn new_scene(&mut self, path: &String) -> Result<&Scene, GltfError>{
+    pub fn draw_node(&mut self, node: &Node) {
+        if node.mesh.is_none() {
+            return;
+        }
+
+        let render_pass = RenderPass::new(
+            node.clone(),
+            PrimitiveType::Triangles
+        );
+
+        self.pipeline.render_passes.push(render_pass);
+    }
+
+    pub fn new_scene(&mut self, path: &String) -> Result<SceneId, GltfError>{
         let scene = GltfLoader::load(path, self)?;
-        let id = self.assets.add_scene(scene);
-        Ok(self.assets.get_scene(id).unwrap())
+
+        Ok(self.assets.add_scene(scene))
     }
 }

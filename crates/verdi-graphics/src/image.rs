@@ -2,20 +2,24 @@
 use glium::Display;
 use image::{io::Reader as ImageReader, RgbaImage, ImageError};
 use rlua::UserData;
-use uuid::Uuid;
+use slotmap::{new_key_type, Key};
 
 use crate::{
-    assets::{AssetId, AssetState}, 
+    assets::AssetState, 
     gpu_assets::GpuAssets, 
     gpu_image::GpuImage
 };
+
+new_key_type! {
+    pub struct ImageId;
+}
 
 pub struct Image {
     width: u32,
     height: u32,
     data: RgbaImage,
     state: AssetState,
-    pub id: AssetId,
+    pub id: ImageId,
 }
 
 impl Image {
@@ -30,7 +34,7 @@ impl Image {
             height: dim.1,
             data: rgba8_img,
             state: AssetState::Created,
-            id: Uuid::nil(),
+            id: ImageId::null(),
         })
     }
 
@@ -49,7 +53,7 @@ impl Image {
             height: dim.1,
             data: rgba8_img,
             state: AssetState::Created,
-            id: Uuid::nil(),
+            id: ImageId::null(),
         })
     }
 
@@ -79,11 +83,11 @@ impl Image {
 
 #[derive(Clone, Copy)]
 pub struct ImageRef {
-    pub id: AssetId,
+    pub id: ImageId,
 }
 
 impl ImageRef {
-    pub fn new(id: AssetId) -> Self{
+    pub fn new(id: ImageId) -> Self{
         Self { id }
     }
 }

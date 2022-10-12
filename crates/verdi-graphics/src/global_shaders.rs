@@ -1,12 +1,12 @@
 use crate::{
-    assets::{AssetId, Assets}, 
+    assets::Assets, 
     shader::Shader, 
-    program::Program, 
-    render_pipeline::RenderPipeline
+    program::{Program, ProgramId}, 
+    render_pipeline::RenderPipeline, 
 };
 
 pub struct GlobalShaders {
-    pub gouraud: AssetId,
+    pub gouraud: ProgramId,
 }
 
 impl GlobalShaders {

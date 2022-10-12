@@ -5,17 +5,18 @@ use thiserror::Error;
 use verdi_math::Mat4;
 
 use crate::{
-    mesh::{Primitive, Mesh}, 
+    mesh::Mesh, 
     graphics_chip::PrimitiveType, 
     image::Image, 
     uniforms::{UniformId, TextureUniform}, 
     prelude::GraphicsChip, 
-    material::Material, 
+    material::{Material, MaterialId}, 
     node::Node, 
     transform::Transform, 
-    assets::AssetId, 
     vertex::Vertex, 
-    scene::Scene};
+    scene::Scene, 
+    primitive::Primitive
+};
 
 #[derive(Error, Debug)]
 pub enum GltfError {
@@ -39,7 +40,7 @@ impl GltfLoader {
 
         let mut texture_uniforms = vec![];
         for gltf_texture in gltf.textures() {
-            let image_ref = gpu.assets.add_texture(
+            let image_id = gpu.assets.add_texture(
                 GltfLoader::load_texture(
                     gltf_texture, 
                     &buffers
@@ -48,7 +49,7 @@ impl GltfLoader {
 
             texture_uniforms.push(
                 gpu.uniforms.add_texture(
-                    TextureUniform::new(image_ref.id)
+                    TextureUniform::new(image_id)
                 )
             );
         }
@@ -68,13 +69,16 @@ impl GltfLoader {
 
         let mut meshes = vec![];
         for gltf_mesh in gltf.meshes() {
+            let mesh = GltfLoader::load_mesh(
+                gltf_mesh, 
+                &buffers, 
+                &materials,
+                gpu
+            )?;
+            
             meshes.push(
                 gpu.assets.add_mesh(
-                    GltfLoader::load_mesh(
-                        gltf_mesh, 
-                        &buffers, 
-                        &materials
-                    )?
+                    mesh 
                 )
             );
         }
@@ -99,67 +103,78 @@ impl GltfLoader {
         Ok(scene)
     }
 
-    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>, materials: &Vec<AssetId>) -> Result<Mesh, GltfError> {
+    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>, materials: &Vec<MaterialId>, gpu: &mut GraphicsChip) -> Result<Mesh, GltfError> {
         let mut mesh = Mesh::new();
         for gltf_primitive in gltf_mesh.primitives() {
-            let reader = gltf_primitive.reader(|buffer| Some(&buffers[buffer.index()]));
-
-            let vertex_count = reader.read_positions().unwrap().size_hint();
-            let mut vertex_buffer:Vec<Vertex> = Vec::new();
-            vertex_buffer.resize(vertex_count.0, Vertex::default());
-
-            let mut i = 0;
-            if let Some(positions) = reader.read_positions() {
-                for pos in positions {
-                    vertex_buffer[i].position = pos;
-                    i += 1;
-                }
-            }
-
-            let mut i = 0;
-            if let Some(normals) = reader.read_normals() {
-                for normal in normals {
-                    vertex_buffer[i].normal = normal;
-                    i += 1;
-                }
-            }
-
-            let mut i = 0;
-            if let Some(colors) = reader.read_colors(0) {
-                for color in colors.into_rgba_f32() {
-                    vertex_buffer[i].color = color;
-                    i += 1;
-                }
-            }
-
-            let mut i = 0;
-            if let Some(uvs) = reader.read_tex_coords(0) {
-                for uv in uvs.into_f32() {
-                    vertex_buffer[i].uv = uv;
-                    i += 1;
-                }
-            }
-
-            let mut index_buffer = None;
-            if let Some(indices) = reader.read_indices() {
-                index_buffer = Some(indices.into_u32().collect());
-            };
-
-            let material_id = gltf_primitive.material().index()
-                .and_then(|i| materials.get(i).cloned()).unwrap(); // unwrap ??
-
-            let primitive = Primitive {
-                vertex_buffer,
-                index_buffer,
-                primitive_type: PrimitiveType::Triangles,
-                material: material_id,
-                id: uuid::Uuid::new_v4(),
-            };
-            
-            mesh.add_primitive(primitive);
+            mesh.add_primitive(
+                gpu.assets.add_primitive(
+                    GltfLoader::load_primitive(
+                        gltf_primitive, 
+                        buffers, 
+                        materials
+                    )?
+                )
+            );
         }
 
         Ok(mesh)
+    }
+
+    fn load_primitive(gltf_primitive: gltf::Primitive, buffers: &Vec<Data>, materials: &Vec<MaterialId>) -> Result<Primitive, GltfError> {
+        let reader = gltf_primitive.reader(|buffer| Some(&buffers[buffer.index()]));
+
+        let vertex_count = reader.read_positions().unwrap().size_hint();
+        let mut vertex_buffer:Vec<Vertex> = Vec::new();
+        vertex_buffer.resize(vertex_count.0, Vertex::default());
+
+        let mut i = 0;
+        if let Some(positions) = reader.read_positions() {
+            for pos in positions {
+                vertex_buffer[i].position = pos;
+                i += 1;
+            }
+        }
+
+        let mut i = 0;
+        if let Some(normals) = reader.read_normals() {
+            for normal in normals {
+                vertex_buffer[i].normal = normal;
+                i += 1;
+            }
+        }
+
+        let mut i = 0;
+        if let Some(colors) = reader.read_colors(0) {
+            for color in colors.into_rgba_f32() {
+                vertex_buffer[i].color = color;
+                i += 1;
+            }
+        }
+
+        let mut i = 0;
+        if let Some(uvs) = reader.read_tex_coords(0) {
+            for uv in uvs.into_f32() {
+                vertex_buffer[i].uv = uv;
+                i += 1;
+            }
+        }
+
+        let mut index_buffer = None;
+        if let Some(indices) = reader.read_indices() {
+            index_buffer = Some(indices.into_u32().collect());
+        };
+
+        let material_id = gltf_primitive.material().index()
+            .and_then(|i| materials.get(i).cloned()).unwrap(); // unwrap ??
+
+        Ok(
+            Primitive::new(
+                vertex_buffer,
+                index_buffer,
+                PrimitiveType::Triangles,
+                material_id
+            )
+        )
     }
 
     fn load_texture(gltf_texture: gltf::Texture, buffers: &Vec<Data>) -> Result<Image, ImageError> {

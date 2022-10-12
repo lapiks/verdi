@@ -43,7 +43,8 @@ impl<'lua> BindGraphicsChip {
     }
 
     fn new_image(gpu: Arc<Mutex<GraphicsChip>>, path: &String) -> ImageRef {
-        gpu.lock().unwrap().new_image(path).unwrap()
+        let image_id = gpu.lock().unwrap().new_image(path).unwrap();
+        ImageRef::new(image_id)
     }
 
     // fn draw(gpu: &Mutex<GraphicsChip>, scene: &Scene) {
@@ -52,8 +53,8 @@ impl<'lua> BindGraphicsChip {
 
     fn new_scene(gpu: Arc<Mutex<GraphicsChip>>, path: &String) -> SceneRef {
         let mut gpu_guard = gpu.lock().unwrap();
-        let scene = gpu_guard.new_scene(path).unwrap();
-        SceneRef::new(gpu.clone(), scene.id)
+        let scene_id = gpu_guard.new_scene(path).unwrap();
+        SceneRef::new(gpu.clone(), scene_id)
     }
 
     pub fn bind(lua: &Lua, gpu: Arc<Mutex<GraphicsChip>>) -> Result<()> {
