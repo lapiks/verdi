@@ -3,6 +3,7 @@ use glium::{
     Frame, 
     Display
 };
+use verdi_math::Mat4;
 
 use crate::{
     camera::Camera,
@@ -130,17 +131,12 @@ impl Renderer {
         // the direction of the light
         let light = [-1.0, 0.4, 0.9f32];
 
-        // view matrix
-        let view_matrix = Camera::view_matrix(&[-5.0, 2.5, -10.0], &[0.0, -0.1, 1.0], &[0.0, 1.0, 0.0]);
-        *gpu.uniforms
-            .get_mat4_mut(gpu.pipeline.view_matrix)
-            .expect("View matrix uniform missing") = view_matrix;
-
         // perspective matrix
         let perspective_matrix = Camera::perspective_matrix(
             target.get_dimensions().0, 
             target.get_dimensions().1
         );
+
         *gpu.uniforms
             .get_mat4_mut(gpu.pipeline.perspective_matrix)
             .expect("Perspective matrix uniform missing") = perspective_matrix;
@@ -210,5 +206,11 @@ impl Renderer {
                 }
             }
         }
+    }
+
+    pub fn post_render(&self, gpu: &mut GraphicsChip) {
+        *gpu.uniforms
+            .get_mat4_mut(gpu.pipeline.view_matrix)
+            .expect("View matrix uniform missing") = Mat4::IDENTITY;
     }
 }

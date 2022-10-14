@@ -112,7 +112,14 @@ impl<'lua> BindGraphicsChip {
             }
             {
                 let gpu = gpu.clone();
-                let func = lua_ctx.create_function_mut(move |_, v: LuaVec3| Ok(BindGraphicsChip::translate(gpu.clone(), v.into())))?;
+                let func = lua_ctx.create_function_mut(
+                    move |_, (x, y, z): (f32, f32, f32)| Ok(
+                        BindGraphicsChip::translate(
+                            gpu.clone(),
+                            Vec3::new(x, y, z)
+                        )
+                    )
+                )?;
                 module_table.set("translate", func)?;
             }
 

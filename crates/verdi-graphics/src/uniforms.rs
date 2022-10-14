@@ -103,6 +103,10 @@ impl Uniforms {
         UniformId::Float(id)
     }
 
+    pub fn get_float(&self, id: FloatUniformId) -> Option<&f32> {
+        self.floats.get(id)
+    }
+
     pub fn get_float_mut(&mut self, id: FloatUniformId) -> Option<&mut f32> {
         self.floats.get_mut(id)
     }
@@ -113,6 +117,10 @@ impl Uniforms {
         UniformId::Vec2(id)
     }
 
+    pub fn get_vec2(&self, id: Vec2UniformId) -> Option<&Vec2> {
+        self.vec2s.get(id)
+    }
+
     pub fn get_vec2_mut(&mut self, id: Vec2UniformId) -> Option<&mut Vec2> {
         self.vec2s.get_mut(id)
     }
@@ -121,6 +129,18 @@ impl Uniforms {
         let id = self.mat4s.insert(value);
 
         UniformId::Mat4(id)
+    }
+
+    pub fn get_mat4(&self, id: UniformId) -> Option<&Mat4> {
+        match id {
+            UniformId::Mat4(id) => {
+                self.mat4s.get(id)
+            }
+            _ => {
+                // wrong type
+                None
+            }
+        }
     }
 
     pub fn get_mat4_mut(&mut self, id: UniformId) -> Option<&mut Mat4> {

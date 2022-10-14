@@ -71,6 +71,8 @@ impl App {
             // draw game
             renderer.render(&mut target, &mut gpu.lock().unwrap());
 
+            renderer.post_render(&mut gpu.lock().unwrap());
+
             // draw GUI
             gui.run(window.get_display());
             gui.render(window.get_display(), &mut target);

@@ -1,6 +1,9 @@
 function verdi.start()
     scene = graphics.newScene("./game_example/assets/tank.gltf")
     print(scene:getNumNodes())
+
+    x = 5
+    y = 10
 end
 
 function verdi.update()
@@ -8,15 +11,30 @@ function verdi.update()
 end
 
 function verdi.draw()
+    graphics.translate(x, -2.5, y)
+
     scene:draw()
 
     -- for i = 0, scene:getNumNodes() do
     --     local node = scene:getNode(i) 
     --     node:draw()
     -- end
+    
 
     if input.getKeyDown("z") then
-        print("z is down")
+        y = y - 1
+    end
+
+    if input.getKeyDown("s") then
+        y = y + 1
+    end
+
+    if input.getKeyDown("q") then
+        x = x + 1
+    end
+
+    if input.getKeyDown("d") then
+        x = x - 1
     end
 
     if input.getButtonDown("l") then
