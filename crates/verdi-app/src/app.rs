@@ -10,7 +10,7 @@ use crate::{
     error::AppError, 
     lua_context::LuaContext, 
     inputs::Inputs, 
-    bind_inputs::BindInputs
+    bind_inputs::BindInputs, time_step::{self, TimeStep}
 };
 
 pub struct App;
@@ -48,9 +48,12 @@ impl App {
         let mut gui = Gui::new(egui_glium);
 
         let mut last_error: String = String::new();
+        let mut time_step = TimeStep::new();
     
         event_loop.run(move |ev, _, control_flow| {
-            if let Err(err) = LuaContext::call_run(&lua) {
+            let delta_time = time_step.delta();
+            
+            if let Err(err) = LuaContext::call_run(&lua, delta_time) {
                 let current_error = err.to_string();
                 if last_error != current_error {
                     println!("{}", err);

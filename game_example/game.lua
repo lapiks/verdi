@@ -4,13 +4,15 @@ function verdi.start()
 
     x = 5
     y = 10
+
+    speed = 5
 end
 
 function verdi.update()
 
 end
 
-function verdi.draw()
+function verdi.draw(deltaTime)
     graphics.translate(x, -2.5, y)
 
     scene:draw()
@@ -20,21 +22,20 @@ function verdi.draw()
     --     node:draw()
     -- end
     
-
     if input.getKeyDown("z") then
-        y = y - 1
+        y = y - speed * deltaTime
     end
 
     if input.getKeyDown("s") then
-        y = y + 1
+        y = y + speed * deltaTime
     end
 
     if input.getKeyDown("q") then
-        x = x + 1
+        x = x + speed * deltaTime
     end
 
     if input.getKeyDown("d") then
-        x = x - 1
+        x = x - speed * deltaTime
     end
 
     if input.getButtonDown("l") then

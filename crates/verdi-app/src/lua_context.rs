@@ -1,6 +1,6 @@
 use std::{path::Path, fs::File, io::Read};
 
-use rlua::{Lua, Result};
+use rlua::{Lua, Result, Function, Table};
 
 pub struct LuaContext {}
 
@@ -43,10 +43,14 @@ impl LuaContext {
         Ok(())
     }
 
-    pub fn call_run(lua: &Lua) -> Result<()> {
+    pub fn call_run(lua: &Lua, delta_time: f32) -> Result<()> {
         lua.context(|lua_ctx| {
+            let globals = lua_ctx.globals();
+            let verdi_table: Table = globals.get("verdi")?;
+
             // run callbacks
-            lua_ctx.load("verdi.run()").exec()?;
+            let run_func: Function = verdi_table.get("run")?;
+            run_func.call::<_,()>(delta_time)?;
 
             Ok(())
         })?;

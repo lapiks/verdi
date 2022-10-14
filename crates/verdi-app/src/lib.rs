@@ -3,6 +3,7 @@ mod error;
 mod lua_context;
 mod inputs;
 mod bind_inputs;
+mod time_step;
 
 #[allow(missing_docs)]
 pub mod prelude {
