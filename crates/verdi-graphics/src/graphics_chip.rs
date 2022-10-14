@@ -165,4 +165,12 @@ impl GraphicsChip {
 
         Ok(self.assets.add_scene(scene))
     }
+
+    pub fn translate(&mut self, v: Vec3) {
+        *self.uniforms
+            .get_mat4_mut(
+                self.pipeline.view_matrix
+            ).unwrap() 
+                *= Mat4::from_translation(v);
+    }
 }

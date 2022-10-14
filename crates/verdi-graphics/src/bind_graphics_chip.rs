@@ -47,14 +47,14 @@ impl<'lua> BindGraphicsChip {
         ImageRef::new(image_id)
     }
 
-    // fn draw(gpu: &Mutex<GraphicsChip>, scene: &Scene) {
-    //     gpu.lock().unwrap().draw(scene)
-    // }
-
     fn new_scene(gpu: Arc<Mutex<GraphicsChip>>, path: &String) -> SceneRef {
         let mut gpu_guard = gpu.lock().unwrap();
         let scene_id = gpu_guard.new_scene(path).unwrap();
         SceneRef::new(gpu.clone(), scene_id)
+    }
+
+    fn translate(gpu: Arc<Mutex<GraphicsChip>>, v: Vec3) {
+        gpu.lock().unwrap().translate(v);
     }
 
     pub fn bind(lua: &Lua, gpu: Arc<Mutex<GraphicsChip>>) -> Result<()> {
@@ -110,10 +110,11 @@ impl<'lua> BindGraphicsChip {
                 let func = lua_ctx.create_function_mut(move |_, path: String| Ok(BindGraphicsChip::new_scene(gpu.clone(), &path)))?;
                 module_table.set("newScene", func)?;
             }
-            // {
-            //     let func = lua_ctx.create_function_mut(|_, scene: Scene| Ok(BindGraphicsChip::draw(gpu, &scene)))?;
-            //     module_table.set("draw", func)?;
-            // }
+            {
+                let gpu = gpu.clone();
+                let func = lua_ctx.create_function_mut(move |_, v: LuaVec3| Ok(BindGraphicsChip::translate(gpu.clone(), v.into())))?;
+                module_table.set("translate", func)?;
+            }
 
             // add table to globals
             globals.set("graphics", module_table)?;
