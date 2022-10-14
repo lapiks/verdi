@@ -12,10 +12,11 @@ impl Gui {
         }
     }
 
-    pub fn run(&mut self, display: &Display) {
+    pub fn run(&mut self, display: &Display, fps: u32) {
         self.egui_glium.run(display, |egui_ctx| {
             egui::SidePanel::left("my_side_panel").show(egui_ctx, |ui| {
-                ui.label("Hello world!");
+                ui.label("fps ");
+                ui.label(fps.to_string());
 
                 if ui.button("click me").clicked() {
 

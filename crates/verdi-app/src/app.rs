@@ -51,8 +51,8 @@ impl App {
         let mut time_step = TimeStep::new();
     
         event_loop.run(move |ev, _, control_flow| {
-            let delta_time = time_step.delta();
-            
+            let delta_time = time_step.tick();
+
             if let Err(err) = LuaContext::call_run(&lua, delta_time) {
                 let current_error = err.to_string();
                 if last_error != current_error {
@@ -77,7 +77,8 @@ impl App {
             renderer.post_render(&mut gpu.lock().unwrap());
 
             // draw GUI
-            gui.run(window.get_display());
+            gui.run(window.get_display(), time_step.get_fps());
+            
             gui.render(window.get_display(), &mut target);
 
             // ends frame
