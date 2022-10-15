@@ -61,15 +61,14 @@ impl App {
                 }
             }
             
-            // request a new frame
-            let mut target = window.get_display().draw();
-            target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
-
             // prepare assets for rendering
             renderer.prepare_assets(window.get_display(), &gpu.lock().unwrap());
 
             // prepare renderer for rendering
             //renderer.prepare_rendering(&target, &mut gpu.lock().unwrap());
+
+            // request a new frame
+            let mut target = window.get_display().draw();
             
             // draw game
             renderer.render(&mut target, &mut gpu.lock().unwrap());

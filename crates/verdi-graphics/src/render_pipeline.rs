@@ -1,4 +1,4 @@
-use verdi_math::Mat4;
+use verdi_math::{Mat4, Vec4};
 
 use crate::{
     uniforms::{UniformId, Uniforms}, 
@@ -10,6 +10,7 @@ pub struct RenderPipeline {
     pub view_matrix: UniformId,
     pub perspective_matrix: UniformId,
     pub render_passes: Vec<RenderPass>,
+    pub clear_color: Vec4,
 }
 
 impl RenderPipeline {
@@ -19,6 +20,7 @@ impl RenderPipeline {
             view_matrix: uniforms.add_mat4(Mat4::IDENTITY),
             perspective_matrix: uniforms.add_mat4(Mat4::IDENTITY),
             render_passes: Vec::new(),
+            clear_color: Vec4::new(0.0, 0.0, 0.0, 1.0),
         }
         
     }

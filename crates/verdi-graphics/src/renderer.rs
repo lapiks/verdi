@@ -128,6 +128,17 @@ impl Renderer {
     // }
 
     pub fn render(&mut self, target: &mut Frame, gpu: &mut GraphicsChip) {
+        let clear_color = gpu.pipeline.clear_color;
+        target.clear_color_and_depth(
+            (
+                clear_color.x, 
+                clear_color.y, 
+                clear_color.z, 
+                clear_color.w
+            ),
+            1.0
+        );
+        
         // the direction of the light
         let light = [-1.0, 0.4, 0.9f32];
 

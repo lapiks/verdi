@@ -52,6 +52,10 @@ impl<'lua> BindGraphicsChip {
         let scene_id = gpu_guard.new_scene(path).unwrap();
         SceneRef::new(gpu.clone(), scene_id)
     }
+    
+    fn set_clear_color(gpu: Arc<Mutex<GraphicsChip>>, color: Vec4) {
+        gpu.lock().unwrap().set_clear_color(color);
+    }
 
     fn translate(gpu: Arc<Mutex<GraphicsChip>>, v: Vec3) {
         gpu.lock().unwrap().translate(v);
@@ -113,6 +117,11 @@ impl<'lua> BindGraphicsChip {
                 let gpu = gpu.clone();
                 let func = lua_ctx.create_function_mut(move |_, path: String| Ok(BindGraphicsChip::new_scene(gpu.clone(), &path)))?;
                 module_table.set("newScene", func)?;
+            }
+            {
+                let gpu = gpu.clone();
+                let func = lua_ctx.create_function_mut(move |_, (r, g, b, a): (f32, f32, f32, f32)| Ok(BindGraphicsChip::set_clear_color(gpu.clone(), Vec4::new(r, g, b, a))))?;
+                module_table.set("setClearColor", func)?;
             }
             {
                 let gpu = gpu.clone();

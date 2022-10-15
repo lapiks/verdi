@@ -166,6 +166,10 @@ impl GraphicsChip {
         Ok(self.assets.add_scene(scene))
     }
 
+    pub fn set_clear_color(&mut self, color: Vec4) {
+        self.pipeline.clear_color = color;
+    }
+
     pub fn translate(&mut self, v: Vec3) {
         *self.uniforms
             .get_mat4_mut(
