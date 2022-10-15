@@ -15,6 +15,11 @@ impl<'lua> BindInputs {
         inputs.lock().unwrap().get_button_down(MouseButton::from(button.clone()))
     }
 
+    fn get_mouse_delta(inputs: Arc<Mutex<Inputs>>) -> (f32, f32) {
+        let delta = inputs.lock().unwrap().get_mouse_delta();
+        (delta.x, delta.y)
+    }
+
     pub fn bind(lua: &Lua, inputs: Arc<Mutex<Inputs>>) -> Result<()> {
         lua.context(move |lua_ctx| {
             let globals = lua_ctx.globals();
@@ -32,6 +37,11 @@ impl<'lua> BindInputs {
                 let inputs = inputs.clone();
                 let func = lua_ctx.create_function(move |_, button: String| Ok(BindInputs::get_button_down(inputs.clone(), &button)))?;
                 module_table.set("getButtonDown", func)?;
+            }
+            {
+                let inputs = inputs.clone();
+                let func = lua_ctx.create_function(move |_, ()| Ok(BindInputs::get_mouse_delta(inputs.clone())))?;
+                module_table.set("getMouseDelta", func)?;
             }
 
             // add table to globals

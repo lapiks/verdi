@@ -99,13 +99,14 @@ impl App {
                         *control_flow = glutin::event_loop::ControlFlow::Exit;
                     }
 
-                    // relays events to the gui
-                    if gui.on_event(&event) {
-                        
+                    // relays event to the gui
+                    if gui.on_event(&event) == false {
+                        // relays event to the game inputs
+                        inputs.lock().unwrap().process_win_events(&event)
                     }
-                    else {
-                        inputs.lock().unwrap().process(&event)
-                    }
+                },
+                glutin::event::Event::DeviceEvent { event, .. } => {
+                    inputs.lock().unwrap().process_device_events(&event);
                 },
                 _ => (),
             }

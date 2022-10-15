@@ -57,6 +57,10 @@ impl<'lua> BindGraphicsChip {
         gpu.lock().unwrap().translate(v);
     }
 
+    fn rotate(gpu: Arc<Mutex<GraphicsChip>>, angle: f32, axis: Vec3) {
+        gpu.lock().unwrap().rotate(angle, axis);
+    }
+
     pub fn bind(lua: &Lua, gpu: Arc<Mutex<GraphicsChip>>) -> Result<()> {
         lua.context(move |lua_ctx| {
             let globals = lua_ctx.globals();
@@ -121,6 +125,19 @@ impl<'lua> BindGraphicsChip {
                     )
                 )?;
                 module_table.set("translate", func)?;
+            }
+            {
+                let gpu = gpu.clone();
+                let func = lua_ctx.create_function_mut(
+                    move |_, (angle, x, y, z): (f32, f32, f32, f32)| Ok(
+                        BindGraphicsChip::rotate(
+                            gpu.clone(),
+                            angle,
+                            Vec3::new(x, y, z)
+                        )
+                    )
+                )?;
+                module_table.set("rotate", func)?;
             }
 
             // add table to globals

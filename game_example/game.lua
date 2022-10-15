@@ -5,6 +5,9 @@ function verdi.start()
     x = 5
     y = 10
 
+    camPitch = 0
+    camYaw = 0
+
     speed = 5
 end
 
@@ -13,7 +16,10 @@ function verdi.update()
 end
 
 function verdi.draw(deltaTime)
+    --graphics.rotate(camPitch, 1, 0, 0)
+    graphics.rotate(camYaw, 0, 1, 0)
     graphics.translate(x, -2.5, y)
+
 
     scene:draw()
 
@@ -38,8 +44,12 @@ function verdi.draw(deltaTime)
         x = x - speed * deltaTime
     end
 
+    local mouseDelta = {input.getMouseDelta()}
+    camYaw = camYaw + mouseDelta[1] * deltaTime
+    camPitch = camPitch + mouseDelta[2] * deltaTime
+
     if input.getButtonDown("l") then
-        print("left mouse button is down")
+
     end
 
     if input.getKeyDown(" ") then

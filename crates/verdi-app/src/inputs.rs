@@ -8,6 +8,7 @@ use glium::glutin::{
     }
 };
 use rlua::UserData;
+use verdi_math::Vec2;
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]
 pub enum Key {
@@ -347,6 +348,7 @@ impl From<GlutinMouseButton> for MouseButton {
 pub struct Inputs {
     keys: HashMap<Key, bool>,
     mouse: HashMap<MouseButton, bool>,
+    mouse_delta: Vec2,
 }
 
 impl Inputs {
@@ -354,10 +356,11 @@ impl Inputs {
         Self {
             keys: HashMap::default(),
             mouse: HashMap::default(),
+            mouse_delta: Vec2::ZERO,
         }
     } 
 
-    pub fn process(&mut self, event: &glutin::event::WindowEvent) {
+    pub fn process_win_events(&mut self, event: &glutin::event::WindowEvent) {
         match *event {
             glutin::event::WindowEvent::KeyboardInput { input, .. } => {
                 let pressed = input.state == glutin::event::ElementState::Pressed;
@@ -371,16 +374,29 @@ impl Inputs {
             glutin::event::WindowEvent::MouseInput { button, state, .. } => {
                 let pressed = state == glutin::event::ElementState::Pressed;
                 self.mouse.insert(MouseButton::from(button), pressed);
-            }
+            },
             _ => return,
         };
     }
 
-    pub fn get_key_down(&mut self, key: Key) -> bool {
+    pub fn process_device_events(&mut self, event: &glutin::event::DeviceEvent) {
+        match *event {
+            glutin::event::DeviceEvent::MouseMotion { delta, .. } => {
+                self.mouse_delta = Vec2::new(delta.0 as f32, delta.1 as f32);
+            },
+            _ => return,
+        };
+    }
+
+    pub fn get_key_down(&self, key: Key) -> bool {
         *self.keys.get(&key).unwrap_or(&false)
     }
 
-    pub fn get_button_down(&mut self, button: MouseButton) -> bool {
+    pub fn get_button_down(&self, button: MouseButton) -> bool {
         *self.mouse.get(&button).unwrap_or(&false)
+    }
+
+    pub fn get_mouse_delta(&self) -> Vec2 {
+        self.mouse_delta
     }
 }
