@@ -3,7 +3,7 @@ use crate::{
     render_pass::RenderPass, 
     image::{Image, ImageRef, ImageId}, 
     assets::Assets, 
-    scene::{Scene, SceneId}, 
+    scene::SceneId, 
     prelude::GlobalShaders, 
     render_pipeline::RenderPipeline, 
     uniforms::Uniforms, 

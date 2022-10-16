@@ -1,4 +1,4 @@
-use glium::{glutin, Surface};
+use glium::glutin;
 use rlua::Lua;
 use std::{sync::{Mutex, Arc}};
 
@@ -10,7 +10,7 @@ use crate::{
     error::AppError, 
     lua_context::LuaContext, 
     inputs::Inputs, 
-    bind_inputs::BindInputs, time_step::{self, TimeStep}
+    bind_inputs::BindInputs, time_step::TimeStep
 };
 
 pub struct App;
