@@ -1,4 +1,8 @@
-use glium::glutin;
+use glium::{
+    glutin, 
+    Surface,
+};
+
 use rlua::Lua;
 use std::{sync::{Mutex, Arc}};
 
@@ -18,6 +22,12 @@ pub struct App;
 impl App {
     pub fn run() -> Result<(), AppError> {
         let mut window = Window::new(1024, 768);
+
+        let render_target = RenderTarget::new(
+            window.get_display(),
+            320, 
+            240
+        ).expect("Render target creation failed");
         
         let gpu = Arc::new(
             Mutex::new(
@@ -70,8 +80,19 @@ impl App {
             // request a new frame
             let mut target = window.get_display().draw();
             
-            // draw game
-            renderer.render(&mut target, &mut gpu.lock().unwrap());
+            let clear_color = gpu.lock().unwrap().pipeline.clear_color;
+            target.clear_color_and_depth(
+                (
+                    clear_color.x, 
+                    clear_color.y, 
+                    clear_color.z, 
+                    clear_color.w
+                ),
+                1.0
+            );
+
+            // draw game in framebuffer
+            renderer.render(window.get_display(), &render_target, &mut target, &mut gpu.lock().unwrap());
 
             renderer.post_render(&mut gpu.lock().unwrap());
 

@@ -6,6 +6,7 @@ pub mod prelude {
         bind_graphics_chip::BindGraphicsChip,
         renderer::Renderer,
         global_shaders::GlobalShaders,
+        render_target::RenderTarget,
     };
 }
 
@@ -17,6 +18,7 @@ mod render_pipeline;
 mod render_pass;
 mod renderer;
 mod renderable;
+mod render_target;
 mod image;
 mod mesh;
 mod primitive;

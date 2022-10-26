@@ -1,14 +1,19 @@
 use glium::{
     Surface, 
+    Display, 
+    framebuffer::SimpleFrameBuffer, 
     Frame, 
-    Display
+    Rect, 
+    BlitTarget, 
+    BlitMask, 
+    uniforms
 };
 use verdi_math::Mat4;
 
 use crate::{
     camera::Camera,
     prelude::GraphicsChip, 
-    gpu_assets::GpuAssets,
+    gpu_assets::GpuAssets, render_target::RenderTarget,
 };
 
 pub struct Renderer {
@@ -127,20 +132,25 @@ impl Renderer {
     //     renderables
     // }
 
-    pub fn render(&mut self, target: &mut Frame, gpu: &mut GraphicsChip) {
-        let clear_color = gpu.pipeline.clear_color;
-        target.clear_color_and_depth(
-            (
-                clear_color.x, 
-                clear_color.y, 
-                clear_color.z, 
-                clear_color.w
-            ),
-            1.0
-        );
-        
+    pub fn render(&mut self, display: &Display, target: &RenderTarget, frame: &mut Frame, gpu: &mut GraphicsChip) {        
         // the direction of the light
         let light = [-1.0, 0.4, 0.9f32];
+        
+        let mut framebuffer = SimpleFrameBuffer::with_depth_buffer(
+            display, 
+            target.get_color_target(), 
+            target.get_depth_target()
+        ).unwrap();
+
+        let clear_color = gpu.pipeline.clear_color;
+        framebuffer.clear_color_and_depth(
+            (
+                clear_color.x,
+                clear_color.y,
+                clear_color.z,
+                clear_color.w
+            ),
+            1.0);
 
         // perspective matrix
         let perspective_matrix = Camera::perspective_matrix(
@@ -198,7 +208,7 @@ impl Renderer {
                 };
 
                 if let Some(index_buffer) = &gpu_primitive.index_buffer {
-                    target.draw(
+                    framebuffer.draw(
                         vertex_buffer,
                         index_buffer,
                         &program.gl, 
@@ -207,7 +217,7 @@ impl Renderer {
                     ).unwrap();
                 }
                 else {
-                    target.draw(
+                    framebuffer.draw(
                         vertex_buffer,
                         glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
                         &program.gl, 
@@ -217,6 +227,24 @@ impl Renderer {
                 }
             }
         }
+
+        frame.blit_buffers_from_simple_framebuffer(
+            &framebuffer,
+            &Rect {
+                left: 0, 
+                bottom: 0, 
+                width: target.get_dimensions().0, 
+                height: target.get_dimensions().1
+            }, 
+            &BlitTarget {
+                left: 0, 
+                bottom: 0, 
+                width: frame.get_dimensions().0 as i32, 
+                height: frame.get_dimensions().1 as i32
+            }, 
+            uniforms::MagnifySamplerFilter::Nearest, 
+            BlitMask::color_and_depth()
+        );
     }
 
     pub fn post_render(&self, gpu: &mut GraphicsChip) {

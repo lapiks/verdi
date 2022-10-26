@@ -16,7 +16,19 @@
         "command": "cargo",
         "args": [
           "run"
-          // "--release",
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+       },
+       {
+        "label": "cargo run release",
+        "type": "shell",
+        "command": "cargo",
+        "args": [
+          "run",
+          "--release"
           // "--",
           // "arg1"
         ],

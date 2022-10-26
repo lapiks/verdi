@@ -1,6 +1,6 @@
 use glium::{
     glutin::{
-        event_loop::EventLoop, window::WindowBuilder, ContextBuilder, self
+        event_loop::EventLoop, window::{WindowBuilder, Fullscreen}, ContextBuilder, self
     },
     Display
 };
@@ -21,7 +21,8 @@ impl Window {
                 width,
                 height,
             })
-            .with_title("Verdi Engine");
+            .with_title("Verdi Engine")
+            .with_fullscreen(Some(Fullscreen::Borderless(None)));
 
         let cb = ContextBuilder::new()
             .with_depth_buffer(24);
