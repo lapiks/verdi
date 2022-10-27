@@ -19,6 +19,9 @@ end
 function verdi.draw(deltaTime)
     graphics.setClearColor(0.2, 0.2, 0.2, 1.0)
 
+    graphics.setFogStart(5.0)
+    graphics.setFogEnd(25.0)
+
     graphics.rotate(camPitch, 1, 0, 0)
     graphics.rotate(camYaw, 0, 1, 0)
     graphics.translate(x, -2.5, y)

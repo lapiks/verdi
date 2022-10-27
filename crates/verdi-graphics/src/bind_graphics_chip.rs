@@ -65,6 +65,14 @@ impl<'lua> BindGraphicsChip {
         gpu.lock().unwrap().rotate(angle, axis);
     }
 
+    fn set_fog_start(gpu: Arc<Mutex<GraphicsChip>>, distance: f32) {
+        gpu.lock().unwrap().set_fog_start(distance);
+    }
+
+    fn set_fog_end(gpu: Arc<Mutex<GraphicsChip>>, distance: f32) {
+        gpu.lock().unwrap().set_fog_end(distance);
+    }
+
     pub fn bind(lua: &Lua, gpu: Arc<Mutex<GraphicsChip>>) -> Result<()> {
         lua.context(move |lua_ctx| {
             let globals = lua_ctx.globals();
@@ -122,6 +130,16 @@ impl<'lua> BindGraphicsChip {
                 let gpu = gpu.clone();
                 let func = lua_ctx.create_function_mut(move |_, (r, g, b, a): (f32, f32, f32, f32)| Ok(BindGraphicsChip::set_clear_color(gpu.clone(), Vec4::new(r, g, b, a))))?;
                 module_table.set("setClearColor", func)?;
+            }
+            {
+                let gpu = gpu.clone();
+                let func = lua_ctx.create_function_mut(move |_, distance: f32| Ok(BindGraphicsChip::set_fog_start(gpu.clone(), distance)))?;
+                module_table.set("setFogStart", func)?;
+            }
+            {
+                let gpu = gpu.clone();
+                let func = lua_ctx.create_function_mut(move |_, distance: f32| Ok(BindGraphicsChip::set_fog_end(gpu.clone(), distance)))?;
+                module_table.set("setFogEnd", func)?;
             }
             {
                 let gpu = gpu.clone();

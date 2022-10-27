@@ -41,6 +41,8 @@ void main() {
     // Polygon jittering
     vec4 snapped_pos = snap(proj_pos);
 
+    gl_Position = snapped_pos;
+
     // fog
     float vertex_depth = length(u_view * u_model * vec4(position, 1.0));
     v_fog_density = clamp(inverse_lerp(u_fog_start, u_fog_end, vertex_depth), 0.0, 1.0);
@@ -57,6 +59,4 @@ void main() {
 
     v_color = vec4(color.xyz * (light_ambient + diffuse), color.w);
     v_uv = uv;
-
-    gl_Position = snapped_pos;
 }

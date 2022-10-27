@@ -185,4 +185,20 @@ impl GraphicsChip {
             ).unwrap() 
                 *= Mat4::from_axis_angle(axis, angle);
     }
+
+    pub fn set_fog_start(&mut self, distance: f32) {
+        *self.uniforms
+            .get_float_mut(
+                self.pipeline.fog_start
+            ).unwrap() 
+                = distance;
+    }
+
+    pub fn set_fog_end(&mut self, distance: f32) {
+        *self.uniforms
+            .get_float_mut(
+                self.pipeline.fog_end
+            ).unwrap() 
+                = distance;
+    }
 }

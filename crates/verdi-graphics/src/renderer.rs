@@ -163,14 +163,6 @@ impl Renderer {
             .expect("Perspective matrix uniform missing") = perspective_matrix;
 
         *gpu.uniforms
-            .get_float_mut(gpu.pipeline.fog_start)
-            .expect("Fog start uniform missing") = 5.0;
-
-        *gpu.uniforms
-            .get_float_mut(gpu.pipeline.fog_end)
-            .expect("Fog end uniform missing") = 20.0;
-
-        *gpu.uniforms
             .get_vec2_mut(gpu.pipeline.resolution)
             .expect("Resolution uniform missing") = Vec2::new(
                 target.get_dimensions().0 as f32, 
