@@ -37,20 +37,21 @@ float inverse_lerp(float a, float b, float t) {
 }
 
 void main() {
-    vec4 proj_pos = u_projection * u_view * u_model * vec4(position, 1.0);
+    vec4 proj_vertex = u_projection * u_view * u_model * vec4(position, 1.0);
+
     // Polygon jittering
-    vec4 snapped_pos = snap(proj_pos);
+    vec4 snapped_pos = snap(proj_vertex);
 
     gl_Position = snapped_pos;
 
     // fog
-    float vertex_depth = length(u_view * u_model * vec4(position, 1.0));
+    vec4 view_vertex = u_view * u_model * vec4(position, 1.0);
+    float vertex_depth = length(view_vertex);
     v_fog_density = clamp(inverse_lerp(u_fog_start, u_fog_end, vertex_depth), 0.0, 1.0);
 
-    vec3 v_pos = vec3(u_view * u_model * vec4(position, 1.0));
+    // lighting
     vec3 v_normal = transpose(inverse(mat3(u_view * u_model))) * normal;
-
-    vec3 lighting_dir = normalize(u_light - v_pos);
+    vec3 lighting_dir = normalize(u_light - view_vertex.xyz);
     vec3 light_color = vec3(1.0, 1.0, 1.0);
     vec3 light_ambient = vec3(0.1, 0.1, 0.1);
 
