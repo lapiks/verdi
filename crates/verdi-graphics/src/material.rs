@@ -75,8 +75,8 @@ impl Material {
         for uniform_id in self.uniforms {
             if uniform_id.is_some() {
                 match uniform_id.unwrap().1 {
-                    UniformId::Texture(id) => {
-                        if let Some(texture_uniform) = uniforms.get_texture(id) {
+                    UniformId::Texture(_) => {
+                        if let Some(texture_uniform) = uniforms.get_texture(uniform_id.unwrap().1) {
                             if let Some(texture) = assets.get_texture(texture_uniform.id) {
                                 texture.prepare_rendering(display, gpu_assets);
                             }

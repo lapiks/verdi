@@ -8,7 +8,7 @@ use glium::{
     BlitMask, 
     uniforms
 };
-use verdi_math::Mat4;
+use verdi_math::{Mat4, Vec2};
 
 use crate::{
     camera::Camera,
@@ -162,6 +162,13 @@ impl Renderer {
             .get_mat4_mut(gpu.pipeline.perspective_matrix)
             .expect("Perspective matrix uniform missing") = perspective_matrix;
 
+        *gpu.uniforms
+            .get_vec2_mut(gpu.pipeline.resolution)
+            .expect("Resolution uniform missing") = Vec2::new(
+                target.get_dimensions().0 as f32, 
+                target.get_dimensions().1 as f32
+            );
+
         for render_pass in gpu.pipeline.render_passes.iter() {
             // model matrix
             let model_matrix = render_pass.node.transform.to_matrix();
@@ -228,6 +235,10 @@ impl Renderer {
             }
         }
 
+        let scale = frame.get_dimensions().1 as f32 / target.get_dimensions().1 as f32;
+        let new_width = target.get_dimensions().0 as f32 * scale;
+        let new_x_pos = (frame.get_dimensions().0 as f32 - new_width) as f32 / 2.0;
+
         frame.blit_buffers_from_simple_framebuffer(
             &framebuffer,
             &Rect {
@@ -237,9 +248,9 @@ impl Renderer {
                 height: target.get_dimensions().1
             }, 
             &BlitTarget {
-                left: 0, 
+                left: new_x_pos as u32, 
                 bottom: 0, 
-                width: frame.get_dimensions().0 as i32, 
+                width: new_width as i32, 
                 height: frame.get_dimensions().1 as i32
             }, 
             uniforms::MagnifySamplerFilter::Nearest, 

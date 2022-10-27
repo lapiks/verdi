@@ -103,12 +103,28 @@ impl Uniforms {
         UniformId::Float(id)
     }
 
-    pub fn get_float(&self, id: FloatUniformId) -> Option<&f32> {
-        self.floats.get(id)
+    pub fn get_float(&self, id: UniformId) -> Option<&f32> {
+        match id {
+            UniformId::Float(id) => {
+                self.floats.get(id)
+            }
+            _ => {
+                // wrong type
+                None
+            }
+        }
     }
 
-    pub fn get_float_mut(&mut self, id: FloatUniformId) -> Option<&mut f32> {
-        self.floats.get_mut(id)
+    pub fn get_float_mut(&mut self, id: UniformId) -> Option<&mut f32> {
+        match id {
+            UniformId::Float(id) => {
+                self.floats.get_mut(id)
+            }
+            _ => {
+                // wrong type
+                None
+            }
+        }
     }
 
     pub fn add_vec2(&mut self, value: Vec2) -> UniformId {
@@ -117,12 +133,28 @@ impl Uniforms {
         UniformId::Vec2(id)
     }
 
-    pub fn get_vec2(&self, id: Vec2UniformId) -> Option<&Vec2> {
-        self.vec2s.get(id)
+    pub fn get_vec2(&self, id: UniformId) -> Option<&Vec2> {
+        match id {
+            UniformId::Vec2(id) => {
+                self.vec2s.get(id)
+            }
+            _ => {
+                // wrong type
+                None
+            }
+        }
     }
 
-    pub fn get_vec2_mut(&mut self, id: Vec2UniformId) -> Option<&mut Vec2> {
-        self.vec2s.get_mut(id)
+    pub fn get_vec2_mut(&mut self, id: UniformId) -> Option<&mut Vec2> {
+        match id {
+            UniformId::Vec2(id) => {
+                self.vec2s.get_mut(id)
+            }
+            _ => {
+                // wrong type
+                None
+            }
+        }
     }
 
     pub fn add_mat4(&mut self, value: Mat4) -> UniformId {
@@ -161,11 +193,27 @@ impl Uniforms {
         UniformId::Texture(id)
     }
 
-    pub fn get_texture(&self, id: TextureUniformId) -> Option<&TextureUniform> {
-        self.textures.get(id)
+    pub fn get_texture(&self, id: UniformId) -> Option<&TextureUniform> {
+        match id {
+            UniformId::Texture(id) => {
+                self.textures.get(id)
+            }
+            _ => {
+                // wrong type
+                None
+            }
+        }
     }
 
-    pub fn get_texture_mut(&mut self, id: TextureUniformId) -> Option<&mut TextureUniform> {
-        self.textures.get_mut(id)
+    pub fn get_texture_mut(&mut self, id: UniformId) -> Option<&mut TextureUniform> {
+        match id {
+            UniformId::Texture(id) => {
+                self.textures.get_mut(id)
+            }
+            _ => {
+                // wrong type
+                None
+            }
+        }
     }
 }
