@@ -54,8 +54,8 @@ void main() {
     vec3 light_color = vec3(1.0, 1.0, 1.0);
     vec3 light_ambient = vec3(0.1, 0.1, 0.1);
 
-    float lightMag = max(dot(lighting_dir, v_normal), 0.0);
-    vec3 diffuse = lightMag * light_color;
+    float light_mag = max(dot(lighting_dir, v_normal), 0.0);
+    vec3 diffuse = light_mag * light_color;
 
     v_color = vec4(color.xyz * (light_ambient + diffuse), color.w);
     v_uv = uv;
