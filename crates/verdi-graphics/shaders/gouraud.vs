@@ -7,6 +7,7 @@ in vec2 uv;
 
 out vec4 v_color;
 out vec2 v_uv;
+out float v_fog_density;
 
 uniform vec3 u_light;
 
@@ -15,6 +16,8 @@ uniform mat4 u_view;
 uniform mat4 u_projection;
 
 uniform vec2 u_resolution;
+uniform float u_fog_start;
+uniform float u_fog_end;
 
 // Polygon jittering
 vec4 snap(vec4 vertex) {
@@ -29,10 +32,18 @@ vec4 snap(vec4 vertex) {
     return vertex;
 }
 
+float inverse_lerp(float a, float b, float t) {
+    return (t - a) / (b - a);
+}
+
 void main() {
     vec4 proj_pos = u_projection * u_view * u_model * vec4(position, 1.0);
     // Polygon jittering
     vec4 snapped_pos = snap(proj_pos);
+
+    // fog
+    float vertex_depth = length(u_view * u_model * vec4(position, 1.0));
+    v_fog_density = clamp(inverse_lerp(u_fog_start, u_fog_end, vertex_depth), 0.0, 1.0);
 
     vec3 v_pos = vec3(u_view * u_model * vec4(position, 1.0));
     vec3 v_normal = transpose(inverse(mat3(u_view * u_model))) * normal;

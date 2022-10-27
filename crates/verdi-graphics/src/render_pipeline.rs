@@ -10,6 +10,8 @@ pub struct RenderPipeline {
     pub view_matrix: UniformId,
     pub perspective_matrix: UniformId,
     pub resolution: UniformId,
+    pub fog_start: UniformId,
+    pub fog_end: UniformId,
     pub render_passes: Vec<RenderPass>,
     pub clear_color: Vec4,
 }
@@ -21,6 +23,8 @@ impl RenderPipeline {
             view_matrix: uniforms.add_mat4(Mat4::IDENTITY),
             perspective_matrix: uniforms.add_mat4(Mat4::IDENTITY),
             resolution: uniforms.add_vec2(Vec2::ZERO),
+            fog_start: uniforms.add_float(0.0),
+            fog_end: uniforms.add_float(0.0),
             render_passes: Vec::new(),
             clear_color: Vec4::new(0.0, 0.0, 0.0, 1.0),
         }

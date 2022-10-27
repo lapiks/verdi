@@ -206,6 +206,8 @@ impl GltfLoader {
         material.add_uniform("u_view", gpu.pipeline.view_matrix);
         material.add_uniform("u_projection", gpu.pipeline.perspective_matrix);
         material.add_uniform("u_resolution", gpu.pipeline.resolution);
+        material.add_uniform("u_fog_start", gpu.pipeline.fog_start);
+        material.add_uniform("u_fog_end", gpu.pipeline.fog_end);
         if let Some(id) = uniform_id {
             material.add_uniform("u_texture", id)
         }
