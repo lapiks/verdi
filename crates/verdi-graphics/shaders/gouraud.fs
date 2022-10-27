@@ -1,7 +1,7 @@
 #version 140
 
-in vec4 v_color;
-in vec2 v_uv;
+noperspective in vec4 v_color;
+noperspective in vec2 v_uv;
 
 out vec4 color;
 
