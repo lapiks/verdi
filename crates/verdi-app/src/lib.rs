@@ -4,6 +4,7 @@ mod lua_context;
 mod inputs;
 mod bind_inputs;
 mod time_step;
+mod file_watcher;
 
 #[allow(missing_docs)]
 pub mod prelude {

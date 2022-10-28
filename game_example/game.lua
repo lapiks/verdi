@@ -1,5 +1,6 @@
 function verdi.start()
     scene = graphics.newScene("./game_example/assets/tank.gltf")
+    --scene = graphics.newScene("C:/Users/Julien/Documents/Rust/glTF-Sample-Models/2.0/Avocado/glTF/Avocado.gltf")
     print(scene:getNumNodes())
 
     x = 5
@@ -19,7 +20,7 @@ end
 function verdi.draw(deltaTime)
     graphics.setClearColor(0.2, 0.2, 0.2, 1.0)
 
-    graphics.setFogStart(5.0)
+    graphics.setFogStart(3.0)
     graphics.setFogEnd(25.0)
 
     graphics.rotate(camPitch, 1, 0, 0)

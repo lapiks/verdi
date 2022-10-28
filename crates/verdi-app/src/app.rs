@@ -4,7 +4,7 @@ use glium::{
 };
 
 use rlua::Lua;
-use std::{sync::{Mutex, Arc}};
+use std::{sync::{Mutex, Arc}, time::Duration, path::Path};
 
 use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
@@ -14,7 +14,7 @@ use crate::{
     error::AppError, 
     lua_context::LuaContext, 
     inputs::Inputs, 
-    bind_inputs::BindInputs, time_step::TimeStep
+    bind_inputs::BindInputs, time_step::TimeStep, file_watcher::FileWatcher
 };
 
 pub struct App;
@@ -52,6 +52,11 @@ impl App {
         LuaContext::load_scripts(&lua)?;
         LuaContext::call_boot(&lua)?;
 
+        let file_watcher = FileWatcher::new(
+            "./game_example", 
+            Duration::from_secs(5))
+        .expect("File watcher initialisation failed");
+
         let event_loop = window.take_event_loop().expect("No event loop in the window");
 
         let egui_glium = egui_glium::EguiGlium::new(&window.get_display(), &event_loop);
@@ -61,8 +66,20 @@ impl App {
         let mut time_step = TimeStep::new();
     
         event_loop.run(move |ev, _, control_flow| {
+            // hot-reload
+            if let Some(watcher_event) = file_watcher.get_event() {
+                if let notify::EventKind::Modify(_) = watcher_event.kind {
+                    //for path in watcher_event.paths {
+                        //if path.as_path() == Path::new("./game_example/game.lua") {
+                            LuaContext::load_scripts(&lua).expect("Reload script failed");
+                        //}
+                    //}
+                }
+            }
+
             let delta_time = time_step.tick();
 
+            // callbacks
             if let Err(err) = LuaContext::call_run(&lua, delta_time) {
                 let current_error = err.to_string();
                 if last_error != current_error {
