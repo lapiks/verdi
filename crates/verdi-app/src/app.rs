@@ -51,6 +51,8 @@ impl App {
 
         let mut scripts = Scripts::new();
         scripts.load_dir("./game_example/")?;
+        scripts.load_file("./crates/verdi-app/src/boot.lua")?;
+        scripts.load_file("./crates/verdi-app/src/run.lua")?;
 
         LuaContext::load_scripts(&lua, &scripts)?;
         LuaContext::call_boot(&lua)?;

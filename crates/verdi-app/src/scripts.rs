@@ -32,20 +32,13 @@ impl Scripts {
         Ok(())
     }
 
-    pub fn add_script(&mut self, path: PathBuf, code: String) {
-        let script = Script {
-            code
-        };
-        
-        self.scripts.insert(path, script);
-    }
+    pub fn load_file<P: AsRef<Path>>(&mut self, file_path: P) -> std::io::Result<()>  {
+        self.scripts.insert(
+            PathBuf::from(file_path.as_ref()),
+            Script::new(file_path)?,
+        );
 
-    fn load_code<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
-        let mut f = File::open(path)?;
-        let mut content: String = String::new();
-        f.read_to_string(&mut content)?;
-        
-        Ok(content)
+        Ok(())
     }
 
     pub fn get_scripts(&self) -> &HashMap<PathBuf, Script> {

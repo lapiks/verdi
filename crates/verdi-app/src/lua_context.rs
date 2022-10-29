@@ -2,15 +2,12 @@ use std::{path::Path, fs::File, io::Read};
 
 use rlua::{Lua, Result, Function, Table};
 
-use crate::scripts::{Scripts, Script};
+use crate::scripts::Scripts;
 
 pub struct LuaContext {}
 
 impl LuaContext {
     pub fn load_scripts(lua: &Lua, scripts: &Scripts) -> Result<()> {
-        let boot_lua = LuaContext::load_script("./crates/verdi-app/src/boot.lua").unwrap();
-        let run_lua = LuaContext::load_script("./crates/verdi-app/src/run.lua").unwrap();
-
         lua.context(|lua_ctx| {   
             let globals = lua_ctx.globals();
 
@@ -18,16 +15,10 @@ impl LuaContext {
             let verdi_table = lua_ctx.create_table()?;
             globals.set("verdi", verdi_table)?;
 
-            // load game scripts
+            // load lua scripts
             for script in scripts.get_scripts().iter() {
                 lua_ctx.load(&script.1.code).eval::<()>()?;
             }
-    
-            // load boot code
-            lua_ctx.load(&boot_lua).eval::<()>()?;
-
-            // load run code
-            lua_ctx.load(&run_lua).eval::<()>()?;
 
             Ok(())
         })?;
@@ -59,14 +50,5 @@ impl LuaContext {
         })?;
 
         Ok(())
-    }
-
-    fn load_script<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
-        // todo : gestion d'erreur
-        let mut f = File::open(path)?;
-        let mut content: String = String::new();
-        f.read_to_string(&mut content)?;
-        
-        Ok(content)
     }
 }
