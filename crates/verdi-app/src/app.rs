@@ -14,7 +14,7 @@ use crate::{
     error::AppError, 
     lua_context::LuaContext, 
     inputs::Inputs, 
-    bind_inputs::BindInputs, time_step::TimeStep, file_watcher::FileWatcher
+    bind_inputs::BindInputs, time_step::TimeStep, file_watcher::FileWatcher, scripts::Scripts
 };
 
 pub struct App;
@@ -48,6 +48,9 @@ impl App {
     
         BindGraphicsChip::bind(&lua, gpu.clone())?;
         BindInputs::bind(&lua, inputs.clone())?;
+
+        let mut scripts = Scripts::new();
+        scripts.load_dir("./game_example/");
 
         LuaContext::load_scripts(&lua, "./game_example/")?;
         LuaContext::call_boot(&lua)?;
