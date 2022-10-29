@@ -4,7 +4,7 @@ use glium::{
 };
 
 use rlua::Lua;
-use std::{sync::{Mutex, Arc}, time::Duration, path::Path};
+use std::{sync::{Mutex, Arc}, time::Duration};
 
 use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
@@ -50,7 +50,7 @@ impl App {
         BindInputs::bind(&lua, inputs.clone())?;
 
         let mut scripts = Scripts::new();
-        scripts.load_dir("./game_example/");
+        scripts.load_dir("./game_example/")?;
 
         LuaContext::load_scripts(&lua, "./game_example/")?;
         LuaContext::call_boot(&lua)?;
@@ -102,7 +102,6 @@ impl App {
             // request a new frame
             let mut target = window.get_display().draw();
             
-            let clear_color = gpu.lock().unwrap().pipeline.clear_color;
             target.clear_color_and_depth(
                 (
                     0.0, 
