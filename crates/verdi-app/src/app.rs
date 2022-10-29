@@ -52,7 +52,7 @@ impl App {
         let mut scripts = Scripts::new();
         scripts.load_dir("./game_example/")?;
 
-        LuaContext::load_scripts(&lua, "./game_example/")?;
+        LuaContext::load_scripts(&lua, &scripts)?;
         LuaContext::call_boot(&lua)?;
 
         let file_watcher = FileWatcher::new(
@@ -76,7 +76,7 @@ impl App {
                 if let notify::EventKind::Modify(_) = watcher_event.kind {
                     //for path in watcher_event.paths {
                         //if path.as_path() == Path::new("./game_example/game.lua") {
-                            LuaContext::load_scripts(&lua, "./game_example/").expect("Reload script failed");
+                            LuaContext::load_scripts(&lua, &scripts).expect("Reload script failed");
                         //}
                     //}
                 }

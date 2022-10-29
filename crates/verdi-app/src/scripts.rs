@@ -47,6 +47,10 @@ impl Scripts {
         
         Ok(content)
     }
+
+    pub fn get_scripts(&self) -> &HashMap<PathBuf, Script> {
+        &self.scripts
+    }
 }
 
 pub struct Script {
