@@ -43,6 +43,7 @@ impl Gui {
 
 /// A panel of the GUI
 pub trait GUIPanel {
+    /// Panel's name
     fn name(&self) -> &'static str;
 
     /// Show the panel

@@ -5,20 +5,38 @@ use rlua::{Lua, Result, Function, Table};
 pub struct LuaContext {}
 
 impl LuaContext {
-    pub fn load_scripts(lua: &Lua) -> Result<()> {
-        let script_code = LuaContext::load_script("./game_example/game.lua").unwrap();
+    pub fn load_scripts<P: AsRef<Path>>(lua: &Lua, folder: P) -> Result<()> {
+        let paths = std::fs::read_dir(folder).unwrap();
+        let mut scripts = Vec::default();
+
+        for path in paths {
+            let path = path.unwrap().path();
+    
+            match path.extension() {
+                Some(p) if p == "lua" => {
+                    println!("Loading script {:?}", path.file_name().unwrap());
+                    scripts.push(
+                        LuaContext::load_script(path).unwrap()
+                    )
+                },
+                _ => (),
+            }
+        }
+
         let boot_lua = LuaContext::load_script("./crates/verdi-app/src/boot.lua").unwrap();
         let run_lua = LuaContext::load_script("./crates/verdi-app/src/run.lua").unwrap();
 
         lua.context(|lua_ctx| {   
             let globals = lua_ctx.globals();
-
+            
             // create verdi table
             let verdi_table = lua_ctx.create_table()?;
             globals.set("verdi", verdi_table)?;
 
-            // load game code
-            lua_ctx.load(&script_code).eval::<()>()?;
+            // load game scripts
+            for script_code in scripts.iter() {
+                lua_ctx.load(&script_code).eval::<()>()?;
+            }
     
             // load boot code
             lua_ctx.load(&boot_lua).eval::<()>()?;

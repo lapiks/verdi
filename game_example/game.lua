@@ -11,6 +11,8 @@ function verdi.start()
 
     speed = 5
     rotSpeed = 1
+
+    test.func()
 end
 
 function verdi.update()
@@ -20,7 +22,7 @@ end
 function verdi.draw(deltaTime)
     graphics.setClearColor(0.2, 0.2, 0.2, 1.0)
 
-    graphics.setFogStart(3.0)
+    graphics.setFogStart(5.0)
     graphics.setFogEnd(25.0)
 
     graphics.rotate(camPitch, 1, 0, 0)

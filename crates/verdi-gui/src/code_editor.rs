@@ -1,7 +1,7 @@
 use crate::gui::GUIPanel;
 
 pub struct CodeEditor {
-    code: String,
+    pub code: String,
 }
 
 impl Default for CodeEditor {

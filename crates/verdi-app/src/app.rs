@@ -49,7 +49,7 @@ impl App {
         BindGraphicsChip::bind(&lua, gpu.clone())?;
         BindInputs::bind(&lua, inputs.clone())?;
 
-        LuaContext::load_scripts(&lua)?;
+        LuaContext::load_scripts(&lua, "./game_example/")?;
         LuaContext::call_boot(&lua)?;
 
         let file_watcher = FileWatcher::new(
@@ -62,6 +62,8 @@ impl App {
         let egui_glium = egui_glium::EguiGlium::new(&window.get_display(), &event_loop);
         let mut gui = Gui::new(egui_glium);
 
+        //gui.code_editor.code 
+
         let mut last_error: String = String::new();
         let mut time_step = TimeStep::new();
     
@@ -71,7 +73,7 @@ impl App {
                 if let notify::EventKind::Modify(_) = watcher_event.kind {
                     //for path in watcher_event.paths {
                         //if path.as_path() == Path::new("./game_example/game.lua") {
-                            LuaContext::load_scripts(&lua).expect("Reload script failed");
+                            LuaContext::load_scripts(&lua, "./game_example/").expect("Reload script failed");
                         //}
                     //}
                 }
