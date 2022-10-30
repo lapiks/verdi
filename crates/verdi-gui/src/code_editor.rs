@@ -1,6 +1,5 @@
 use std::{rc::Rc, path::PathBuf, cell::RefCell};
 
-use glium::glutin::event::{WindowEvent, ElementState, VirtualKeyCode};
 use verdi_game::prelude::Scripts;
 
 use crate::gui::GUIPanel;
