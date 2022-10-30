@@ -1,8 +1,6 @@
 pub mod prelude {
     pub use crate::{
-        inputs::Inputs, 
-        inputs::MouseButton,
-        inputs::Key,
+        inputs::{Inputs, MouseButton, Key}, 
         bind_inputs::BindInputs,
     };
 }

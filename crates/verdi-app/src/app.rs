@@ -79,10 +79,18 @@ impl App {
             // hot-reload
             if let Some(watcher_event) = file_watcher.get_event() {
                 if let notify::EventKind::Modify(_) = watcher_event.kind {
-                    for path in watcher_event.paths {
-                        //if path.as_path() == Path::new("./game_example/game.lua") {
-                            LuaContext::load_scripts(&lua, &scripts.borrow()).expect("Reload script failed");
-                        //}
+                    for path in watcher_event.paths.iter() {
+                        if let Some(script) = scripts.borrow().get_script(path) {
+                            // reload script
+                            scripts.borrow_mut()
+                                .load_file(path)
+                                .expect("Reload script file failed");
+                            // update lua context
+                            LuaContext::load_script(
+                                &lua, 
+                                script
+                            ).expect("Reload script failed");
+                        }
                     }
                 }
             }

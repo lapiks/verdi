@@ -1,6 +1,6 @@
 use rlua::{Lua, Result, Function, Table};
 
-use verdi_game::prelude::Scripts;
+use verdi_game::prelude::*;
 
 pub struct LuaContext {}
 
@@ -15,8 +15,19 @@ impl LuaContext {
 
             // load lua scripts
             for script in scripts.get_scripts().iter() {
-                lua_ctx.load(&script.1.code).eval::<()>()?;
+                LuaContext::load_script(lua, script.1)?;
             }
+
+            Ok(())
+        })?;
+
+        Ok(())
+    }
+
+    pub fn load_script(lua: &Lua, script: &Script) -> Result<()> {
+        lua.context(|lua_ctx| {   
+            // load lua script
+            lua_ctx.load(&script.code).eval::<()>()?;
 
             Ok(())
         })?;
