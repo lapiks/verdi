@@ -33,21 +33,6 @@ impl GUIPanel for CodeEditor {
         //     self.draw(ui);
         // });
     }
-
-    fn on_event(&mut self, event: &WindowEvent) {
-        match *event {
-            WindowEvent::KeyboardInput { input, .. } => {
-                let pressed = input.state == ElementState::Pressed;
-                if input.virtual_keycode.unwrap() == VirtualKeyCode::S {
-
-                }
-            },
-            WindowEvent::ModifiersChanged(modifiers_state) => {
-                self.modifiers = modifiers_state;
-            },
-            _ => return,
-        }
-    }
 }
 
 impl CodeEditor {
