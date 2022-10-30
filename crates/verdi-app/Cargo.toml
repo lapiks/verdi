@@ -11,6 +11,7 @@ verdi-graphics = { path = "../verdi-graphics" }
 verdi-gui = { path = "../verdi-gui" }
 verdi-math = { path = "../verdi-math" }
 verdi-game = { path = "../verdi-game" }
+verdi-input = { path = "../verdi-input" }
 glium = "*"
 egui_glium = "0.19.0"
 rlua = "0.19.4"

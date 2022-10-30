@@ -11,12 +11,11 @@ use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
 use verdi_gui::prelude::*;
 use verdi_game::prelude::Scripts;
+use verdi_input::prelude::*;
 
 use crate::{
     error::AppError, 
-    lua_context::LuaContext, 
-    inputs::Inputs, 
-    bind_inputs::BindInputs, 
+    lua_context::LuaContext,
     time_step::TimeStep, 
     file_watcher::FileWatcher
 };
