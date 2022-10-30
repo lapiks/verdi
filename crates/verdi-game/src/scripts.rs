@@ -44,6 +44,18 @@ impl Scripts {
     pub fn get_scripts(&self) -> &HashMap<PathBuf, Script> {
         &self.scripts
     }
+
+    pub fn get_scripts_mut(&mut self) -> &mut HashMap<PathBuf, Script> {
+        &mut self.scripts
+    }
+
+    pub fn get_script(&self, path: &PathBuf) -> Option<&Script> {
+        self.scripts.get(path)
+    }
+
+    pub fn get_script_mut(&mut self, path: &PathBuf) -> Option<&mut Script> {
+        self.scripts.get_mut(path)
+    }
 }
 
 pub struct Script {

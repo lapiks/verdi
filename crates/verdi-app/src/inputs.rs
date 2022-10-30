@@ -4,7 +4,7 @@ use glium::glutin::{
     self, 
     event::{
         VirtualKeyCode, 
-        MouseButton as GlutinMouseButton
+        MouseButton as GlutinMouseButton, ModifiersState
     }
 };
 use rlua::UserData;
@@ -346,16 +346,18 @@ impl From<GlutinMouseButton> for MouseButton {
 }
 
 pub struct Inputs {
-    keys: HashMap<Key, bool>,
     mouse: HashMap<MouseButton, bool>,
+    keys: HashMap<Key, bool>,
+    modifiers: ModifiersState,
     mouse_delta: Vec2,
 }
 
 impl Inputs {
     pub fn new() -> Self {
         Self {
-            keys: HashMap::default(),
             mouse: HashMap::default(),
+            keys: HashMap::default(),
+            modifiers: ModifiersState::empty(),
             mouse_delta: Vec2::ZERO,
         }
     } 
@@ -370,6 +372,9 @@ impl Inputs {
                 };
    
                 self.keys.insert(Key::from(key), pressed);
+            },
+            glutin::event::WindowEvent::ModifiersChanged(modifiers_state) => {
+                self.modifiers = modifiers_state;
             },
             glutin::event::WindowEvent::MouseInput { button, state, .. } => {
                 let pressed = state == glutin::event::ElementState::Pressed;

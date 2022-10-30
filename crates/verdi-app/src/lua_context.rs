@@ -1,8 +1,6 @@
-use std::{path::Path, fs::File, io::Read};
-
 use rlua::{Lua, Result, Function, Table};
 
-use crate::scripts::Scripts;
+use verdi_game::prelude::Scripts;
 
 pub struct LuaContext {}
 

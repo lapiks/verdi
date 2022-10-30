@@ -5,7 +5,6 @@ mod inputs;
 mod bind_inputs;
 mod time_step;
 mod file_watcher;
-mod scripts;
 
 #[allow(missing_docs)]
 pub mod prelude {

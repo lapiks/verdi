@@ -4,17 +4,21 @@ use glium::{
 };
 
 use rlua::Lua;
-use std::{sync::{Mutex, Arc}, time::Duration};
+
+use std::{sync::{Mutex, Arc}, time::Duration, rc::Rc, cell::RefCell};
 
 use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
 use verdi_gui::prelude::*;
+use verdi_game::prelude::Scripts;
 
 use crate::{
     error::AppError, 
     lua_context::LuaContext, 
     inputs::Inputs, 
-    bind_inputs::BindInputs, time_step::TimeStep, file_watcher::FileWatcher, scripts::Scripts
+    bind_inputs::BindInputs, 
+    time_step::TimeStep, 
+    file_watcher::FileWatcher
 };
 
 pub struct App;
@@ -49,12 +53,12 @@ impl App {
         BindGraphicsChip::bind(&lua, gpu.clone())?;
         BindInputs::bind(&lua, inputs.clone())?;
 
-        let mut scripts = Scripts::new();
-        scripts.load_dir("./game_example/")?;
-        scripts.load_file("./crates/verdi-app/src/boot.lua")?;
-        scripts.load_file("./crates/verdi-app/src/run.lua")?;
+        let scripts = Rc::new(RefCell::new(Scripts::new()));
+        scripts.borrow_mut().load_dir("./game_example/")?;
+        scripts.borrow_mut().load_file("./crates/verdi-app/src/boot.lua")?;
+        scripts.borrow_mut().load_file("./crates/verdi-app/src/run.lua")?;
 
-        LuaContext::load_scripts(&lua, &scripts)?;
+        LuaContext::load_scripts(&lua, &scripts.borrow())?;
         LuaContext::call_boot(&lua)?;
 
         let file_watcher = FileWatcher::new(
@@ -65,9 +69,9 @@ impl App {
         let event_loop = window.take_event_loop().expect("No event loop in the window");
 
         let egui_glium = egui_glium::EguiGlium::new(&window.get_display(), &event_loop);
-        let mut gui = Gui::new(egui_glium);
+        let mut gui = Gui::new(egui_glium, scripts.clone());
 
-        //gui.code_editor.code 
+        //gui.get_code_editor_mut().code = 
 
         let mut last_error: String = String::new();
         let mut time_step = TimeStep::new();
@@ -78,7 +82,7 @@ impl App {
                 if let notify::EventKind::Modify(_) = watcher_event.kind {
                     //for path in watcher_event.paths {
                         //if path.as_path() == Path::new("./game_example/game.lua") {
-                            LuaContext::load_scripts(&lua, &scripts).expect("Reload script failed");
+                            LuaContext::load_scripts(&lua, &scripts.borrow()).expect("Reload script failed");
                         //}
                     //}
                 }

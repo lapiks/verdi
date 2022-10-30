@@ -1,5 +1,8 @@
+use std::{rc::Rc, cell::RefCell};
+
 use egui_glium::{EguiGlium, egui_winit::egui};
 use glium::{Frame, Display, glutin::event::WindowEvent};
+use verdi_game::prelude::Scripts;
 
 use crate::code_editor::CodeEditor;
 
@@ -9,10 +12,10 @@ pub struct Gui {
 }
 
 impl Gui {
-    pub fn new(egui_glium: EguiGlium) -> Self {
+    pub fn new(egui_glium: EguiGlium, scripts: Rc<RefCell<Scripts>>) -> Self {
         Self {
             egui_glium,
-            code_editor: CodeEditor::default(),
+            code_editor: CodeEditor::new(scripts),
         }
     }
 
@@ -38,6 +41,10 @@ impl Gui {
 
     pub fn on_event(&mut self, event: &WindowEvent) -> bool {
         self.egui_glium.on_event(event)
+    }
+
+    pub fn get_code_editor_mut(&mut self) -> &mut CodeEditor {
+        &mut self.code_editor
     }
 }
 
