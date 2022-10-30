@@ -1,6 +1,7 @@
-use std::{rc::Rc, path::PathBuf, cell::RefCell};
+use std::{rc::Rc, path::PathBuf, cell::RefCell, sync::{Mutex, Arc}};
 
 use verdi_game::prelude::Scripts;
+use verdi_input::prelude::*;
 
 use crate::gui::GUIPanel;
 
@@ -31,6 +32,13 @@ impl GUIPanel for CodeEditor {
         // egui::CentralPanel::default().show(ctx, |ui| { 
         //     self.draw(ui);
         // });
+    }
+
+    fn update(&mut self, inputs: Arc<Mutex<Inputs>>) {
+        // if inputs.lock().unwrap().get_key_down(Key::S) == true && inputs.lock().unwrap().get_modifiers().ctrl == true {
+        //     println!("save script");
+        //     self.scripts.borrow_mut().save_script(&self.current_script);
+        // }
     }
 }
 

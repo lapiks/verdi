@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use egui_glium::egui_winit::egui::Modifiers as EguiModifiers;
 use glium::glutin::{
     self, 
     event::{
@@ -317,6 +318,29 @@ impl From<VirtualKeyCode> for Key {
     }
 }
 
+#[derive(Clone, Copy, Hash, Eq, PartialEq, Default)]
+pub struct Modifiers {
+    pub alt: bool,
+    pub ctrl: bool,
+    pub shift: bool,
+}
+
+impl Modifiers {
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
+
+impl From<EguiModifiers> for Modifiers {
+    fn from(b: EguiModifiers) -> Self {
+        Self {
+            alt: b.alt,
+            ctrl: b.ctrl,
+            shift: b.shift,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]
 pub enum MouseButton {
     Unknown,
@@ -348,7 +372,7 @@ impl From<GlutinMouseButton> for MouseButton {
 pub struct Inputs {
     mouse: HashMap<MouseButton, bool>,
     keys: HashMap<Key, bool>,
-    modifiers: ModifiersState,
+    modifiers: Modifiers,
     mouse_delta: Vec2,
 }
 
@@ -357,7 +381,7 @@ impl Inputs {
         Self {
             mouse: HashMap::default(),
             keys: HashMap::default(),
-            modifiers: ModifiersState::empty(),
+            modifiers: Modifiers::default(),
             mouse_delta: Vec2::ZERO,
         }
     } 
@@ -374,7 +398,10 @@ impl Inputs {
                 self.keys.insert(Key::from(key), pressed);
             },
             glutin::event::WindowEvent::ModifiersChanged(modifiers_state) => {
-                self.modifiers = modifiers_state;
+                // todo: à revoir ?
+                self.modifiers.alt = modifiers_state.alt();
+                self.modifiers.shift = modifiers_state.shift();
+                self.modifiers.ctrl = modifiers_state.ctrl();
             },
             glutin::event::WindowEvent::MouseInput { button, state, .. } => {
                 let pressed = state == glutin::event::ElementState::Pressed;
@@ -395,6 +422,10 @@ impl Inputs {
 
     pub fn get_key_down(&self, key: Key) -> bool {
         *self.keys.get(&key).unwrap_or(&false)
+    }
+
+    pub fn get_modifiers(&self) -> &Modifiers {
+        &self.modifiers
     }
 
     pub fn get_button_down(&self, button: MouseButton) -> bool {

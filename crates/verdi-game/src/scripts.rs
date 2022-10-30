@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::{PathBuf, Path}, fs::File, io::Read};
+use std::{collections::HashMap, path::{PathBuf, Path}, fs::File, io::{Read, Write}};
 
 pub struct Scripts {
     scripts: HashMap<PathBuf, Script>
@@ -41,6 +41,14 @@ impl Scripts {
         Ok(())
     }
 
+    pub fn save_script(&mut self, file_path: &PathBuf) -> std::io::Result<()> {
+        if let Some(script) = self.get_script_mut(file_path) {
+            script.save_at(file_path)?;
+        }
+
+        Ok(())
+    }
+
     pub fn get_scripts(&self) -> &HashMap<PathBuf, Script> {
         &self.scripts
     }
@@ -73,5 +81,10 @@ impl Script {
                 code,
             }
         )
+    }
+
+    pub fn save_at<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
+        let mut f = File::open(path)?;
+        f.write_all(&self.code.as_bytes())
     }
 }

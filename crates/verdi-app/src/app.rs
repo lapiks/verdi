@@ -79,11 +79,11 @@ impl App {
             // hot-reload
             if let Some(watcher_event) = file_watcher.get_event() {
                 if let notify::EventKind::Modify(_) = watcher_event.kind {
-                    //for path in watcher_event.paths {
+                    for path in watcher_event.paths {
                         //if path.as_path() == Path::new("./game_example/game.lua") {
                             LuaContext::load_scripts(&lua, &scripts.borrow()).expect("Reload script failed");
                         //}
-                    //}
+                    }
                 }
             }
 
@@ -122,10 +122,11 @@ impl App {
 
             renderer.post_render(&mut gpu.lock().unwrap());
 
+            // update GUI
+            gui.update(inputs.clone());
+
             // draw GUI
-            gui.run(window.get_display(), time_step.get_fps());
-            
-            gui.render(window.get_display(), &mut target);
+            gui.render(window.get_display(),  &mut target, time_step.get_fps());
 
             // ends frame
             target.finish().unwrap();

@@ -1,8 +1,9 @@
-use std::{rc::Rc, cell::RefCell};
+use std::{rc::Rc, cell::RefCell, sync::{Arc, Mutex}};
 
 use egui_glium::{EguiGlium, egui_winit::egui};
 use glium::{Frame, Display, glutin::event::WindowEvent};
 use verdi_game::prelude::Scripts;
+use verdi_input::prelude::Inputs;
 
 use crate::code_editor::CodeEditor;
 
@@ -19,7 +20,7 @@ impl Gui {
         }
     }
 
-    pub fn run(&mut self, display: &Display, fps: u32) {
+    pub fn render(&mut self, display: &Display, target: &mut Frame, fps: u32) {
         self.egui_glium.run(display, |ctx| {
             egui::SidePanel::left("my_side_panel").show(ctx, |ui| {
                 ui.label("fps ");
@@ -33,10 +34,12 @@ impl Gui {
             let mut open_editor = true;
             self.code_editor.show(ctx, &mut open_editor);
         });
+
+        self.egui_glium.paint(&display, target);
     }
 
-    pub fn render(&mut self, display: &Display, target: &mut Frame) {
-        self.egui_glium.paint(&display, target);
+    pub fn update(&mut self, inputs: Arc<Mutex<Inputs>>) {
+        self.code_editor.update(inputs);
     }
 
     pub fn on_event(&mut self, event: &WindowEvent) -> bool {
@@ -55,4 +58,6 @@ pub trait GUIPanel {
 
     /// Show the panel
     fn show(&mut self, ctx: &egui::Context, open: &mut bool);
+
+    fn update(&mut self, inputs: Arc<Mutex<Inputs>>);
 }
