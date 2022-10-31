@@ -1,4 +1,5 @@
 
+use std::path::Path;
 use glium::Display;
 use image::{io::Reader as ImageReader, RgbaImage, ImageError};
 use rlua::UserData;
@@ -23,7 +24,7 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn new(path: &String) -> Result<Self, ImageError> {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, ImageError> {
         let dyn_img = ImageReader::open(path)?.decode()?;
         let rgba8_img = dyn_img.to_rgba8();
 

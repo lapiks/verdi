@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use gltf::buffer::Data;
 use image::ImageError;
 
@@ -31,19 +33,22 @@ pub enum GltfError {
 pub struct GltfLoader;
 
 impl GltfLoader {
-    pub fn load(path: &String, gpu: &mut GraphicsChip) -> Result<Scene, GltfError> {
+    pub fn load<P: AsRef<Path>>(path: P, gpu: &mut GraphicsChip) -> Result<Scene, GltfError> {
         let mut scene = Scene::new();
 
-        let gltf = gltf::Gltf::open(path)?;
+        let gltf = gltf::Gltf::open(path.as_ref())?;
 
-        let (_, buffers, _) = gltf::import(path)?;
+        let (_, buffers, _) = gltf::import(path.as_ref())?;
+
+        let folder = path.as_ref().parent().unwrap();
 
         let mut texture_uniforms = vec![];
         for gltf_texture in gltf.textures() {
             let image_id = gpu.assets.add_texture(
                 GltfLoader::load_texture(
                     gltf_texture, 
-                    &buffers
+                    &buffers,
+                    folder
                 )?
             );
 
@@ -177,7 +182,7 @@ impl GltfLoader {
         )
     }
 
-    fn load_texture(gltf_texture: gltf::Texture, buffers: &Vec<Data>) -> Result<Image, ImageError> {
+    fn load_texture(gltf_texture: gltf::Texture, buffers: &Vec<Data>, folder_path: &Path) -> Result<Image, ImageError> {
         gltf_texture.sampler();
         let source = match gltf_texture.source().source() {
             gltf::image::Source::View { view, mime_type } => {
@@ -187,7 +192,8 @@ impl GltfLoader {
                 Image::from_buffer(buffer)?
             }
             gltf::image::Source::Uri { uri, mime_type } => {
-                Image::new(&uri.to_string())?
+                let image_path = folder_path.join(uri);
+                Image::new(image_path)?
             }
         };
 
