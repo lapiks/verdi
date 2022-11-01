@@ -15,6 +15,7 @@ use image::ImageError;
 use verdi_math::prelude::*;
 
 pub struct GraphicsChip {
+    pub buffer_state: StreamBufferState,
     pub pipeline: RenderPipeline,
     pub assets: Assets,
     pub globals: GlobalShaders,
@@ -45,6 +46,7 @@ impl From<PrimitiveType> for glium::index::PrimitiveType {
     }
 }
 
+// Public API
 impl GraphicsChip {
     pub fn new() -> Result<Self, std::io::Error> {
         let mut assets = Assets::new();
@@ -52,12 +54,26 @@ impl GraphicsChip {
         let pipeline = RenderPipeline::new(&mut uniforms);
         let globals = GlobalShaders::new(&mut assets, &pipeline)?;
 
+        let buffer_state = StreamBufferState {
+            vertex_buffer: vec![Vertex::default(); 1024 * 1024],
+            index_buffer: vec![0; 1024 * 1024],
+            primitive_type: PrimitiveType::Triangles,
+            vertex_count: 0,
+            current_offset: 0,
+        };
+
         Ok(Self { 
+            buffer_state,
             pipeline,
             assets,
             globals,
             uniforms,
         })
+    }
+
+    pub fn next_frame(&mut self) {
+        self.pipeline.render_passes.clear();   
+        self.buffer_state.next_frame();
     }
 
     pub fn begin(&mut self, primitive_type: PrimitiveType) {
@@ -203,6 +219,83 @@ impl GraphicsChip {
     }
 
     pub fn draw_line(&mut self, p1: &Vec2, p2: &Vec2) {
+        let cmd = DrawCommand {
+            primitive_type: PrimitiveType::Lines,
+            vertex_count: 2,
+        };
+
+        let v1 = Vertex {
+            position: [p1.x, p1.y, 0.0],
+            uv: [0.0, 0.0],
+            normal: [0.0, 0.0, 0.0],
+            color: [1.0, 0.0, 0.0, 1.0],
+        };
+
+        let v2 = Vertex {
+            position: [p2.x, p2.y, 0.0],
+            uv: [0.0, 0.0],
+            normal: [0.0, 0.0, 0.0],
+            color: [1.0, 0.0, 0.0, 1.0],
+        };
+
+        let vertices = [v1, v2];
+
+        let stream_buffer = self.request_flush(&cmd);
+        stream_buffer.data.clone_from_slice(&vertices)
+    }
+}
+
+pub struct StreamBufferState {
+    pub vertex_buffer: Vec<Vertex>,
+    pub index_buffer: Vec<u32>,
+    pub primitive_type: PrimitiveType,
+    pub vertex_count: u32,
+    pub current_offset: usize,
+}
+
+impl StreamBufferState {
+    pub fn next_frame(&mut self) {
+        self.current_offset = 0;
+        self.vertex_count = 0;
+    }
+}
+
+pub struct StreamBuffer<'a> {
+    pub data: &'a mut [Vertex],
+}
+
+pub struct DrawCommand {
+    pub primitive_type: PrimitiveType,
+    pub vertex_count: u32,
+    // material_id
+}
+
+// Private impl
+impl GraphicsChip {
+    fn request_flush(&mut self, cmd: &DrawCommand) -> StreamBuffer {
+        if cmd.primitive_type != self.buffer_state.primitive_type {
+            self.flush();
+
+            self.buffer_state.primitive_type = cmd.primitive_type;
+            self.buffer_state.vertex_count = cmd.vertex_count;
+            self.buffer_state.current_offset = 0;
+        }
+
+        let new_offset = self.buffer_state.current_offset + cmd.vertex_count as usize;
+        let stream_buffer = StreamBuffer {
+            data: &mut self.buffer_state.vertex_buffer[
+                self.buffer_state.current_offset
+                ..
+                new_offset
+            ],
+        };
+
+        self.buffer_state.current_offset = new_offset;
+
+        stream_buffer
+    }
+
+    fn flush(&mut self) {
 
     }
 }

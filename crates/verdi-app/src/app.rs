@@ -139,7 +139,7 @@ impl App {
             // ends frame
             target.finish().unwrap();
             
-            gpu.lock().unwrap().pipeline.render_passes.clear();
+            gpu.lock().unwrap().next_frame();
     
             let next_frame_time = std::time::Instant::now() +
                 std::time::Duration::from_nanos(16_666_667);

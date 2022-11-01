@@ -191,7 +191,7 @@ impl<'lua> BindGraphicsChip {
                         )
                     )
                 )?;
-                module_table.set("drawLine", func)?;
+                module_table.set("line", func)?;
             }
             {
                 let gpu = gpu.clone();
