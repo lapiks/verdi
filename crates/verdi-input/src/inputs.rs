@@ -5,7 +5,7 @@ use glium::glutin::{
     self, 
     event::{
         VirtualKeyCode, 
-        MouseButton as GlutinMouseButton, ModifiersState
+        MouseButton as GlutinMouseButton
     }
 };
 use rlua::UserData;
