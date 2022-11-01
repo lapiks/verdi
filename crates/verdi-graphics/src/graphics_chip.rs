@@ -79,7 +79,7 @@ impl GraphicsChip {
         };
     }
 
-    pub fn vertex(&mut self, coords: Vec3) {
+    pub fn vertex(&mut self, coords: &Vec3) {
         // match self.render_passes.last_mut() {
         //     Some(render_pass) => {
         //         render_pass.current_vertex_state.position = coords.to_array();
@@ -89,7 +89,7 @@ impl GraphicsChip {
         // };
     }
 
-    pub fn normal(&mut self, coords: Vec3) {
+    pub fn normal(&mut self, coords: &Vec3) {
         match self.pipeline.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state.normal = coords.to_array();
@@ -98,7 +98,7 @@ impl GraphicsChip {
         };
     }
 
-    pub fn tex_coord(&mut self, coords: Vec2) {
+    pub fn tex_coord(&mut self, coords: &Vec2) {
         match self.pipeline.render_passes.last_mut() {
             Some(render_pass) => {
                 render_pass.current_vertex_state.uv = coords.to_array();
@@ -107,10 +107,10 @@ impl GraphicsChip {
         };
     }
 
-    pub fn color(&mut self, coords: Vec4) {
+    pub fn color(&mut self, color: &Vec4) {
         match self.pipeline.render_passes.last_mut() {
             Some(render_pass) => {
-                render_pass.current_vertex_state.color = coords.to_array();
+                render_pass.current_vertex_state.color = color.to_array();
             },
             None => return
         };
@@ -166,24 +166,24 @@ impl GraphicsChip {
         Ok(self.assets.add_scene(scene))
     }
 
-    pub fn set_clear_color(&mut self, color: Vec4) {
-        self.pipeline.clear_color = color;
+    pub fn set_clear_color(&mut self, color: &Vec4) {
+        self.pipeline.clear_color = *color;
     }
 
-    pub fn translate(&mut self, v: Vec3) {
+    pub fn translate(&mut self, v: &Vec3) {
         *self.uniforms
             .get_mat4_mut(
                 self.pipeline.view_matrix
             ).unwrap() 
-                *= Mat4::from_translation(v);
+                *= Mat4::from_translation(*v);
     }
 
-    pub fn rotate(&mut self, angle: f32, axis: Vec3) {
+    pub fn rotate(&mut self, angle: f32, axis: &Vec3) {
         *self.uniforms
             .get_mat4_mut(
                 self.pipeline.view_matrix
             ).unwrap() 
-                *= Mat4::from_axis_angle(axis, angle);
+                *= Mat4::from_axis_angle(*axis, angle);
     }
 
     pub fn set_fog_start(&mut self, distance: f32) {
@@ -200,5 +200,9 @@ impl GraphicsChip {
                 self.pipeline.fog_end
             ).unwrap() 
                 = distance;
+    }
+
+    pub fn draw_line(&mut self, p1: &Vec2, p2: &Vec2) {
+
     }
 }

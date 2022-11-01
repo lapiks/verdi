@@ -22,20 +22,20 @@ impl<'lua> BindGraphicsChip {
         gpu.lock().unwrap().end();
     }
 
-    fn vertex(gpu: Arc<Mutex<GraphicsChip>>, x: f32, y: f32, z: f32) {
-        gpu.lock().unwrap().vertex(Vec3::new(x, y, z));
+    fn vertex(gpu: Arc<Mutex<GraphicsChip>>, coords: &Vec3) {
+        gpu.lock().unwrap().vertex(coords);
     }
 
-    fn normal(gpu: Arc<Mutex<GraphicsChip>>, x: f32, y: f32, z: f32) {
-        gpu.lock().unwrap().normal(Vec3::new(x, y, z));
+    fn normal(gpu: Arc<Mutex<GraphicsChip>>, coords: &Vec3) {
+        gpu.lock().unwrap().normal(coords);
     }
 
-    fn tex_coord(gpu: Arc<Mutex<GraphicsChip>>, u: f32, v: f32) {
-        gpu.lock().unwrap().tex_coord(Vec2::new(u, v));
+    fn tex_coord(gpu: Arc<Mutex<GraphicsChip>>, coords: &Vec2) {
+        gpu.lock().unwrap().tex_coord(coords);
     }
 
-    fn color(gpu: Arc<Mutex<GraphicsChip>>, r: f32, g: f32, b: f32, a: f32) {
-        gpu.lock().unwrap().color(Vec4::new(r, g, b, a));
+    fn color(gpu: Arc<Mutex<GraphicsChip>>, color: &Vec4) {
+        gpu.lock().unwrap().color(color);
     }
 
     fn bind_texture(gpu: Arc<Mutex<GraphicsChip>>, image: ImageRef) {
@@ -53,15 +53,15 @@ impl<'lua> BindGraphicsChip {
         SceneRef::new(gpu.clone(), scene_id)
     }
     
-    fn set_clear_color(gpu: Arc<Mutex<GraphicsChip>>, color: Vec4) {
+    fn set_clear_color(gpu: Arc<Mutex<GraphicsChip>>, color: &Vec4) {
         gpu.lock().unwrap().set_clear_color(color);
     }
 
-    fn translate(gpu: Arc<Mutex<GraphicsChip>>, v: Vec3) {
+    fn translate(gpu: Arc<Mutex<GraphicsChip>>, v: &Vec3) {
         gpu.lock().unwrap().translate(v);
     }
 
-    fn rotate(gpu: Arc<Mutex<GraphicsChip>>, angle: f32, axis: Vec3) {
+    fn rotate(gpu: Arc<Mutex<GraphicsChip>>, angle: f32, axis: &Vec3) {
         gpu.lock().unwrap().rotate(angle, axis);
     }
 
@@ -71,6 +71,10 @@ impl<'lua> BindGraphicsChip {
 
     fn set_fog_end(gpu: Arc<Mutex<GraphicsChip>>, distance: f32) {
         gpu.lock().unwrap().set_fog_end(distance);
+    }
+
+    fn draw_line(gpu: Arc<Mutex<GraphicsChip>>, p1: &Vec2, p2: &Vec2) {
+        gpu.lock().unwrap().draw_line(p1, p2);
     }
 
     pub fn bind(lua: &Lua, gpu: Arc<Mutex<GraphicsChip>>) -> Result<()> {
@@ -93,22 +97,50 @@ impl<'lua> BindGraphicsChip {
             }
             {
                 let gpu = gpu.clone();
-                let func = lua_ctx.create_function_mut(move |_, (x, y ,z): (f32 , f32, f32)| Ok(BindGraphicsChip::vertex(gpu.clone(), x, y, z)))?;
+                let func = lua_ctx.create_function_mut(
+                    move |_, (x, y ,z): (f32 , f32, f32)| Ok(
+                        BindGraphicsChip::vertex(
+                            gpu.clone(), 
+                            &Vec3::new(x, y, z)
+                        )
+                    )
+                )?;
                 module_table.set("vertex", func)?;
             }
             {
                 let gpu = gpu.clone();
-                let func = lua_ctx.create_function_mut(move |_, (x, y ,z): (f32 , f32, f32)| Ok(BindGraphicsChip::normal(gpu.clone(), x, y, z)))?;
+                let func = lua_ctx.create_function_mut(
+                    move |_, (x, y ,z): (f32 , f32, f32)| Ok(
+                        BindGraphicsChip::normal(
+                            gpu.clone(), 
+                            &Vec3::new(x, y, z)
+                        )
+                    )
+                )?;
                 module_table.set("normal", func)?;
             }
             {
                 let gpu = gpu.clone();
-                let func = lua_ctx.create_function_mut(move |_, (u, v): (f32 , f32)| Ok(BindGraphicsChip::tex_coord(gpu.clone(), u, v)))?;
+                let func = lua_ctx.create_function_mut(
+                    move |_, (u, v): (f32 , f32)| Ok(
+                        BindGraphicsChip::tex_coord(
+                            gpu.clone(), 
+                            &Vec2::new(u, v)
+                        )
+                    )
+                )?;
                 module_table.set("tex_coord", func)?;
             }
             {
                 let gpu = gpu.clone();
-                let func = lua_ctx.create_function_mut(move |_, (r, g, b, a): (f32 , f32, f32, f32)| Ok(BindGraphicsChip::color(gpu.clone(), r, g, b, a)))?;
+                let func = lua_ctx.create_function_mut(
+                    move |_, (r, g, b, a): (f32 , f32, f32, f32)| Ok(
+                        BindGraphicsChip::color(
+                            gpu.clone(), 
+                            &Vec4::new(r, g, b, a)
+                        )  
+                    )
+                )?;
                 module_table.set("color", func)?;
             }
             {
@@ -128,7 +160,14 @@ impl<'lua> BindGraphicsChip {
             }
             {
                 let gpu = gpu.clone();
-                let func = lua_ctx.create_function_mut(move |_, (r, g, b, a): (f32, f32, f32, f32)| Ok(BindGraphicsChip::set_clear_color(gpu.clone(), Vec4::new(r, g, b, a))))?;
+                let func = lua_ctx.create_function_mut(
+                    move |_, (r, g, b, a): (f32, f32, f32, f32)| Ok(
+                        BindGraphicsChip::set_clear_color(
+                            gpu.clone(), 
+                            &Vec4::new(r, g, b, a)
+                        )
+                    )
+                )?;
                 module_table.set("setClearColor", func)?;
             }
             {
@@ -144,10 +183,23 @@ impl<'lua> BindGraphicsChip {
             {
                 let gpu = gpu.clone();
                 let func = lua_ctx.create_function_mut(
+                    move |_, (x1, y1, x2, y2): (f32, f32, f32, f32)| Ok(
+                        BindGraphicsChip::draw_line(
+                            gpu.clone(), 
+                            &Vec2::new(x1, y1), 
+                            &Vec2::new(x2, y2)
+                        )
+                    )
+                )?;
+                module_table.set("drawLine", func)?;
+            }
+            {
+                let gpu = gpu.clone();
+                let func = lua_ctx.create_function_mut(
                     move |_, (x, y, z): (f32, f32, f32)| Ok(
                         BindGraphicsChip::translate(
                             gpu.clone(),
-                            Vec3::new(x, y, z)
+                            &Vec3::new(x, y, z)
                         )
                     )
                 )?;
@@ -160,7 +212,7 @@ impl<'lua> BindGraphicsChip {
                         BindGraphicsChip::rotate(
                             gpu.clone(),
                             angle,
-                            Vec3::new(x, y, z)
+                            &Vec3::new(x, y, z)
                         )
                     )
                 )?;
