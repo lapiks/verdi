@@ -1,20 +1,25 @@
 #version 150
 
+// in
 in vec3 position;
 in vec3 normal;
 in vec4 color;
 in vec2 uv;
 
+// out
 out vec4 v_color;
 out vec2 v_uv;
 out float v_fog_density;
 
+// light
 uniform vec3 u_light;
 
+// matrices
 uniform mat4 u_model;
 uniform mat4 u_view;
 uniform mat4 u_projection;
 
+// fog
 uniform vec2 u_resolution;
 uniform float u_fog_start;
 uniform float u_fog_end;

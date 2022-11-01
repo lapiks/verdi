@@ -1,6 +1,6 @@
 function verdi.start()
-    scene = graphics.newScene("./game_example/assets/tank.gltf")
-    --scene = graphics.newScene("C:/Users/Julien/Documents/Rust/glTF-Sample-Models/2.0/Avocado/glTF/Avocado.gltf")
+    --scene = graphics.newScene("./game_example/assets/tank.gltf")
+    scene = graphics.newScene("C:/Users/Julien/Documents/Rust/glTF-Sample-Models/2.0/Sponza/glTF/Sponza.gltf")
     print(scene:getNumNodes())
 
     x = 5
