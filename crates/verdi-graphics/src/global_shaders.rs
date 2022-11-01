@@ -7,37 +7,69 @@ use crate::{
 
 pub struct GlobalShaders {
     pub gouraud: ProgramId,
+    pub std_2d: ProgramId,
 }
 
 impl GlobalShaders {
     pub fn new(assets: &mut Assets, pipeline: &RenderPipeline) -> Result<Self, std::io::Error> {
-        let gouraud_vs = Shader::new(
+        Ok(
+            Self {
+                gouraud: GlobalShaders::init_gouraud(assets)?,
+                std_2d: GlobalShaders::init_std_2d(assets)?,
+            }
+        )
+    }
+
+    fn init_gouraud(assets: &mut Assets) -> Result<ProgramId, std::io::Error> {
+        let vs = Shader::new(
             match std::fs::read_to_string( "./crates/verdi-graphics/shaders/gouraud.vs") {
-                Ok(gouraud_vs) => gouraud_vs,
+                Ok(src) => src,
                 Err(e) => {
                     println!("{}", e);
                     return Err(e);
                 }
             }
         );
-        let vs_id = assets.add_shader(gouraud_vs);
+        let vs_id = assets.add_shader(vs);
 
-        let gouraud_fs = Shader::new(
+        let fs = Shader::new(
             match std::fs::read_to_string("./crates/verdi-graphics/shaders/gouraud.fs") {
-                Ok(gouraud_fs) => gouraud_fs,
+                Ok(src) => src,
                 Err(e) => {
                     println!("{}", e);
                     return Err(e);
                 }
             }
         );
-        let fs_id = assets.add_shader(gouraud_fs);
+        let fs_id = assets.add_shader(fs);
 
-        let gouraud_program = assets.add_program(Program::new(vs_id, fs_id));
-        
-        Ok(Self {
-            gouraud: gouraud_program,
-        })
+        Ok(assets.add_program(Program::new(vs_id, fs_id)))
+    }
+
+    fn init_std_2d(assets: &mut Assets) -> Result<ProgramId, std::io::Error> {
+        let vs = Shader::new(
+            match std::fs::read_to_string( "./crates/verdi-graphics/shaders/std2d.vs") {
+                Ok(src) => src,
+                Err(e) => {
+                    println!("{}", e);
+                    return Err(e);
+                }
+            }
+        );
+        let vs_id = assets.add_shader(vs);
+
+        let fs = Shader::new(
+            match std::fs::read_to_string("./crates/verdi-graphics/shaders/std2d.fs") {
+                Ok(src) => src,
+                Err(e) => {
+                    println!("{}", e);
+                    return Err(e);
+                }
+            }
+        );
+        let fs_id = assets.add_shader(fs);
+
+        Ok(assets.add_program(Program::new(vs_id, fs_id)))
     }
 }
 

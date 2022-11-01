@@ -8,7 +8,9 @@ use crate::{
     render_pipeline::RenderPipeline, 
     uniforms::Uniforms, 
     gltf_loader::{GltfError, GltfLoader}, 
-    node::Node
+    node::Node, 
+    primitive::{Primitive, PrimitiveId}, 
+    material::Material
 };
 
 use image::ImageError;
@@ -54,10 +56,21 @@ impl GraphicsChip {
         let pipeline = RenderPipeline::new(&mut uniforms);
         let globals = GlobalShaders::new(&mut assets, &pipeline)?;
 
+        let material_2d = assets.add_material(
+            Material::new(globals.std_2d)
+        );
+
+        let streaming_primitive = assets.add_primitive(
+            Primitive::new(
+                vec![Vertex::default(); 1024 * 1024],
+                Some(vec![0; 1024 * 1024]),
+                PrimitiveType::Triangles,
+                material_2d,
+            )
+        );
+
         let buffer_state = StreamBufferState {
-            vertex_buffer: vec![Vertex::default(); 1024 * 1024],
-            index_buffer: vec![0; 1024 * 1024],
-            primitive_type: PrimitiveType::Triangles,
+            primitive_id: streaming_primitive,
             vertex_count: 0,
             current_offset: 0,
         };
@@ -246,9 +259,7 @@ impl GraphicsChip {
 }
 
 pub struct StreamBufferState {
-    pub vertex_buffer: Vec<Vertex>,
-    pub index_buffer: Vec<u32>,
-    pub primitive_type: PrimitiveType,
+    pub primitive_id: PrimitiveId, 
     pub vertex_count: u32,
     pub current_offset: usize,
 }
@@ -273,17 +284,19 @@ pub struct DrawCommand {
 // Private impl
 impl GraphicsChip {
     fn request_flush(&mut self, cmd: &DrawCommand) -> StreamBuffer {
-        if cmd.primitive_type != self.buffer_state.primitive_type {
-            self.flush();
+        let primitive = self.assets.get_primitive_mut(self.buffer_state.primitive_id).expect("Primitive not found");
 
-            self.buffer_state.primitive_type = cmd.primitive_type;
+        if cmd.primitive_type != primitive.primitive_type {
+            //self.flush();
+
+            primitive.primitive_type = cmd.primitive_type;
             self.buffer_state.vertex_count = cmd.vertex_count;
             self.buffer_state.current_offset = 0;
         }
 
         let new_offset = self.buffer_state.current_offset + cmd.vertex_count as usize;
         let stream_buffer = StreamBuffer {
-            data: &mut self.buffer_state.vertex_buffer[
+            data: &mut primitive.vertex_buffer[
                 self.buffer_state.current_offset
                 ..
                 new_offset

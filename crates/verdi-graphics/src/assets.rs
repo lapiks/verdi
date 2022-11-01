@@ -75,6 +75,10 @@ impl Assets {
         self.primitives.get(id)
     }
 
+    pub fn get_primitive_mut(&mut self, id: PrimitiveId) -> Option<&mut Primitive> {
+        self.primitives.get_mut(id)
+    }
+
     pub fn add_material(&mut self, material: Material) -> MaterialId {
         let id = self.materials.insert(material);
         unsafe {
