@@ -37,7 +37,9 @@ float inverse_lerp(float a, float b, float t) {
 }
 
 void main() {
-    vec4 proj_vertex = u_projection * u_view * u_model * vec4(position, 1.0);
+    vec4 world_vertex = u_model * vec4(position, 1.0);
+    vec4 view_vertex = u_view * world_vertex;
+    vec4 proj_vertex = u_projection * view_vertex;
 
     // Polygon jittering
     vec4 snapped_pos = snap(proj_vertex);
@@ -45,19 +47,23 @@ void main() {
     gl_Position = snapped_pos;
 
     // fog
-    vec4 view_vertex = u_view * u_model * vec4(position, 1.0);
     float vertex_depth = length(view_vertex);
     v_fog_density = clamp(inverse_lerp(u_fog_start, u_fog_end, vertex_depth), 0.0, 1.0);
 
     // lighting
-    vec3 v_normal = transpose(inverse(mat3(u_view * u_model))) * normal;
-    vec3 lighting_dir = normalize(u_light - view_vertex.xyz);
-    vec3 light_color = vec3(1.0, 1.0, 1.0);
-    vec3 light_ambient = vec3(0.1, 0.1, 0.1);
+    const vec3 light_color = vec3(1.0, 1.0, 1.0);
 
+    // ambient
+    const float ambient_strength = 0.1;
+    vec3 ambient_comp = ambient_strength * light_color;
+
+    // diffuse
+    vec3 v_normal = normalize(mat3(transpose(inverse(u_model))) * normal);
+    vec3 lighting_dir = normalize(u_light - world_vertex.xyz);
     float light_mag = max(dot(lighting_dir, v_normal), 0.0);
-    vec3 diffuse = light_mag * light_color;
+    vec3 diffuse_comp = light_mag * light_color;
 
-    v_color = vec4(color.xyz * (light_ambient + diffuse), color.w);
+    // final color
+    v_color = vec4(color.xyz * (ambient_comp + diffuse_comp), color.w);
     v_uv = uv;
 }
