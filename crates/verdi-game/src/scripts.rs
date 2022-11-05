@@ -1,5 +1,6 @@
 use std::{collections::HashMap, path::{PathBuf, Path}, fs::File, io::{Read, Write}};
 
+use verdi_utils::read_at_path;
 pub struct Scripts {
     scripts: HashMap<PathBuf, Script>
 }
@@ -72,13 +73,9 @@ pub struct Script {
 
 impl Script {
     pub fn new<P: AsRef<Path>>(path: P) -> std::io::Result<Self>  {
-        let mut f = File::open(path)?;
-        let mut code: String = String::new();
-        f.read_to_string(&mut code)?;
-        
         Ok(
             Self {
-                code,
+                code: read_at_path(path)?
             }
         )
     }
@@ -86,5 +83,11 @@ impl Script {
     pub fn save_at<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
         let mut f = File::open(path)?;
         f.write_all(&self.code.as_bytes())
+    }
+
+    pub fn reload<P: AsRef<Path>>(&mut self, path: P) -> std::io::Result<()> {
+        self.code = read_at_path(path)?;
+
+        Ok(())
     }
 }

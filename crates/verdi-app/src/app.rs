@@ -7,6 +7,7 @@ use rlua::Lua;
 
 use std::{sync::{Mutex, Arc}, time::Duration, rc::Rc, cell::RefCell};
 
+use verdi_utils::make_relative_path;
 use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
 use verdi_gui::prelude::*;
@@ -53,9 +54,9 @@ impl App {
         BindInputs::bind(&lua, inputs.clone())?;
 
         let scripts = Rc::new(RefCell::new(Scripts::new()));
-        scripts.borrow_mut().load_dir("./game_example/")?;
-        scripts.borrow_mut().load_file("./crates/verdi-app/src/boot.lua")?;
-        scripts.borrow_mut().load_file("./crates/verdi-app/src/run.lua")?;
+        scripts.borrow_mut().load_dir("game_example/")?;
+        scripts.borrow_mut().load_file("crates/verdi-app/src/boot.lua")?;
+        scripts.borrow_mut().load_file("crates/verdi-app/src/run.lua")?;
 
         LuaContext::load_scripts(&lua, &scripts.borrow())?;
         LuaContext::call_boot(&lua)?;
@@ -80,16 +81,19 @@ impl App {
             if let Some(watcher_event) = file_watcher.get_event() {
                 if let notify::EventKind::Modify(_) = watcher_event.kind {
                     for path in watcher_event.paths.iter() {
-                        if let Some(script) = scripts.borrow().get_script(path) {
-                            // reload script
-                            scripts.borrow_mut()
-                                .load_file(path)
-                                .expect("Reload script file failed");
-                            // update lua context
-                            LuaContext::load_script(
-                                &lua, 
+                        if let Ok(relative_path) = make_relative_path(path) {
+                            if let Some(script) = scripts.borrow_mut().get_script_mut(&relative_path) {
+                                // reload script
                                 script
-                            ).expect("Reload script failed");
+                                    .reload(relative_path)
+                                    .expect("Reload script file failed");
+
+                                // update lua context
+                                LuaContext::load_script(
+                                    &lua, 
+                                    script
+                                ).expect("Reload script failed");
+                            }
                         }
                     }
                 }

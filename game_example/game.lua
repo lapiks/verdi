@@ -15,7 +15,7 @@ function verdi.start()
     test.func()
 end
 
-function verdi.update()
+function verdi.update() 
 
 end
 
@@ -24,7 +24,7 @@ function verdi.draw(deltaTime)
 
     --graphics.line(0.0, 0.0, 1.0, 1.0)
 
-    graphics.setFogStart(20.0)
+    graphics.setFogStart(5.0)
     graphics.setFogEnd(25.0)
 
     graphics.rotate(camPitch, 1, 0, 0)
