@@ -5,7 +5,7 @@ use slotmap::{new_key_type, Key};
 
 use crate::{
     node::{Node, NodeRef}, 
-    graphics_chip::GraphicsChip
+    graphics_chip::GraphicsChip, render_pass::RenderPass
 };
 
 new_key_type! {
@@ -52,7 +52,7 @@ impl SceneRef {
     }
 
     pub fn draw(&self) {
-        self.gpu.lock().unwrap().draw(self.id);
+        self.gpu.lock().unwrap().draw_scene(self.id);
     }
 
     pub fn get_node(&self, index: usize) -> NodeRef {

@@ -19,8 +19,9 @@ uniform mat4 u_model;
 uniform mat4 u_view;
 uniform mat4 u_projection;
 
-// fog
 uniform vec2 u_resolution;
+
+// fog
 uniform float u_fog_start;
 uniform float u_fog_end;
 

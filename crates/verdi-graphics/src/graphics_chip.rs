@@ -1,27 +1,28 @@
+use std::sync::{Arc, Mutex};
+
 use crate::{
     vertex::Vertex, 
     render_pass::RenderPass, 
     image::{Image, ImageRef, ImageId}, 
     assets::Assets, 
     scene::SceneId, 
-    prelude::GlobalShaders, 
-    render_pipeline::RenderPipeline, 
     uniforms::Uniforms, 
     gltf_loader::{GltfError, GltfLoader}, 
     node::Node, 
-    primitive::{Primitive, PrimitiveId}, 
-    material::Material
+    primitive::{Primitive, PrimitiveId, PrimitiveHandle}, 
+    material::Material, 
+    globals::Globals, transform::Transform
 };
 
 use image::ImageError;
 use verdi_math::prelude::*;
 
 pub struct GraphicsChip {
+    pub render_passes: Vec<RenderPass>,
     pub buffer_state: StreamBufferState,
-    pub pipeline: RenderPipeline,
     pub assets: Assets,
-    pub globals: GlobalShaders,
-    pub uniforms: Uniforms
+    pub uniforms: Uniforms,
+    pub globals: Globals,
 }
 
 #[derive(Copy, Clone, PartialEq)]
@@ -53,17 +54,20 @@ impl GraphicsChip {
     pub fn new() -> Result<Self, std::io::Error> {
         let mut assets = Assets::new();
         let mut uniforms = Uniforms::default();
-        let pipeline = RenderPipeline::new(&mut uniforms);
-        let globals = GlobalShaders::new(&mut assets, &pipeline)?;
+        let globals = Globals::new(&mut assets, &mut uniforms)?;
 
         let material_2d = assets.add_material(
-            Material::new(globals.std_2d)
+            *Material::new(globals.global_shaders.std_2d)
+                .add_uniform("u_model", globals.global_uniforms.model_matrix)
+                .add_uniform("u_view", globals.global_uniforms.view_matrix)
+                .add_uniform("u_projection", globals.global_uniforms.perspective_matrix)
+                .add_uniform("u_resolution", globals.global_uniforms.resolution)
         );
 
         let streaming_primitive = assets.add_primitive(
             Primitive::new(
                 vec![Vertex::default(); 1024 * 1024],
-                Some(vec![0; 1024 * 1024]),
+                None,
                 PrimitiveType::Triangles,
                 material_2d,
             )
@@ -76,36 +80,59 @@ impl GraphicsChip {
         };
 
         Ok(Self { 
+            render_passes: Vec::new(),
             buffer_state,
-            pipeline,
             assets,
-            globals,
             uniforms,
+            globals,
         })
     }
 
+    pub fn new_frame(&mut self) {
+        if self.buffer_state.vertex_count > 0 {
+            let render_pass = RenderPass {
+                primitive_id: self.buffer_state.primitive_id,
+                transform: Transform::default(),
+            };
+    
+            self.render_passes.push(render_pass);
+        }   
+    }
+
     pub fn next_frame(&mut self) {
-        self.pipeline.render_passes.clear();   
+        self.render_passes.clear();   
         self.buffer_state.next_frame();
     }
 
     pub fn begin(&mut self, primitive_type: PrimitiveType) {
-        // let render_pass = RenderPass::new(
+        // let handle = PrimitiveHandle {
+        //     id: self.buffer_state.primitive_id,
+        //     gpu: Arc::new(Mutex::new(self)),
+        // };
+
+        // let cmd = DrawCommand {
+        //     primitive_type: primitive_type,
+        //     vertex_count: 0,
+        // };
+
+        // self.request_flush(&cmd);
+
+        // let render_pass = RenderPass {
         //     None,
         //     primitive_type
-        // );
+        // };
 
         // self.render_passes.push(render_pass);
     }
 
     pub fn end(&mut self) {
-        match self.pipeline.render_passes.last_mut() {
-            Some(render_pass) => {
-                render_pass.current_vertex_state = Vertex::default();
-                //render_pass.vertex_buffer.clear();
-            },
-            None => return
-        };
+        // match self.render_passes.last_mut() {
+        //     Some(render_pass) => {
+        //         render_pass.current_vertex_state = Vertex::default();
+        //         //render_pass.vertex_buffer.clear();
+        //     },
+        //     None => return
+        // };
     }
 
     pub fn vertex(&mut self, coords: &Vec3) {
@@ -116,33 +143,48 @@ impl GraphicsChip {
         //     },
         //     None => return
         // };
+
+        // let cmd = DrawCommand {
+        //     primitive_type: PrimitiveType::Lines,
+        //     vertex_count: 2,
+        // };
+
+        // let vertex = Vertex {
+        //     position: coords.to_array(),
+        //     uv: [0.0, 0.0],
+        //     normal: [0.0, 0.0, 0.0],
+        //     color: [1.0, 0.0, 0.0, 1.0],
+        // };
+
+        // let stream_buffer = self.request_flush(&cmd);
+        // stream_buffer.data.clone_from_slice(&vertices)
     }
 
     pub fn normal(&mut self, coords: &Vec3) {
-        match self.pipeline.render_passes.last_mut() {
-            Some(render_pass) => {
-                render_pass.current_vertex_state.normal = coords.to_array();
-            },
-            None => return
-        };
+        // match self.render_passes.last_mut() {
+        //     Some(render_pass) => {
+        //         render_pass.current_vertex_state.normal = coords.to_array();
+        //     },
+        //     None => return
+        // };
     }
 
     pub fn tex_coord(&mut self, coords: &Vec2) {
-        match self.pipeline.render_passes.last_mut() {
-            Some(render_pass) => {
-                render_pass.current_vertex_state.uv = coords.to_array();
-            },
-            None => return
-        };
+        // match self.render_passes.last_mut() {
+        //     Some(render_pass) => {
+        //         render_pass.current_vertex_state.uv = coords.to_array();
+        //     },
+        //     None => return
+        // };
     }
 
     pub fn color(&mut self, color: &Vec4) {
-        match self.pipeline.render_passes.last_mut() {
-            Some(render_pass) => {
-                render_pass.current_vertex_state.color = color.to_array();
-            },
-            None => return
-        };
+        // match self.render_passes.last_mut() {
+        //     Some(render_pass) => {
+        //         render_pass.current_vertex_state.color = color.to_array();
+        //     },
+        //     None => return
+        // };
     }
 
     pub fn new_image(&mut self, path: &String) -> Result<ImageId, ImageError> {
@@ -152,41 +194,51 @@ impl GraphicsChip {
     }
 
     pub fn bind_texture(&mut self, image: ImageRef) {
-        match self.pipeline.render_passes.last_mut() {
-            Some(render_pass) => {
-                render_pass.current_texture = Some(image);
-            },
-            None => return
-        };
+        // match self.render_passes.last_mut() {
+        //     Some(render_pass) => {
+        //         render_pass.current_texture = Some(image);
+        //     },
+        //     None => return
+        // };
     }
 
-    pub fn draw(&mut self, scene_id: SceneId) {
+    pub fn draw_scene(&mut self, scene_id: SceneId) {
         let scene = self.assets.get_scene(scene_id).unwrap();
         for node in scene.nodes.iter() {
+            // nothing to draw
             if node.mesh.is_none() {
                 continue;
             }
-    
-            let render_pass = RenderPass::new(
-                node.clone(),
-                PrimitiveType::Triangles
-            );
-    
-            self.pipeline.render_passes.push(render_pass);
+
+            if let Some(mesh) = self.assets.get_mesh(node.mesh.unwrap()) {
+                for primitive_id in mesh.primitives.iter() {
+                    self.render_passes.push(
+                        RenderPass { 
+                            primitive_id: *primitive_id,
+                            transform: node.transform.clone(),
+                        }
+                    );
+                }
+            }
         }
     }
 
     pub fn draw_node(&mut self, node: &Node) {
+        // nothing to draw
         if node.mesh.is_none() {
             return;
         }
 
-        let render_pass = RenderPass::new(
-            node.clone(),
-            PrimitiveType::Triangles
-        );
-
-        self.pipeline.render_passes.push(render_pass);
+        if let Some(mesh) = self.assets.get_mesh(node.mesh.unwrap()) {
+            for primitive_id in mesh.primitives.iter() {
+                self.render_passes.push(
+                    RenderPass { 
+                        primitive_id: *primitive_id,
+                        transform: node.transform.clone(),
+                    }
+                );
+            }
+        }
     }
 
     pub fn new_scene(&mut self, path: &String) -> Result<SceneId, GltfError>{
@@ -196,13 +248,13 @@ impl GraphicsChip {
     }
 
     pub fn set_clear_color(&mut self, color: &Vec4) {
-        self.pipeline.clear_color = *color;
+        self.globals.clear_color = *color;
     }
 
     pub fn translate(&mut self, v: &Vec3) {
         *self.uniforms
             .get_mat4_mut(
-                self.pipeline.view_matrix
+                self.globals.global_uniforms.view_matrix
             ).unwrap() 
                 *= Mat4::from_translation(*v);
     }
@@ -210,7 +262,7 @@ impl GraphicsChip {
     pub fn rotate(&mut self, angle: f32, axis: &Vec3) {
         *self.uniforms
             .get_mat4_mut(
-                self.pipeline.view_matrix
+                self.globals.global_uniforms.view_matrix
             ).unwrap() 
                 *= Mat4::from_axis_angle(*axis, angle);
     }
@@ -218,7 +270,7 @@ impl GraphicsChip {
     pub fn set_fog_start(&mut self, distance: f32) {
         *self.uniforms
             .get_float_mut(
-                self.pipeline.fog_start
+                self.globals.global_uniforms.fog_start
             ).unwrap() 
                 = distance;
     }
@@ -226,7 +278,7 @@ impl GraphicsChip {
     pub fn set_fog_end(&mut self, distance: f32) {
         *self.uniforms
             .get_float_mut(
-                self.pipeline.fog_end
+                self.globals.global_uniforms.fog_end
             ).unwrap() 
                 = distance;
     }
@@ -292,6 +344,10 @@ impl GraphicsChip {
             primitive.primitive_type = cmd.primitive_type;
             self.buffer_state.vertex_count = cmd.vertex_count;
             self.buffer_state.current_offset = 0;
+        }
+        else {
+            self.buffer_state.current_offset = self.buffer_state.vertex_count as usize;
+            self.buffer_state.vertex_count += cmd.vertex_count;
         }
 
         let new_offset = self.buffer_state.current_offset + cmd.vertex_count as usize;

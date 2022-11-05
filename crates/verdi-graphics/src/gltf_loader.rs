@@ -207,15 +207,15 @@ impl GltfLoader {
             .map(|info| info.texture().index())
             .and_then(|i| textures.get(i).cloned());
 
-        let mut material = Material::new(gpu.globals.gouraud);
-        material.add_uniform("u_model", gpu.pipeline.model_matrix);
-        material.add_uniform("u_view", gpu.pipeline.view_matrix);
-        material.add_uniform("u_projection", gpu.pipeline.perspective_matrix);
-        material.add_uniform("u_resolution", gpu.pipeline.resolution);
-        material.add_uniform("u_fog_start", gpu.pipeline.fog_start);
-        material.add_uniform("u_fog_end", gpu.pipeline.fog_end);
+        let mut material = Material::new(gpu.globals.global_shaders.gouraud);
+        material.add_uniform("u_model", gpu.globals.global_uniforms.model_matrix);
+        material.add_uniform("u_view", gpu.globals.global_uniforms.view_matrix);
+        material.add_uniform("u_projection", gpu.globals.global_uniforms.perspective_matrix);
+        material.add_uniform("u_resolution", gpu.globals.global_uniforms.resolution);
+        material.add_uniform("u_fog_start", gpu.globals.global_uniforms.fog_start);
+        material.add_uniform("u_fog_end", gpu.globals.global_uniforms.fog_end);
         if let Some(id) = uniform_id {
-            material.add_uniform("u_texture", id)
+            material.add_uniform("u_texture", id);
         }
 
         material

@@ -15,6 +15,8 @@ uniform mat4 u_model;
 uniform mat4 u_view;
 uniform mat4 u_projection;
 
+uniform vec2 u_resolution;
+
 // Polygon jittering
 vec4 snap(vec4 vertex) {
     // convert to normalised device coordinates (NDC)
@@ -29,14 +31,13 @@ vec4 snap(vec4 vertex) {
 }
 
 void main() {
-    vec4 proj_vertex = u_projection * view_vertex;
+    vec4 proj_vertex = u_projection * u_model * vec4(position.xy, 0.0, 1.0);
 
     // Polygon jittering
-    vec4 snapped_pos = snap(proj_vertex);
+    //vec4 snapped_pos = snap(proj_vertex);
 
-    gl_Position = snapped_pos;
+    gl_Position = proj_vertex;
 
-    // final color
-    v_color = vec4(color.xyz * (ambient_comp + diffuse_comp), color.w);
+    v_color = color;
     v_uv = uv;
 }

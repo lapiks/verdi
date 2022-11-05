@@ -105,9 +105,6 @@ impl App {
                     last_error = current_error;
                 }
             }
-            
-            // prepare assets for rendering
-            renderer.prepare_assets(window.get_display(), &gpu.lock().unwrap());
 
             // prepare renderer for rendering
             //renderer.prepare_rendering(&target, &mut gpu.lock().unwrap());
@@ -124,6 +121,11 @@ impl App {
                 ),
                 1.0
             );
+
+            gpu.lock().unwrap().new_frame();
+
+            // prepare assets for rendering
+            renderer.prepare_assets(window.get_display(), &gpu.lock().unwrap());
 
             // draw game in framebuffer
             renderer.render(window.get_display(), &render_target, &mut target, &mut gpu.lock().unwrap());

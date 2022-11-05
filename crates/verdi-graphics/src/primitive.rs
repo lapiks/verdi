@@ -1,8 +1,11 @@
+use std::sync::{Arc, Mutex};
+
 use glium::Display;
+use rlua::{UserData, UserDataMethods};
 use slotmap::{new_key_type, Key};
 
 use crate::{
-    graphics_chip::PrimitiveType, 
+    graphics_chip::{PrimitiveType, GraphicsChip}, 
     vertex::Vertex, 
     material::MaterialId, 
     gpu_primitive::GpuPrimitive, 
@@ -60,5 +63,18 @@ impl Primitive {
                 gpu_assets.add_primitive(self.id, gpu_primitive);
             }
         }
+    }
+}
+
+pub struct PrimitiveHandle {
+    pub id: PrimitiveId,
+    pub gpu: Arc<Mutex<GraphicsChip>>,
+}
+
+impl UserData for PrimitiveHandle {
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method("vertex", |_, handle, ()| {
+            Ok(())
+        });
     }
 }

@@ -1,9 +1,49 @@
+use verdi_math::{Vec2, Vec4, Mat4};
+
 use crate::{
+    uniforms::{UniformId, Uniforms}, 
+    program::{ProgramId, Program}, 
     assets::Assets, 
-    shader::Shader, 
-    program::{Program, ProgramId}, 
-    render_pipeline::RenderPipeline, 
+    shader::Shader
 };
+
+pub struct Globals {
+    pub global_shaders: GlobalShaders,
+    pub global_uniforms: GlobalUniforms, 
+    pub clear_color: Vec4,
+}
+
+impl Globals {
+    pub fn new(assets: &mut Assets, uniforms: &mut Uniforms) -> Result<Self, std::io::Error> {
+        Ok(Self {
+            global_shaders: GlobalShaders::new(assets)?,
+            global_uniforms: GlobalUniforms::new(uniforms),
+            clear_color: Vec4::new(0.0, 0.0, 0.0, 1.0),
+        })
+    }
+}
+
+pub struct GlobalUniforms {
+    pub model_matrix: UniformId,
+    pub view_matrix: UniformId,
+    pub perspective_matrix: UniformId,
+    pub resolution: UniformId,
+    pub fog_start: UniformId,
+    pub fog_end: UniformId,
+}
+
+impl GlobalUniforms {
+    pub fn new(uniforms: &mut Uniforms) -> Self{
+        Self {
+            model_matrix: uniforms.add_mat4(Mat4::IDENTITY),
+            view_matrix: uniforms.add_mat4(Mat4::IDENTITY),
+            perspective_matrix: uniforms.add_mat4(Mat4::IDENTITY),
+            resolution: uniforms.add_vec2(Vec2::ZERO),
+            fog_start: uniforms.add_float(0.0),
+            fog_end: uniforms.add_float(0.0),
+        }
+    }    
+}
 
 pub struct GlobalShaders {
     pub gouraud: ProgramId,
@@ -11,7 +51,7 @@ pub struct GlobalShaders {
 }
 
 impl GlobalShaders {
-    pub fn new(assets: &mut Assets, pipeline: &RenderPipeline) -> Result<Self, std::io::Error> {
+    pub fn new(assets: &mut Assets) -> Result<Self, std::io::Error> {
         Ok(
             Self {
                 gouraud: GlobalShaders::init_gouraud(assets)?,
@@ -72,4 +112,3 @@ impl GlobalShaders {
         Ok(assets.add_program(Program::new(vs_id, fs_id)))
     }
 }
-

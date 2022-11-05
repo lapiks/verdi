@@ -5,7 +5,6 @@ pub mod prelude {
         graphics_chip::GraphicsChip,
         bind_graphics_chip::BindGraphicsChip,
         renderer::Renderer,
-        global_shaders::GlobalShaders,
         render_target::RenderTarget,
     };
 }
@@ -14,8 +13,8 @@ mod graphics_chip;
 mod bind_graphics_chip;
 mod vertex;
 mod sprite_vertex;
-mod render_pipeline;
 mod render_pass;
+mod draw_command;
 mod renderer;
 mod renderable;
 mod render_target;
@@ -33,7 +32,7 @@ mod transform;
 mod camera;
 mod material;
 mod uniforms;
-mod global_shaders;
+mod globals;
 mod program;
 mod shader;
 mod screen_quad;

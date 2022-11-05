@@ -21,8 +21,9 @@ new_key_type! {
     pub struct MaterialId;
 }
 
+#[derive(Clone, Copy)]
 pub struct Material {
-    program: ProgramId,
+    pub program: ProgramId,
     uniforms: [Option<(&'static str, UniformId)>; MAX_UNIFORMS],
     pub id: MaterialId,
 }
@@ -36,13 +37,14 @@ impl Material {
         }
     }
 
-    pub fn add_uniform(&mut self, name: &'static str, id: UniformId) {
+    pub fn add_uniform(&mut self, name: &'static str, id: UniformId) -> &mut Self {
         for uniform in &mut self.uniforms[..] {
             if uniform.is_none() {
                 *uniform = Some((name, id));
                 break;
             }
         }
+        self
     }
 
     pub fn get_uniform_values<'a>(&self, uniforms: &'a Uniforms, gpu_assets: &'a GpuAssets) -> Option<UniformValues<'a>> {

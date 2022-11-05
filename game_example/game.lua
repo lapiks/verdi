@@ -22,7 +22,7 @@ end
 function verdi.draw(deltaTime)
     graphics.setClearColor(0.2, 0.2, 0.2, 1.0)
 
-    graphics.line(0.0, 0.0, 100.0, 100.0)
+    --graphics.line(0.0, 0.0, 1.0, 1.0)
 
     graphics.setFogStart(20.0)
     graphics.setFogEnd(25.0)
