@@ -8,3 +8,4 @@ pub mod prelude {
 
 mod gui;
 mod code_editor;
+mod console;

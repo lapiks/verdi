@@ -4,11 +4,16 @@ use egui_glium::{EguiGlium, egui_winit::egui};
 use glium::{Frame, Display, glutin::event::WindowEvent};
 use verdi_game::prelude::Scripts;
 
-use crate::code_editor::CodeEditor;
+use crate::{
+    code_editor::CodeEditor, 
+    console::Console
+};
 
 pub struct Gui {
     egui_glium: EguiGlium,
-    code_editor: CodeEditor
+    code_editor: CodeEditor,
+    console: Console,
+    show_console: bool,
 }
 
 impl Gui {
@@ -16,6 +21,8 @@ impl Gui {
         Self {
             egui_glium,
             code_editor: CodeEditor::new(scripts),
+            console: Console::default(),
+            show_console: true,
         }
     }
 
@@ -30,8 +37,13 @@ impl Gui {
                 }
             });
 
-            let mut open_editor = true;
-            self.code_editor.show(ctx, &mut open_editor);
+            if self.show_console {
+                self.console.show(ctx, &mut self.show_console);
+            }
+            else {
+                //let mut open_editor = true;
+                self.code_editor.show(ctx, &mut self.show_console);
+            }
         });
 
         self.egui_glium.paint(&display, target);

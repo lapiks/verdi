@@ -25,9 +25,15 @@ impl GUIPanel for CodeEditor {
 
     fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
         egui::Window::new(self.name())
-            .open(open)
+            //.open(open)
             .default_height(800.0)
-            .show(ctx, |ui| self.draw(ui));
+            .show(ctx, |ui| { 
+                if ui.input().key_pressed(egui::Key::Escape) {
+                    *open = true;
+                }
+                self.draw(ui) 
+            }
+        );
         // egui::CentralPanel::default().show(ctx, |ui| { 
         //     self.draw(ui);
         // });
@@ -60,7 +66,7 @@ impl CodeEditor {
                             .frame(false) // to mask borders
                     );
 
-                    if ui.input().modifiers.ctrl == true && ui.input().keys_down.get(&egui::Key::S).is_some() {
+                    if ui.input().modifiers.ctrl == true && ui.input().key_pressed(egui::Key::S) {
                         script
                             .save_at(&self.current_script)
                             .expect("Unable to save script");

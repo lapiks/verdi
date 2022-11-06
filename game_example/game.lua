@@ -9,7 +9,7 @@ function verdi.start()
     camPitch = 0
     camYaw = 0
 
-    speed = 50
+    speed = 5
     rotSpeed = 1
 
     test.func()

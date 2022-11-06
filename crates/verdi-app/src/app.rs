@@ -108,9 +108,6 @@ impl App {
                 }
             }
 
-            // prepare renderer for rendering
-            //renderer.prepare_rendering(&target, &mut gpu.lock().unwrap());
-
             // request a new frame
             let mut target = window.get_display().draw();
             
