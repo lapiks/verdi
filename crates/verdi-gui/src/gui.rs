@@ -26,6 +26,10 @@ impl Gui {
         }
     }
 
+    pub fn init(&mut self) {
+        self.console.init();
+    }
+
     pub fn render(&mut self, display: &Display, target: &mut Frame, fps: u32) {
         self.egui_glium.run(display, |ctx| {
             egui::SidePanel::left("my_side_panel").show(ctx, |ui| {

@@ -70,6 +70,7 @@ impl App {
 
         let egui_glium = egui_glium::EguiGlium::new(&window.get_display(), &event_loop);
         let mut gui = Gui::new(egui_glium, scripts.clone());
+        gui.init();
 
         let mut last_error: String = String::new();
         let mut time_step = TimeStep::new();

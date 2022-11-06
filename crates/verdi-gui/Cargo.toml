@@ -11,3 +11,4 @@ verdi-input = { path = "../verdi-input" }
 egui = { version = "0.19.0", default-features = true }
 egui_glium = "0.19.0"
 glium = "*"
+thiserror = "1.0.34"

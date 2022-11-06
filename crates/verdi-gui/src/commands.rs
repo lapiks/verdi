@@ -1,28 +1,42 @@
 pub trait Command {
-    fn name() -> &'static str;
-    fn desc() -> &'static str;
+    fn name(&self) -> &'static str;
+    fn desc(&self) -> &'static str;
 }
 
-pub struct Load;
+pub struct Load {
+
+}
 
 impl Command for Load {
-    fn name() -> &'static str {
-        "load"
+    fn name(&self) -> &'static str {
+        Load::name()
     }
 
-    fn desc() -> &'static str {
+    fn desc(&self) -> &'static str {
         "load a game folder"
+    }
+}
+
+impl Load {
+    pub fn name() -> &'static str {
+        "load"
     }
 }
 
 pub struct Help;
 
 impl Command for Help {
-    fn name() -> &'static str {
-        "help"
+    fn name(&self) -> &'static str {
+        Help::name()
     }
 
-    fn desc() -> &'static str {
+    fn desc(&self) -> &'static str {
         "pint available commands"
+    }
+}
+
+impl Help {
+    pub fn name() -> &'static str {
+        "help"
     }
 }
