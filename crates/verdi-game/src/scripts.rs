@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::{PathBuf, Path}, fs::{File, OpenOptions}, io::{Read, Write}};
+use std::{collections::HashMap, path::{PathBuf, Path}, fs::OpenOptions, io::Write};
 
 use verdi_utils::read_at_path;
 pub struct Scripts {

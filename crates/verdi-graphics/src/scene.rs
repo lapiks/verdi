@@ -5,7 +5,7 @@ use slotmap::{new_key_type, Key};
 
 use crate::{
     node::{Node, NodeRef}, 
-    graphics_chip::GraphicsChip, render_pass::RenderPass
+    graphics_chip::GraphicsChip,
 };
 
 new_key_type! {

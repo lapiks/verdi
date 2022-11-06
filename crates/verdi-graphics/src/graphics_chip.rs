@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use crate::{
     vertex::Vertex, 
     render_pass::RenderPass, 
@@ -9,7 +7,7 @@ use crate::{
     uniforms::Uniforms, 
     gltf_loader::{GltfError, GltfLoader}, 
     node::Node, 
-    primitive::{Primitive, PrimitiveId, PrimitiveHandle}, 
+    primitive::{Primitive, PrimitiveId}, 
     material::Material, 
     globals::Globals, transform::Transform
 };

@@ -1,7 +1,6 @@
-use std::{rc::Rc, path::PathBuf, cell::RefCell, sync::{Mutex, Arc}};
+use std::{rc::Rc, path::PathBuf, cell::RefCell};
 
 use verdi_game::prelude::Scripts;
-use verdi_input::prelude::*;
 
 use crate::gui::GUIPanel;
 

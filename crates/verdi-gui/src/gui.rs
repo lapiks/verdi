@@ -1,9 +1,8 @@
-use std::{rc::Rc, cell::RefCell, sync::{Arc, Mutex}};
+use std::{rc::Rc, cell::RefCell};
 
 use egui_glium::{EguiGlium, egui_winit::egui};
 use glium::{Frame, Display, glutin::event::WindowEvent};
 use verdi_game::prelude::Scripts;
-use verdi_input::prelude::Inputs;
 
 use crate::code_editor::CodeEditor;
 
