@@ -54,7 +54,8 @@ impl Console {
 
                         if ui.input().key_pressed(egui::Key::Enter) {
                             // execute command
-                            
+                            self.execute(&self.current_text);
+
                             let line = format!("{}{}", "> ", self.current_text);
                             self.previous_text += &line;
                             self.current_text.clear();
@@ -63,5 +64,18 @@ impl Console {
                     
                 }
             );
+    }
+
+    fn execute(&self, cmd: &String) {
+        let first_word = cmd
+            .split_whitespace()
+            .next()
+            .unwrap_or("");
+
+        println!("{}", first_word);
+    }
+
+    fn draw_help(&mut self) {
+        //self.previous_text.
     }
 }
