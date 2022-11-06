@@ -83,7 +83,7 @@ impl App {
                             if let Some(script) = scripts.borrow_mut().get_script_mut(&relative_path) {
                                 // reload script
                                 script
-                                    .reload(relative_path)
+                                    .reload_from(relative_path)
                                     .expect("Reload script file failed");
 
                                 // update lua context

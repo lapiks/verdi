@@ -16,28 +16,24 @@ impl Scripts {
         let paths = std::fs::read_dir(dir_path).unwrap();
 
         for path in paths {
-            let path = path.unwrap().path();
-    
-            match path.extension() {
-                Some(p) if p == "lua" => {
-                    println!("Loading script {:?}", path.file_name().unwrap());
-                    self.scripts.insert(
-                        path.clone(),
-                        Script::new(path)?,
-                    );
-                },
-                _ => (),
-            }
+            let file_path = path?.path();
+            self.load_file(file_path)?;
         }
 
         Ok(())
     }
 
     pub fn load_file<P: AsRef<Path>>(&mut self, file_path: P) -> std::io::Result<()>  {
-        self.scripts.insert(
-            PathBuf::from(file_path.as_ref()),
-            Script::new(file_path)?,
-        );
+        match &file_path.as_ref().extension() {
+            Some(p) if *p == "lua" => {
+                println!("Loading script {:?}", file_path.as_ref().file_name().unwrap());
+                self.scripts.insert(
+                    file_path.as_ref().to_path_buf(),
+                    Script::new(file_path)?,
+                );
+            },
+            _ => (),
+        }
 
         Ok(())
     }
@@ -88,7 +84,7 @@ impl Script {
         f.write_all(&self.code.as_bytes())
     }
 
-    pub fn reload<P: AsRef<Path>>(&mut self, path: P) -> std::io::Result<()> {
+    pub fn reload_from<P: AsRef<Path>>(&mut self, path: P) -> std::io::Result<()> {
         self.code = read_at_path(path)?;
 
         Ok(())
