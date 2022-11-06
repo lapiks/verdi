@@ -33,13 +33,6 @@ impl GUIPanel for CodeEditor {
         //     self.draw(ui);
         // });
     }
-
-    fn update(&mut self, inputs: Arc<Mutex<Inputs>>) {
-        // if inputs.lock().unwrap().get_key_down(Key::S) == true && inputs.lock().unwrap().get_modifiers().ctrl == true {
-        //     println!("save script");
-        //     self.scripts.borrow_mut().save_script(&self.current_script);
-        // }
-    }
 }
 
 impl CodeEditor {
@@ -67,8 +60,13 @@ impl CodeEditor {
                             .desired_width(f32::INFINITY)
                             .frame(false) // to mask borders
                     );
-                }       
-            });
 
+                    if ui.input().modifiers.ctrl == true && ui.input().keys_down.get(&egui::Key::S).is_some() {
+                        script
+                            .save_at(&self.current_script)
+                            .expect("Unable to save script");
+                    }
+                }
+            });
     }
 }

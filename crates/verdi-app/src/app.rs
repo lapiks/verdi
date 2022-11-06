@@ -71,8 +71,6 @@ impl App {
         let egui_glium = egui_glium::EguiGlium::new(&window.get_display(), &event_loop);
         let mut gui = Gui::new(egui_glium, scripts.clone());
 
-        //gui.get_code_editor_mut().code = 
-
         let mut last_error: String = String::new();
         let mut time_step = TimeStep::new();
     
@@ -135,9 +133,6 @@ impl App {
             renderer.render(window.get_display(), &render_target, &mut target, &mut gpu.lock().unwrap());
 
             renderer.post_render(&mut gpu.lock().unwrap());
-
-            // update GUI
-            gui.update(inputs.clone());
 
             // draw GUI
             gui.render(window.get_display(),  &mut target, time_step.get_fps());

@@ -38,10 +38,6 @@ impl Gui {
         self.egui_glium.paint(&display, target);
     }
 
-    pub fn update(&mut self, inputs: Arc<Mutex<Inputs>>) {
-        self.code_editor.update(inputs);
-    }
-
     pub fn on_event(&mut self, event: &WindowEvent) -> bool {
         self.egui_glium.on_event(event)
     }
@@ -58,6 +54,4 @@ pub trait GUIPanel {
 
     /// Show the panel
     fn show(&mut self, ctx: &egui::Context, open: &mut bool);
-
-    fn update(&mut self, inputs: Arc<Mutex<Inputs>>);
 }

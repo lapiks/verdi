@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::{PathBuf, Path}, fs::File, io::{Read, Write}};
+use std::{collections::HashMap, path::{PathBuf, Path}, fs::{File, OpenOptions}, io::{Read, Write}};
 
 use verdi_utils::read_at_path;
 pub struct Scripts {
@@ -81,7 +81,10 @@ impl Script {
     }
 
     pub fn save_at<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
-        let mut f = File::open(path)?;
+        let mut f = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(path)?;
         f.write_all(&self.code.as_bytes())
     }
 
