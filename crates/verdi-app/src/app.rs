@@ -5,7 +5,7 @@ use glium::{
 
 use rlua::Lua;
 
-use std::{sync::{Mutex, Arc}, time::Duration, rc::Rc, cell::RefCell};
+use std::{sync::{Mutex, Arc}, time::Duration, rc::Rc, cell::RefCell, path::Path};
 
 use verdi_utils::make_relative_path;
 use verdi_window::prelude::*;
@@ -53,13 +53,13 @@ impl App {
         BindGraphicsChip::bind(&lua, gpu.clone())?;
         BindInputs::bind(&lua, inputs.clone())?;
 
+        LuaContext::create_verdi_table(&lua)?;
+        LuaContext::load_internal_scripts(&lua)?;
+
         let scripts = Rc::new(RefCell::new(Scripts::new()));
         scripts.borrow_mut().load_dir("game_example/")?;
-        scripts.borrow_mut().load_file("crates/verdi-app/src/boot.lua")?;
-        scripts.borrow_mut().load_file("crates/verdi-app/src/run.lua")?;
 
         LuaContext::load_scripts(&lua, &scripts.borrow())?;
-        LuaContext::call_boot(&lua)?;
 
         let file_watcher = FileWatcher::new(
             "./game_example", 
@@ -74,6 +74,8 @@ impl App {
 
         let mut last_error: String = String::new();
         let mut time_step = TimeStep::new();
+
+        LuaContext::call_boot(&lua)?;
     
         event_loop.run(move |ev, _, control_flow| {
             // hot-reload
@@ -165,5 +167,9 @@ impl App {
                 _ => (),
             }
         });
+    }
+
+    fn load_game<P: AsRef<Path>>(path: P) {
+
     }
 }

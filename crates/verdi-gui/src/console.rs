@@ -103,7 +103,7 @@ impl Console {
 
         Ok(())
     }
-
+    
     fn add_command(&mut self, cmd: Box<dyn Command>) {
         self.commands.insert(cmd.name().to_string(), cmd);
     }

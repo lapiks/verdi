@@ -1,5 +1,6 @@
 use std::{rc::Rc, path::PathBuf, cell::RefCell};
 
+use egui::text::LayoutJob;
 use verdi_game::prelude::Scripts;
 
 use crate::gui::GUIPanel;
@@ -42,6 +43,7 @@ impl GUIPanel for CodeEditor {
 
 impl CodeEditor {
     fn draw(&mut self, ui: &mut egui::Ui) {
+        // script tabs
         ui.horizontal(|ui| {
             for script in self.scripts.borrow().get_scripts() {
                 ui.selectable_value(
@@ -54,6 +56,14 @@ impl CodeEditor {
         
         ui.separator();
 
+        // code
+        let mut layouter = |ui: &egui::Ui, string: &str, wrap_width: f32| {
+            let mut layout_job =
+                crate::syntax_highlighting::highlight(ui.ctx(), string);
+            layout_job.wrap.max_width = wrap_width;
+            ui.fonts().layout_job(layout_job)
+        };
+
         egui::ScrollArea::both()
             .show(ui, |ui| {
                 if let Some(script) = self.scripts.borrow_mut().get_script_mut(&self.current_script) {
@@ -64,6 +74,7 @@ impl CodeEditor {
                             .lock_focus(true)
                             .desired_width(f32::INFINITY)
                             .frame(false) // to mask borders
+                            .layouter(&mut layouter)
                     );
 
                     if ui.input().modifiers.ctrl == true && ui.input().key_pressed(egui::Key::S) {
@@ -75,3 +86,4 @@ impl CodeEditor {
             });
     }
 }
+

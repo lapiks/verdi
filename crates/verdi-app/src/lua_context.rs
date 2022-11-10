@@ -5,7 +5,7 @@ use verdi_game::prelude::*;
 pub struct LuaContext {}
 
 impl LuaContext {
-    pub fn load_scripts(lua: &Lua, scripts: &Scripts) -> Result<()> {
+    pub fn create_verdi_table(lua: &Lua) -> Result<()> {
         lua.context(|lua_ctx| {   
             let globals = lua_ctx.globals();
 
@@ -13,13 +13,27 @@ impl LuaContext {
             let verdi_table = lua_ctx.create_table()?;
             globals.set("verdi", verdi_table)?;
 
-            // load lua scripts
-            for script in scripts.get_scripts().iter() {
-                LuaContext::load_script(lua, script.1)?;
-            }
-
             Ok(())
         })?;
+
+        Ok(())
+    }
+
+    pub fn load_internal_scripts(lua: &Lua) -> Result<()> {
+        let boot_script = Scripts::load_file("crates/verdi-app/src/boot.lua").expect("Unable to load boot.lua file");
+        let run_script = Scripts::load_file("crates/verdi-app/src/run.lua").expect("Unable to load run.lua file");
+
+        LuaContext::load_script(&lua, &boot_script)?;
+        LuaContext::load_script(&lua, &run_script)?;
+
+        Ok(())
+    }
+
+    pub fn load_scripts(lua: &Lua, scripts: &Scripts) -> Result<()> {
+        // load lua scripts
+        for script in scripts.get_scripts().iter() {
+            LuaContext::load_script(lua, script.1)?;
+        }
 
         Ok(())
     }

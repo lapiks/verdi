@@ -8,5 +8,6 @@ pub mod prelude {
 
 mod gui;
 mod code_editor;
+mod syntax_highlighting;
 mod console;
 mod commands;
