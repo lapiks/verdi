@@ -1,6 +1,5 @@
 use std::{rc::Rc, path::PathBuf, cell::RefCell};
 
-use egui::text::LayoutJob;
 use verdi_game::prelude::Scripts;
 
 use crate::gui::GUIPanel;
