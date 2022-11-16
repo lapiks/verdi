@@ -11,7 +11,7 @@ use verdi_utils::make_relative_path;
 use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
 use verdi_gui::prelude::*;
-use verdi_game::prelude::Scripts;
+use verdi_game::prelude::{Scripts, Game};
 use verdi_input::prelude::*;
 
 use crate::{
@@ -76,6 +76,8 @@ impl App {
         let mut time_step = TimeStep::new();
 
         LuaContext::call_boot(&lua)?;
+        
+        let mut game = Game::default();
     
         event_loop.run(move |ev, _, control_flow| {
             // hot-reload
@@ -102,18 +104,9 @@ impl App {
 
             let delta_time = time_step.tick();
 
-            // callbacks
-            if let Err(err) = LuaContext::call_run(&lua, delta_time) {
-                let current_error = err.to_string();
-                if last_error != current_error {
-                    println!("{}", err);
-                    last_error = current_error;
-                }
-            }
-
             // request a new frame
             let mut target = window.get_display().draw();
-            
+
             target.clear_color_and_depth(
                 (
                     0.0, 
@@ -124,15 +117,26 @@ impl App {
                 1.0
             );
 
-            gpu.lock().unwrap().new_frame();
+            if game.running {
+                // callbacks
+                if let Err(err) = LuaContext::call_run(&lua, delta_time) {
+                    let current_error = err.to_string();
+                    if last_error != current_error {
+                        println!("{}", err);
+                        last_error = current_error;
+                    }
+                }
 
-            // prepare assets for rendering
-            renderer.prepare_assets(window.get_display(), &gpu.lock().unwrap());
+                gpu.lock().unwrap().new_frame();
 
-            // draw game in framebuffer
-            renderer.render(window.get_display(), &render_target, &mut target, &mut gpu.lock().unwrap());
+                // prepare assets for rendering
+                renderer.prepare_assets(window.get_display(), &gpu.lock().unwrap());
 
-            renderer.post_render(&mut gpu.lock().unwrap());
+                // draw game in framebuffer
+                renderer.render(window.get_display(), &render_target, &mut target, &mut gpu.lock().unwrap());
+
+                renderer.post_render(&mut gpu.lock().unwrap());
+            }
 
             // draw GUI
             gui.render(window.get_display(),  &mut target, time_step.get_fps());
