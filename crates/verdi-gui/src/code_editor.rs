@@ -8,20 +8,14 @@ use verdi_game::prelude::{
 use crate::gui::GUIPanel;
 
 pub struct CodeEditor {
-    scripts: Rc<RefCell<Scripts>>,
     current_script: PathBuf,
 }
 
 impl CodeEditor {
     pub fn new() -> Self {
         Self { 
-            scripts: Rc::new(RefCell::new(Scripts::new())),
             current_script: PathBuf::new(),
          }
-    }
-
-    pub fn set_scripts(&mut self, scripts: Rc<RefCell<Scripts>>) {
-        self.scripts = scripts;
     }
 }
 
@@ -51,7 +45,7 @@ impl CodeEditor {
     fn draw(&mut self, ui: &mut egui::Ui, game: &mut Game) {
         // script tabs
         ui.horizontal(|ui| {
-            for script in self.scripts.borrow().get_scripts() {
+            for script in game.get_scripts().borrow().get_scripts() {
                 ui.selectable_value(
                     &mut self.current_script, 
                     script.0.to_path_buf(), 

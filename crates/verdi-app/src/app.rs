@@ -93,13 +93,6 @@ impl App {
                 // stop game
             }
 
-            // update scripts in script editor
-            gui
-                .get_code_editor_mut()
-                .set_scripts(
-                    game.get_scripts()
-                );
-
             // draw GUI
             gui.render(window.get_display(),  &mut target, &mut game);
 
