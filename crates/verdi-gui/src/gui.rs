@@ -5,7 +5,8 @@ use verdi_game::prelude::Game;
 
 use crate::{
     code_editor::CodeEditor, 
-    console::Console
+    console::Console, 
+    toolbar::Toolbar
 };
 
 pub struct Gui {
@@ -13,6 +14,7 @@ pub struct Gui {
     code_editor: CodeEditor,
     console: Console,
     show_console: bool,
+    toolbar: Toolbar,
 }
 
 impl Gui {
@@ -22,6 +24,7 @@ impl Gui {
             code_editor: CodeEditor::new(),
             console: Console::default(),
             show_console: true,
+            toolbar: Toolbar::new()
         }
     }
 
@@ -31,21 +34,15 @@ impl Gui {
 
     pub fn render(&mut self, display: &Display, target: &mut Frame, game: &mut Game) {
         self.egui_glium.run(display, |ctx| {
-            egui::SidePanel::left("my_side_panel").show(ctx, |ui| {
-                if ui.button("run").clicked() {
-                    game.running = true;
-                }
-                if ui.button("stop").clicked() {
-                    game.running = false;
-                }
-            });
-
             if self.show_console {
                 self.console.show(ctx, &mut self.show_console, game);
             }
             else {
                 //let mut open_editor = true;
-                self.code_editor.show(ctx, &mut self.show_console,game);
+                self.code_editor.show(ctx, &mut self.show_console, game);
+                
+                let mut show_toolbar = true;
+                self.toolbar.show(ctx, &mut show_toolbar, game);
             }
         });
 
