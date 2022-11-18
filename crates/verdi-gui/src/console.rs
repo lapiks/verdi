@@ -63,15 +63,23 @@ impl Console {
             .show(ui, |ui| {
                     ui.horizontal(|ui| {
                         ui.label("> ");
-                        ui.add(
+                        let text_edit = ui.add(
                             egui::TextEdit::multiline(&mut self.current_text)
                                 .font(egui::TextStyle::Monospace) // for cursor height
                                 .code_editor()
                                 .lock_focus(true)
                                 .cursor_at_end(true)
                                 .desired_width(f32::INFINITY)
-                                .frame(false) // to mask borders
+                                .frame(false) // to mask borders          
                         );
+
+                        // set focus at the end of the text
+                        if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit.id) {
+                            let ccursor = egui::text::CCursor::new(self.current_text.chars().count());
+                            state.set_ccursor_range(Some(egui::text::CCursorRange::one(ccursor)));
+                            state.store(ui.ctx(), text_edit.id);
+                            ui.ctx().memory().request_focus(text_edit.id); // give focus back to the `TextEdit`.
+                        }
 
                         if ui.input().key_pressed(egui::Key::Enter) {
                             let new_text = "> ".to_owned() + &self.current_text;
