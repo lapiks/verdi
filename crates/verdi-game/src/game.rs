@@ -33,7 +33,7 @@ pub struct Game {
     pub state: GameState,
     scripts: Rc<RefCell<Scripts>>,
     file_watcher: FileWatcher,
-    time_step: TimeStep,
+    pub time_step: TimeStep,
     last_error: String,
 }
 

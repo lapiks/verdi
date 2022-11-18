@@ -40,6 +40,9 @@ impl Toolbar {
             if ui.button("Stop").clicked() {
                 game.state = GameState::Stopped;
             }
+            ui.add_space(30.0);
+            ui.label("FPS: ");
+            ui.label(game.time_step.get_fps().to_string());
         });
     }
 }
