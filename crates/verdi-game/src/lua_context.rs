@@ -1,6 +1,6 @@
 use rlua::{Lua, Result, Function, Table};
 
-use verdi_game::prelude::*;
+use crate::prelude::{Scripts, Script};
 
 pub struct LuaContext {}
 

@@ -7,4 +7,6 @@ edition = "2021"
 
 [dependencies]
 verdi-utils = { path = "../verdi-utils" }
+rlua = "0.19.4"
 thiserror = "1.0.34"
+notify = "5.0.0"

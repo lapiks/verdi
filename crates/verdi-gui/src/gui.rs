@@ -17,10 +17,10 @@ pub struct Gui {
 }
 
 impl Gui {
-    pub fn new(egui_glium: EguiGlium, scripts: Rc<RefCell<Scripts>>) -> Self {
+    pub fn new(egui_glium: EguiGlium) -> Self {
         Self {
             egui_glium,
-            code_editor: CodeEditor::new(scripts),
+            code_editor: CodeEditor::new(),
             console: Console::default(),
             show_console: true,
         }
@@ -30,13 +30,13 @@ impl Gui {
         self.console.init();
     }
 
-    pub fn render(&mut self, display: &Display, target: &mut Frame, fps: u32) {
+    pub fn render(&mut self, display: &Display, target: &mut Frame) {
         self.egui_glium.run(display, |ctx| {
             egui::SidePanel::left("my_side_panel").show(ctx, |ui| {
-                ui.label("fps ");
-                ui.label(fps.to_string());
+                if ui.button("run").clicked() {
 
-                if ui.button("click me").clicked() {
+                }
+                if ui.button("stop").clicked() {
 
                 }
             });

@@ -7,5 +7,8 @@ pub mod prelude {
     };
 }
 
-mod scripts;
 mod game;
+mod time_step;
+mod scripts;
+mod lua_context;
+mod file_watcher;

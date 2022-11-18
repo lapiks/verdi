@@ -5,20 +5,16 @@ use glium::{
 
 use rlua::Lua;
 
-use std::{sync::{Mutex, Arc}, time::Duration, rc::Rc, cell::RefCell, path::Path};
+use std::{sync::{Mutex, Arc}, path::Path};
 
-use verdi_utils::make_relative_path;
 use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
 use verdi_gui::prelude::*;
-use verdi_game::prelude::{Scripts, Game};
+use verdi_game::prelude::Game;
 use verdi_input::prelude::*;
 
 use crate::{
     error::AppError, 
-    lua_context::LuaContext,
-    time_step::TimeStep, 
-    file_watcher::FileWatcher
 };
 
 pub struct App;
@@ -47,63 +43,26 @@ impl App {
         );
 
         let mut renderer = Renderer::new();
-    
+
+        let event_loop = window.take_event_loop().expect("No event loop in the window");
+
+        // gui initialisation
+        let egui_glium = egui_glium::EguiGlium::new(
+            &window.get_display(), 
+            &event_loop
+        );
+        let mut gui = Gui::new(egui_glium);
+        gui.init();
+
         let lua = Lua::new();
     
         BindGraphicsChip::bind(&lua, gpu.clone())?;
         BindInputs::bind(&lua, inputs.clone())?;
-
-        LuaContext::create_verdi_table(&lua)?;
-        LuaContext::load_internal_scripts(&lua)?;
-
-        let scripts = Rc::new(RefCell::new(Scripts::new()));
-        scripts.borrow_mut().load_dir("game_example/")?;
-
-        LuaContext::load_scripts(&lua, &scripts.borrow())?;
-
-        let file_watcher = FileWatcher::new(
-            "./game_example", 
-            Duration::from_secs(5))
-        .expect("File watcher initialisation failed");
-
-        let event_loop = window.take_event_loop().expect("No event loop in the window");
-
-        let egui_glium = egui_glium::EguiGlium::new(&window.get_display(), &event_loop);
-        let mut gui = Gui::new(egui_glium, scripts.clone());
-        gui.init();
-
-        let mut last_error: String = String::new();
-        let mut time_step = TimeStep::new();
-
-        LuaContext::call_boot(&lua)?;
         
-        let mut game = Game::default();
+        let mut game = Game::new("game_example/").expect("Loading game failed");
+        game.boot(&lua).expect("Game boot failed");
     
         event_loop.run(move |ev, _, control_flow| {
-            // hot-reload
-            if let Some(watcher_event) = file_watcher.get_event() {
-                if let notify::EventKind::Modify(_) = watcher_event.kind {
-                    for path in watcher_event.paths.iter() {
-                        if let Ok(relative_path) = make_relative_path(path) {
-                            if let Some(script) = scripts.borrow_mut().get_script_mut(&relative_path) {
-                                // reload script
-                                script
-                                    .reload_from(relative_path)
-                                    .expect("Reload script file failed");
-
-                                // update lua context
-                                LuaContext::load_script(
-                                    &lua, 
-                                    script
-                                ).expect("Reload script failed");
-                            }
-                        }
-                    }
-                }
-            }
-
-            let delta_time = time_step.tick();
-
             // request a new frame
             let mut target = window.get_display().draw();
 
@@ -118,14 +77,7 @@ impl App {
             );
 
             if game.running {
-                // callbacks
-                if let Err(err) = LuaContext::call_run(&lua, delta_time) {
-                    let current_error = err.to_string();
-                    if last_error != current_error {
-                        println!("{}", err);
-                        last_error = current_error;
-                    }
-                }
+                game.run(&lua);
 
                 gpu.lock().unwrap().new_frame();
 
@@ -138,12 +90,20 @@ impl App {
                 renderer.post_render(&mut gpu.lock().unwrap());
             }
 
+            // update scripts in script editor
+            gui
+                .get_code_editor_mut()
+                .set_scripts(
+                    game.get_scripts()
+                );
+
             // draw GUI
-            gui.render(window.get_display(),  &mut target, time_step.get_fps());
+            gui.render(window.get_display(),  &mut target);
 
             // ends frame
             target.finish().unwrap();
             
+            // prepare next frame
             gpu.lock().unwrap().next_frame();
     
             let next_frame_time = std::time::Instant::now() +

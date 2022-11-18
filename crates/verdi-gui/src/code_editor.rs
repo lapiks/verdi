@@ -10,11 +10,15 @@ pub struct CodeEditor {
 }
 
 impl CodeEditor {
-    pub fn new(scripts: Rc<RefCell<Scripts>>) -> Self {
+    pub fn new() -> Self {
         Self { 
-            scripts,
+            scripts: Rc::new(RefCell::new(Scripts::new())),
             current_script: PathBuf::new(),
          }
+    }
+
+    pub fn set_scripts(&mut self, scripts: Rc<RefCell<Scripts>>) {
+        self.scripts = scripts;
     }
 }
 
