@@ -10,7 +10,7 @@ use std::{sync::{Mutex, Arc}, path::Path};
 use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
 use verdi_gui::prelude::*;
-use verdi_game::prelude::Game;
+use verdi_game::prelude::{Game, GameState};
 use verdi_input::prelude::*;
 
 use crate::{
@@ -76,7 +76,7 @@ impl App {
                 1.0
             );
 
-            if game.running {
+            if game.state == GameState::Running {
                 game.run(&lua);
 
                 gpu.lock().unwrap().new_frame();
@@ -88,6 +88,9 @@ impl App {
                 renderer.render(window.get_display(), &render_target, &mut target, &mut gpu.lock().unwrap());
 
                 renderer.post_render(&mut gpu.lock().unwrap());
+            }
+            else if game.state == GameState::Stopped {
+                // stop game
             }
 
             // update scripts in script editor

@@ -21,9 +21,16 @@ pub enum GameError {
     FileWatcherError(#[from] notify::Error),
 }
 
+#[derive(PartialEq)]
+pub enum GameState {
+    Running,
+    Paused,
+    Stopped,
+}
+
 pub struct Game {
     path: PathBuf,
-    pub running: bool,
+    pub state: GameState,
     scripts: Rc<RefCell<Scripts>>,
     file_watcher: FileWatcher,
     time_step: TimeStep,
@@ -34,7 +41,7 @@ impl Game {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, GameError> {
         Ok(Self { 
             path: path.as_ref().to_path_buf(),
-            running: false,
+            state: GameState::Stopped,
             scripts: Rc::new(RefCell::new(Scripts::new())),
             file_watcher: FileWatcher::new(path, Duration::from_secs(5))?,
             time_step: TimeStep::new(),

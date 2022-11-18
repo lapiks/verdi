@@ -1,5 +1,6 @@
 use verdi_game::prelude::{
-    Game
+    Game, 
+    GameState
 };
 
 use crate::gui::GUIPanel;
@@ -31,10 +32,13 @@ impl Toolbar {
     fn draw(&mut self, ui: &mut egui::Ui, game: &mut Game) {
         ui.horizontal_centered(|ui| {
             if ui.button("Run").clicked() {
-                game.running = true;
+                game.state = GameState::Running;
+            }
+            if ui.button("Pause").clicked() {
+                game.state = GameState::Paused;
             }
             if ui.button("Stop").clicked() {
-                game.running = false;
+                game.state = GameState::Stopped;
             }
         });
     }

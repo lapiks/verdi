@@ -3,7 +3,7 @@ pub mod prelude {
     #[doc(hidden)]
     pub use crate::{
         scripts::{Scripts, Script},
-        game::Game,
+        game::{Game, GameState},
     };
 }
 
