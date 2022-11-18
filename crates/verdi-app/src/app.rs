@@ -98,7 +98,7 @@ impl App {
                 );
 
             // draw GUI
-            gui.render(window.get_display(),  &mut target);
+            gui.render(window.get_display(),  &mut target, &mut game);
 
             // ends frame
             target.finish().unwrap();

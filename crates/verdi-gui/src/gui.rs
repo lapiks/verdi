@@ -1,8 +1,7 @@
-use std::{rc::Rc, cell::RefCell};
-
 use egui_glium::{EguiGlium, egui_winit::egui};
 use glium::{Frame, Display, glutin::event::WindowEvent};
-use verdi_game::prelude::Scripts;
+
+use verdi_game::prelude::Game;
 
 use crate::{
     code_editor::CodeEditor, 
@@ -30,23 +29,23 @@ impl Gui {
         self.console.init();
     }
 
-    pub fn render(&mut self, display: &Display, target: &mut Frame) {
+    pub fn render(&mut self, display: &Display, target: &mut Frame, game: &mut Game) {
         self.egui_glium.run(display, |ctx| {
             egui::SidePanel::left("my_side_panel").show(ctx, |ui| {
                 if ui.button("run").clicked() {
-
+                    game.running = true;
                 }
                 if ui.button("stop").clicked() {
-
+                    game.running = false;
                 }
             });
 
             if self.show_console {
-                self.console.show(ctx, &mut self.show_console);
+                self.console.show(ctx, &mut self.show_console, game);
             }
             else {
                 //let mut open_editor = true;
-                self.code_editor.show(ctx, &mut self.show_console);
+                self.code_editor.show(ctx, &mut self.show_console,game);
             }
         });
 
@@ -68,5 +67,5 @@ pub trait GUIPanel {
     fn name(&self) -> &'static str;
 
     /// Show the panel
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool);
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, game: &mut Game);
 }

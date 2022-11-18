@@ -6,6 +6,7 @@ use crate::{
 };
 
 use thiserror::Error;
+use verdi_game::prelude::Game;
 
 #[derive(Error, Debug)]
 pub enum ConsoleError {
@@ -34,7 +35,7 @@ impl GUIPanel for Console {
         "Console"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, game: &mut Game) {
         egui::CentralPanel::default().show(ctx, |ui| { 
             if ui.input().key_pressed(egui::Key::Escape) {
                 *open = false;

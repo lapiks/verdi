@@ -1,6 +1,9 @@
 use std::{rc::Rc, path::PathBuf, cell::RefCell};
 
-use verdi_game::prelude::Scripts;
+use verdi_game::prelude::{
+    Scripts, 
+    Game
+};
 
 use crate::gui::GUIPanel;
 
@@ -27,7 +30,7 @@ impl GUIPanel for CodeEditor {
         "Code Editor"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, game: &mut Game) {
         egui::Window::new(self.name())
             //.open(open)
             .default_height(800.0)
@@ -35,7 +38,7 @@ impl GUIPanel for CodeEditor {
                 if ui.input().key_pressed(egui::Key::Escape) {
                     *open = true;
                 }
-                self.draw(ui) 
+                self.draw(ui, game) 
             }
         );
         // egui::CentralPanel::default().show(ctx, |ui| { 
@@ -45,7 +48,7 @@ impl GUIPanel for CodeEditor {
 }
 
 impl CodeEditor {
-    fn draw(&mut self, ui: &mut egui::Ui) {
+    fn draw(&mut self, ui: &mut egui::Ui, game: &mut Game) {
         // script tabs
         ui.horizontal(|ui| {
             for script in self.scripts.borrow().get_scripts() {
@@ -69,7 +72,7 @@ impl CodeEditor {
 
         egui::ScrollArea::both()
             .show(ui, |ui| {
-                if let Some(script) = self.scripts.borrow_mut().get_script_mut(&self.current_script) {
+                if let Some(script) = game.get_scripts().borrow_mut().get_script_mut(&self.current_script) {
                     ui.add(
                         egui::TextEdit::multiline(&mut script.code)
                             .font(egui::TextStyle::Monospace) // for cursor height
