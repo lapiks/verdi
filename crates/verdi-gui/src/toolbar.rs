@@ -1,5 +1,3 @@
-use std::{rc::Rc, path::PathBuf, cell::RefCell};
-
 use verdi_game::prelude::{
     Game
 };
@@ -23,14 +21,21 @@ impl GUIPanel for Toolbar {
     }
 
     fn show(&mut self, ctx: &egui::Context, _open: &mut bool, game: &mut Game) {
-        egui::SidePanel::left("my_side_panel").show(ctx, |ui| {
-            if ui.button("run").clicked() {
+        egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
+            self.draw(ui, game);
+        });
+    }
+}
+
+impl Toolbar {
+    fn draw(&mut self, ui: &mut egui::Ui, game: &mut Game) {
+        ui.horizontal_centered(|ui| {
+            if ui.button("Run").clicked() {
                 game.running = true;
             }
-            if ui.button("stop").clicked() {
+            if ui.button("Stop").clicked() {
                 game.running = false;
             }
         });
     }
 }
-
