@@ -39,6 +39,16 @@ impl Assets {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.textures.clear();
+        self.meshes.clear();
+        self.primitives.clear();
+        self.materials.clear();
+        self.shaders.clear();
+        self.programs.clear();
+        self.scenes.clear();
+    }
+
     pub fn add_texture(&mut self, image: Image) -> ImageId {
         let id = self.textures.insert(image);
         unsafe {

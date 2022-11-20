@@ -23,6 +23,7 @@ pub enum GameError {
 
 #[derive(PartialEq)]
 pub enum GameState {
+    Start,
     Running,
     Paused,
     Stopped,
@@ -49,14 +50,15 @@ impl Game {
         })
     }
 
+    pub fn load(&mut self) -> Result<(), GameError> {
+        Ok(self.scripts.borrow_mut().load_dir(&self.path)?)
+    }
+
+    // called at the start of the game execution
     pub fn boot(&mut self, lua: &Lua) -> Result<(), GameError>{
         LuaContext::create_verdi_table(lua)?;
         LuaContext::load_internal_scripts(lua)?;
-
-        self.scripts.borrow_mut().load_dir(&self.path)?;
-
         LuaContext::load_scripts(lua, &self.scripts.borrow())?;
-
         LuaContext::call_boot(lua)?;
 
         Ok(())

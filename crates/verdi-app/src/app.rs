@@ -59,8 +59,8 @@ impl App {
         BindGraphicsChip::bind(&lua, gpu.clone())?;
         BindInputs::bind(&lua, inputs.clone())?;
         
-        let mut game = Game::new("game_example/").expect("Loading game failed");
-        game.boot(&lua).expect("Game boot failed");
+        let mut game = Game::new("game_example/").expect("Creating game failed");
+        game.load().expect("Loading game failed");
     
         event_loop.run(move |ev, _, control_flow| {
             // request a new frame
@@ -76,6 +76,17 @@ impl App {
                 1.0
             );
 
+            if game.state == GameState::Start {
+                gpu.lock().unwrap().on_game_start();
+                game.boot(&lua).expect("Game boot failed");
+                game.state = GameState::Running;
+            }
+            else if game.state == GameState::Stopped {
+                // stop game
+                gpu.lock().unwrap().on_game_shutdown();
+                renderer.on_game_shutdown();
+            }
+
             if game.state == GameState::Running {
                 game.run(&lua);
 
@@ -88,9 +99,6 @@ impl App {
                 renderer.render(window.get_display(), &render_target, &mut target, &mut gpu.lock().unwrap());
 
                 renderer.post_render(&mut gpu.lock().unwrap());
-            }
-            else if game.state == GameState::Stopped {
-                // stop game
             }
 
             // draw GUI

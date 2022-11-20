@@ -32,7 +32,12 @@ impl Toolbar {
     fn draw(&mut self, ui: &mut egui::Ui, game: &mut Game) {
         ui.horizontal_centered(|ui| {
             if ui.button("Run").clicked() {
-                game.state = GameState::Running;
+                if game.state == GameState::Paused {
+                    game.state = GameState::Running;
+                }
+                else if game.state == GameState::Stopped {
+                    game.state = GameState::Start;
+                }
             }
             if ui.button("Pause").clicked() {
                 game.state = GameState::Paused;

@@ -24,6 +24,12 @@ impl GpuAssets {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.primitives.clear();
+        self.textures.clear();
+        self.programs.clear();
+    }
+
     pub fn add_texture(&mut self, id: ImageId, gpu_image: GpuImage) {
         self.textures.insert(id, gpu_image);
     }

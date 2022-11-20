@@ -68,6 +68,13 @@ impl Default for Uniforms {
 }
 
 impl Uniforms {
+    pub fn clear(&mut self) {
+        self.floats.clear();
+        self.vec2s.clear();
+        self.mat4s.clear();
+        self.textures.clear();
+    }
+
     pub fn get_value<'a>(&'a self, uniform_id: UniformId, gpu_assets: &'a GpuAssets) -> Option<UniformValue> {
         match uniform_id {
             UniformId::Float(uniform_id) => {

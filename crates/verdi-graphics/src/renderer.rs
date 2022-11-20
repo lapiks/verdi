@@ -27,6 +27,10 @@ impl Renderer {
         }
     }
 
+    pub fn on_game_shutdown(&mut self) {
+        self.gpu_assets.clear();
+    }
+
     pub fn prepare_assets(&mut self, display: &Display, gpu: &GraphicsChip) {
         // à rendre générique
         for render_pass in gpu.render_passes.iter() {
@@ -53,8 +57,8 @@ impl Renderer {
         
         // construct gpu programs
         // Pas fou !
-        if self.gpu_assets.get_program(gpu.globals.global_shaders.gouraud).is_none() {
-            if let Some(program) = gpu.assets.get_program(gpu.globals.global_shaders.gouraud) {
+        if self.gpu_assets.get_program(gpu.globals.as_ref().unwrap().global_shaders.gouraud).is_none() {
+            if let Some(program) = gpu.assets.get_program(gpu.globals.as_ref().unwrap().global_shaders.gouraud) {
                 program.prepare_rendering(
                     display, 
                     &gpu.assets, 
@@ -63,8 +67,8 @@ impl Renderer {
             }   
         }
 
-        if self.gpu_assets.get_program(gpu.globals.global_shaders.std_2d).is_none() {
-            if let Some(program) = gpu.assets.get_program(gpu.globals.global_shaders.std_2d) {
+        if self.gpu_assets.get_program(gpu.globals.as_ref().unwrap().global_shaders.std_2d).is_none() {
+            if let Some(program) = gpu.assets.get_program(gpu.globals.as_ref().unwrap().global_shaders.std_2d) {
                 program.prepare_rendering(
                     display, 
                     &gpu.assets, 
@@ -145,7 +149,7 @@ impl Renderer {
             target.get_depth_target()
         ).unwrap();
 
-        let clear_color = gpu.globals.clear_color;
+        let clear_color = gpu.globals.as_ref().unwrap().clear_color;
         framebuffer.clear_color_and_depth(
             (
                 clear_color.x,
@@ -162,11 +166,11 @@ impl Renderer {
         );
 
         *gpu.uniforms
-            .get_mat4_mut(gpu.globals.global_uniforms.perspective_matrix)
+            .get_mat4_mut(gpu.globals.as_ref().unwrap().global_uniforms.perspective_matrix)
             .expect("Perspective matrix uniform missing") = perspective_matrix;
 
         *gpu.uniforms
-            .get_vec2_mut(gpu.globals.global_uniforms.resolution)
+            .get_vec2_mut(gpu.globals.as_ref().unwrap().global_uniforms.resolution)
             .expect("Resolution uniform missing") = Vec2::new(
                 target.get_dimensions().0 as f32, 
                 target.get_dimensions().1 as f32
@@ -176,7 +180,7 @@ impl Renderer {
             // model matrix
             let model_matrix = render_pass.transform.to_matrix();
             *gpu.uniforms
-                .get_mat4_mut(gpu.globals.global_uniforms.model_matrix)
+                .get_mat4_mut(gpu.globals.as_ref().unwrap().global_uniforms.model_matrix)
                 .expect("Model matrix uniform missing") = model_matrix;
 
             let primitive = gpu.assets
@@ -256,7 +260,7 @@ impl Renderer {
 
     pub fn post_render(&self, gpu: &mut GraphicsChip) {
         *gpu.uniforms
-            .get_mat4_mut(gpu.globals.global_uniforms.view_matrix)
+            .get_mat4_mut(gpu.globals.as_ref().unwrap().global_uniforms.view_matrix)
             .expect("View matrix uniform missing") = Mat4::IDENTITY;
     }
 }
