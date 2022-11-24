@@ -86,8 +86,8 @@ impl Console {
                             self.draw_text(&new_text);
                             // execute command
                             if let Err(_) = self.execute(self.current_text.clone()) {
-                                let err_msg = "Unknown command".to_owned() + &"\n".to_owned();
-                                self.draw_text(&err_msg);
+                                self.draw_text(&"Unknown command".to_owned());
+                                self.new_line();
                             }
                             self.current_text.clear();
                         }
@@ -103,8 +103,11 @@ impl Console {
             .next()
             .unwrap_or("");
 
-        if let Some(cmd) = self.commands.get(&first_word.to_string()) {
-
+        if first_word.to_string() == Help::name() {
+            self.draw_help();
+        }
+        else if let Some(cmd) = self.commands.get(&first_word.to_string()) {
+            cmd.execute();
         }
         else {
             return Err(ConsoleError::UnknownCommand());
@@ -121,7 +124,22 @@ impl Console {
         self.previous_text += text;
     }
 
+    fn new_line(&mut self) {
+        self.previous_text += &"\n".to_owned();
+    }
+
+    fn add_space(&mut self) {
+        self.previous_text += &" ".to_owned();
+    }
+
     fn draw_help(&mut self) {
-        //self.previous_text.
+        let mut text = String::new();
+        for command in self.commands.iter() {
+            let line = command.1.name().to_string() + &" -> ".to_owned() + &command.1.desc().to_string();
+            text += &line;
+            text += &"\n".to_owned();
+        }
+
+        self.draw_text(&text);
     }
 }

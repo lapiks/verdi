@@ -1,6 +1,7 @@
 pub trait Command {
     fn name(&self) -> &'static str;
     fn desc(&self) -> &'static str;
+    fn execute(&self);
 }
 
 pub struct Load {
@@ -14,6 +15,10 @@ impl Command for Load {
 
     fn desc(&self) -> &'static str {
         "load a game folder"
+    }
+
+    fn execute(&self) {
+        
     }
 }
 
@@ -31,7 +36,11 @@ impl Command for Help {
     }
 
     fn desc(&self) -> &'static str {
-        "pint available commands"
+        "print available commands"
+    }
+
+    fn execute(&self) {
+        
     }
 }
 
