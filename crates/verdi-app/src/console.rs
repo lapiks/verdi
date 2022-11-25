@@ -45,7 +45,7 @@ impl GUIPanel for Console {
             if ui.input().key_pressed(egui::Key::Escape) {
                 *open = false;
             }
-            self.draw(ui);
+            self.draw(ui, app);
         });
     }
 }
@@ -57,7 +57,7 @@ impl Console {
         self.add_command(Box::new(Shutdown {}));
     }
 
-    fn draw(&mut self, ui: &mut egui::Ui) {
+    fn draw(&mut self, ui: &mut egui::Ui, app: &mut App) {
         ui.label("Verdi-0.1.0");
         ui.label("(C) 2022 JD Games");
         ui.label("Type HELP for help");
@@ -91,7 +91,7 @@ impl Console {
                             let new_text = "> ".to_owned() + &self.current_text;
                             self.draw_text(&new_text);
                             // execute command
-                            if let Err(_) = self.execute(self.current_text.clone()) {
+                            if let Err(_) = self.execute(self.current_text.clone(), app) {
                                 self.draw_text(&"Unknown command".to_owned());
                                 self.new_line();
                             }
@@ -103,9 +103,14 @@ impl Console {
             );
     }
 
-    fn execute(&mut self, str_cmd: String) -> Result<(), ConsoleError> {
-        let first_word = str_cmd
-            .split_whitespace()
+    fn execute(&mut self, str_cmd: String, app: &mut App) -> Result<(), ConsoleError> {
+        let mut split = str_cmd.split_whitespace();
+
+        let first_word = split
+            .next()
+            .unwrap_or("");
+
+        let second_word = split
             .next()
             .unwrap_or("");
 
@@ -113,7 +118,7 @@ impl Console {
             self.draw_help();
         }
         else if let Some(cmd) = self.commands.get(&first_word.to_string()) {
-            cmd.execute();
+            cmd.execute(second_word, app);
         }
         else {
             return Err(ConsoleError::UnknownCommand());

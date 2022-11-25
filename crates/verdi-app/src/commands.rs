@@ -1,7 +1,9 @@
+use crate::app::App;
+
 pub trait Command {
     fn name(&self) -> &'static str;
     fn desc(&self) -> &'static str;
-    fn execute(&self);
+    fn execute(&self, cmd: &str, app: &mut App);
 }
 
 pub struct Load {
@@ -17,8 +19,8 @@ impl Command for Load {
         "load a game folder"
     }
 
-    fn execute(&self) {
-        
+    fn execute(&self, cmd: &str, app: &mut App) {
+        app.load_game(cmd);
     }
 }
 
@@ -39,7 +41,7 @@ impl Command for Help {
         "print available commands"
     }
 
-    fn execute(&self) {
+    fn execute(&self, cmd: &str, app: &mut App) {
         
     }
 }
@@ -61,7 +63,7 @@ impl Command for Shutdown {
         "exits the program"
     }
 
-    fn execute(&self) {
+    fn execute(&self, cmd: &str, app: &mut App) {
         
     }
 }

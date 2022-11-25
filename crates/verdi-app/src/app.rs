@@ -75,9 +75,9 @@ impl App {
         BindGraphicsChip::bind(&lua, gpu.clone())?;
         BindInputs::bind(&lua, inputs.clone())?;
         
-        if app.load_game("game_example/").is_err() {
-            println!("Loading game failed");
-        }
+        // if app.load_game("game_example/").is_err() {
+        //     println!("Loading game failed");
+        // }
     
         event_loop.run(move |ev, _, control_flow| {
             // request a new frame
@@ -162,7 +162,7 @@ impl App {
         self.game.as_ref()
     }
 
-    fn load_game<P: AsRef<Path>>(&mut self, path: P) -> Result<(), GameError> {
+    pub fn load_game<P: AsRef<Path>>(&mut self, path: P) -> Result<(), GameError> {
         self.game = Some(
             Game::new(path)?
         );
