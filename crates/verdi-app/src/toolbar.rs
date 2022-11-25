@@ -31,7 +31,9 @@ impl GUIPanel for Toolbar {
 impl Toolbar {
     fn draw(&mut self, ui: &mut egui::Ui, app: &mut App) {
         ui.horizontal_centered(|ui| {
-            if ui.button("Run").clicked() {
+            let game_loaded = app.get_game().is_some();
+
+            if ui.button("Run").clicked() && game_loaded {
                 if app.game_state == GameState::Paused {
                     app.game_state = GameState::Running;
                 }
@@ -39,16 +41,18 @@ impl Toolbar {
                     app.game_state = GameState::Start;
                 }
             }
-            if ui.button("Pause").clicked() {
+            if ui.button("Pause").clicked() && game_loaded{
                 app.game_state = GameState::Paused;
             }
-            if ui.button("Stop").clicked() {
+            if ui.button("Stop").clicked() && game_loaded {
                 app.game_state = GameState::Stopped;
             }
             ui.add_space(30.0);
-            ui.label("FPS: ");
-            if let Some(game) = app.get_game() {
-                ui.label(game.time_step.get_fps().to_string());
+            if game_loaded {
+                ui.label("FPS: ");
+                if let Some(game) = app.get_game() {
+                    ui.label(game.time_step.get_fps().to_string());
+                }
             }
         });
     }
