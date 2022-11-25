@@ -9,11 +9,12 @@ edition = "2021"
 verdi-utils = { path = "../verdi-utils" }
 verdi-window = { path = "../verdi-window" }
 verdi-graphics = { path = "../verdi-graphics" }
-verdi-gui = { path = "../verdi-gui" }
 verdi-math = { path = "../verdi-math" }
 verdi-game = { path = "../verdi-game" }
 verdi-input = { path = "../verdi-input" }
 glium = "*"
+egui = { version = "0.19.0", default-features = true }
 egui_glium = "0.19.0"
+syntect = "5.0"
 rlua = "0.19.4"
 thiserror = "1.0.34"

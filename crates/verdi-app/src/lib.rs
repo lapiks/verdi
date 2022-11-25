@@ -8,3 +8,9 @@ pub mod prelude {
 
 mod app;
 mod error;
+mod gui;
+mod toolbar;
+mod code_editor;
+mod syntax_highlighting;
+mod console;
+mod commands;

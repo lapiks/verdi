@@ -49,3 +49,25 @@ impl Help {
         "help"
     }
 }
+
+pub struct Shutdown;
+
+impl Command for Shutdown {
+    fn name(&self) -> &'static str {
+        Shutdown::name()
+    }
+
+    fn desc(&self) -> &'static str {
+        "exits the program"
+    }
+
+    fn execute(&self) {
+        
+    }
+}
+
+impl Shutdown {
+    pub fn name() -> &'static str {
+        "shutdown"
+    }
+}

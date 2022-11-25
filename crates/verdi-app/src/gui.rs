@@ -1,12 +1,11 @@
-use egui_glium::{EguiGlium, egui_winit::egui};
+use egui_glium::EguiGlium;
 use glium::{Frame, Display, glutin::event::WindowEvent};
-
-use verdi_game::prelude::Game;
 
 use crate::{
     code_editor::CodeEditor, 
     console::Console, 
-    toolbar::Toolbar
+    toolbar::Toolbar, 
+    app::App
 };
 
 pub struct Gui {
@@ -32,17 +31,17 @@ impl Gui {
         self.console.init();
     }
 
-    pub fn render(&mut self, display: &Display, target: &mut Frame, game: &mut Game) {
+    pub fn render(&mut self, display: &Display, target: &mut Frame, app: &mut App) {
         self.egui_glium.run(display, |ctx| {
             if self.show_console {
-                self.console.show(ctx, &mut self.show_console, game);
+                self.console.show(ctx, &mut self.show_console, app);
             }
             else {
                 //let mut open_editor = true;
-                self.code_editor.show(ctx, &mut self.show_console, game);
+                self.code_editor.show(ctx, &mut self.show_console, app);
                 
                 let mut show_toolbar = true;
-                self.toolbar.show(ctx, &mut show_toolbar, game);
+                self.toolbar.show(ctx, &mut show_toolbar, app);
             }
         });
 
@@ -64,5 +63,5 @@ pub trait GUIPanel {
     fn name(&self) -> &'static str;
 
     /// Show the panel
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, game: &mut Game);
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &mut App);
 }

@@ -9,26 +9,40 @@ use std::{sync::{Mutex, Arc}, path::Path};
 
 use verdi_window::prelude::*;
 use verdi_graphics::prelude::*;
-use verdi_gui::prelude::*;
-use verdi_game::prelude::{Game, GameState};
+use verdi_game::prelude::{Game, GameState, GameError};
 use verdi_input::prelude::*;
 
 use crate::{
     error::AppError, 
+    gui::Gui, 
 };
 
-pub struct App;
+pub struct App {
+    game: Option<Game>,
+    pub game_state: GameState,
+}
 
 impl App {
+    pub fn new() -> Self {
+        Self {
+            game: None,
+            game_state: GameState::Stopped,
+        }
+    }
+
     pub fn run() -> Result<(), AppError> {
+        let mut app = App::new();
+
         let mut window = Window::new(1024, 768);
 
+        // à mettre dans game
         let render_target = RenderTarget::new(
             window.get_display(),
             320, 
             240
         ).expect("Render target creation failed");
         
+        // à mettre dans game
         let gpu = Arc::new(
             Mutex::new(
                 GraphicsChip::new()
@@ -36,12 +50,14 @@ impl App {
             )
         );
 
+        // à mettre dans game
         let inputs = Arc::new(
             Mutex::new(
                 Inputs::new()
             )
         );
 
+        // à mettre dans game
         let mut renderer = Renderer::new();
 
         let event_loop = window.take_event_loop().expect("No event loop in the window");
@@ -59,8 +75,9 @@ impl App {
         BindGraphicsChip::bind(&lua, gpu.clone())?;
         BindInputs::bind(&lua, inputs.clone())?;
         
-        let mut game = Game::new("game_example/").expect("Creating game failed");
-        game.load().expect("Loading game failed");
+        if app.load_game("game_example/").is_err() {
+            println!("Loading game failed");
+        }
     
         event_loop.run(move |ev, _, control_flow| {
             // request a new frame
@@ -76,33 +93,37 @@ impl App {
                 1.0
             );
 
-            if game.state == GameState::Start {
-                gpu.lock().unwrap().on_game_start();
-                game.boot(&lua).expect("Game boot failed");
-                game.state = GameState::Running;
+            if app.game_state == GameState::Start {
+                if let Some(game) = app.game.as_mut() {
+                    gpu.lock().unwrap().on_game_start();
+                    game.boot(&lua).expect("Game boot failed");
+                    app.game_state = GameState::Running;
+                }
             }
-            else if game.state == GameState::Stopped {
+            else if app.game_state == GameState::Stopped {
                 // stop game
                 gpu.lock().unwrap().on_game_shutdown();
                 renderer.on_game_shutdown();
             }
 
-            if game.state == GameState::Running {
-                game.run(&lua);
+            if app.game_state == GameState::Running {
+                if let Some(game) = app.game.as_mut() {
+                    game.run(&lua);
 
-                gpu.lock().unwrap().new_frame();
-
-                // prepare assets for rendering
-                renderer.prepare_assets(window.get_display(), &gpu.lock().unwrap());
-
-                // draw game in framebuffer
-                renderer.render(window.get_display(), &render_target, &mut target, &mut gpu.lock().unwrap());
-
-                renderer.post_render(&mut gpu.lock().unwrap());
+                    gpu.lock().unwrap().new_frame();
+    
+                    // prepare assets for rendering
+                    renderer.prepare_assets(window.get_display(), &gpu.lock().unwrap());
+    
+                    // draw game in framebuffer
+                    renderer.render(window.get_display(), &render_target, &mut target, &mut gpu.lock().unwrap());
+    
+                    renderer.post_render(&mut gpu.lock().unwrap());
+                }
             }
 
             // draw GUI
-            gui.render(window.get_display(),  &mut target, &mut game);
+            gui.render(window.get_display(),  &mut target, &mut app);
 
             // ends frame
             target.finish().unwrap();
@@ -137,7 +158,19 @@ impl App {
         });
     }
 
-    fn load_game<P: AsRef<Path>>(path: P) {
+    pub fn get_game(&self) -> Option<&Game> {
+        self.game.as_ref()
+    }
 
+    fn load_game<P: AsRef<Path>>(&mut self, path: P) -> Result<(), GameError> {
+        self.game = Some(
+            Game::new(path)?
+        );
+
+        if let Some(game) = self.game.as_mut() {
+            game.load()?;
+        }
+
+        Ok(())
     }
 }

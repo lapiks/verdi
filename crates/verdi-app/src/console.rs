@@ -2,11 +2,16 @@ use std::collections::HashMap;
 
 use crate::{
     gui::GUIPanel, 
-    commands::{Command, Help, Load}
+    commands::{
+        Command, 
+        Help, 
+        Load, 
+        Shutdown
+    }, 
+    app::App,
 };
 
 use thiserror::Error;
-use verdi_game::prelude::Game;
 
 #[derive(Error, Debug)]
 pub enum ConsoleError {
@@ -35,7 +40,7 @@ impl GUIPanel for Console {
         "Console"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, game: &mut Game) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &mut App) {
         egui::CentralPanel::default().show(ctx, |ui| { 
             if ui.input().key_pressed(egui::Key::Escape) {
                 *open = false;
@@ -49,6 +54,7 @@ impl Console {
     pub fn init(&mut self) {
         self.add_command(Box::new(Help {}));
         self.add_command(Box::new(Load {}));
+        self.add_command(Box::new(Shutdown {}));
     }
 
     fn draw(&mut self, ui: &mut egui::Ui) {
