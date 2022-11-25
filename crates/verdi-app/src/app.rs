@@ -170,6 +170,16 @@ impl App {
     }
 
     pub fn load_game<P: AsRef<Path>>(&mut self, path: P) -> Result<(), GameError> {
+        if !path.as_ref().exists() {
+            return Err(GameError::GameFolderError);
+        }
+
+        self.game_state = GameState::Stopped;
+
+        if let Some(game) = self.game.as_mut() {
+           // sutdown game 
+        }
+
         self.game = Some(
             Game::new(path)?
         );

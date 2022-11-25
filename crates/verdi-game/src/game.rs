@@ -19,6 +19,8 @@ pub enum GameError {
     LuaError(#[from] rlua::Error),
     #[error("File watcher error")]
     FileWatcherError(#[from] notify::Error),
+    #[error("Game folder doesn't exists")]
+    GameFolderError,
 }
 
 #[derive(PartialEq)]
@@ -31,7 +33,6 @@ pub enum GameState {
 
 pub struct Game {
     path: PathBuf,
-    pub state: GameState,
     scripts: Rc<RefCell<Scripts>>,
     file_watcher: FileWatcher,
     pub time_step: TimeStep,
@@ -42,7 +43,6 @@ impl Game {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, GameError> {
         Ok(Self { 
             path: path.as_ref().to_path_buf(),
-            state: GameState::Stopped,
             scripts: Rc::new(RefCell::new(Scripts::new())),
             file_watcher: FileWatcher::new(path, Duration::from_secs(5))?,
             time_step: TimeStep::new(),
