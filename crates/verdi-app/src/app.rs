@@ -20,6 +20,7 @@ use crate::{
 pub struct App {
     game: Option<Game>,
     pub game_state: GameState,
+    pub shutdown: bool
 }
 
 impl App {
@@ -27,6 +28,7 @@ impl App {
         Self {
             game: None,
             game_state: GameState::Stopped,
+            shutdown: false,
         }
     }
 
@@ -133,8 +135,13 @@ impl App {
     
             let next_frame_time = std::time::Instant::now() +
                 std::time::Duration::from_nanos(16_666_667);
-    
-            *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
+
+            if app.shutdown {
+                *control_flow = glutin::event_loop::ControlFlow::Exit;
+            }
+            else {
+                *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
+            }
 
             // events handling
             match ev {
@@ -172,5 +179,9 @@ impl App {
         }
 
         Ok(())
+    }
+
+    pub fn shutdown(&mut self) {
+        self.shutdown = true;
     }
 }

@@ -64,7 +64,7 @@ impl Command for Shutdown {
     }
 
     fn execute(&self, cmd: &str, app: &mut App) {
-        
+        app.shutdown();
     }
 }
 
