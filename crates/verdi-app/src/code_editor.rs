@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::{
     gui::GUIPanel, 
-    prelude::App
+    prelude::App, commands::Command
 };
 
 pub struct CodeEditor {
@@ -22,7 +22,7 @@ impl GUIPanel for CodeEditor {
         "Code Editor"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &mut App) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &App) -> Option<Box<dyn Command>> {
         egui::Window::new(self.name())
             //.open(open)
             .default_height(800.0)
@@ -30,17 +30,19 @@ impl GUIPanel for CodeEditor {
                 if ui.input().key_pressed(egui::Key::Escape) {
                     *open = true;
                 }
-                self.draw(ui, app) 
+                return self.ui(ui, app); 
             }
         );
         // egui::CentralPanel::default().show(ctx, |ui| { 
         //     self.draw(ui);
         // });
+
+        None
     }
 }
 
 impl CodeEditor {
-    fn draw(&mut self, ui: &mut egui::Ui, app: &mut App) {
+    fn ui(&mut self, ui: &mut egui::Ui, app: &App) -> Option<Box<dyn Command>> {
         // script tabs
         ui.horizontal(|ui| {
             if let Some(game) = app.get_game() {
@@ -86,6 +88,8 @@ impl CodeEditor {
                     }
                 }
             });
+
+            None
     }
 }
 

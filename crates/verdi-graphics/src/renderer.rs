@@ -8,7 +8,7 @@ use glium::{
     BlitMask, 
     uniforms
 };
-use verdi_math::{Mat4, Vec2};
+use verdi_math::{Mat4, Vec2, IVec2};
 
 use crate::{
     camera::Camera,
@@ -17,12 +17,21 @@ use crate::{
 };
 
 pub struct Renderer {
+    render_target: RenderTarget,
     gpu_assets: GpuAssets,
 }
 
 impl Renderer {
-    pub fn new() -> Self {
+    pub fn new(display: &Display, render_size: &IVec2) -> Self {
+        // à mettre dans game
+        let render_target = RenderTarget::new(
+            display,
+            render_size.x as u32, 
+            render_size.y as u32,
+        ).expect("Render target creation failed");
+        
         Self {
+            render_target,
             gpu_assets: GpuAssets::new(),
         }
     }
@@ -139,14 +148,14 @@ impl Renderer {
     //     renderables
     // }
 
-    pub fn render(&mut self, display: &Display, target: &RenderTarget, frame: &mut Frame, gpu: &mut GraphicsChip) {        
+    pub fn render(&mut self, display: &Display, frame: &mut Frame, gpu: &mut GraphicsChip) {        
         // the direction of the light
         let light = [-1.0, 0.4, 0.9f32];
         
         let mut framebuffer = SimpleFrameBuffer::with_depth_buffer(
             display, 
-            target.get_color_target(), 
-            target.get_depth_target()
+            self.render_target.get_color_target(), 
+            self.render_target.get_depth_target()
         ).unwrap();
 
         let clear_color = gpu.globals.as_ref().unwrap().clear_color;
@@ -161,8 +170,8 @@ impl Renderer {
 
         // perspective matrix
         let perspective_matrix = Camera::perspective_matrix(
-            target.get_dimensions().0, 
-            target.get_dimensions().1
+            self.render_target.get_dimensions().0, 
+            self.render_target.get_dimensions().1
         );
 
         *gpu.uniforms
@@ -172,8 +181,8 @@ impl Renderer {
         *gpu.uniforms
             .get_vec2_mut(gpu.globals.as_ref().unwrap().global_uniforms.resolution)
             .expect("Resolution uniform missing") = Vec2::new(
-                target.get_dimensions().0 as f32, 
-                target.get_dimensions().1 as f32
+                self.render_target.get_dimensions().0 as f32, 
+                self.render_target.get_dimensions().1 as f32
             );
 
         for render_pass in gpu.render_passes.iter() {
@@ -235,8 +244,8 @@ impl Renderer {
             }
         }
 
-        let scale = frame.get_dimensions().1 as f32 / target.get_dimensions().1 as f32;
-        let new_width = target.get_dimensions().0 as f32 * scale;
+        let scale = frame.get_dimensions().1 as f32 / self.render_target.get_dimensions().1 as f32;
+        let new_width = self.render_target.get_dimensions().0 as f32 * scale;
         let new_x_pos = (frame.get_dimensions().0 as f32 - new_width) as f32 / 2.0;
 
         frame.blit_buffers_from_simple_framebuffer(
@@ -244,8 +253,8 @@ impl Renderer {
             &Rect {
                 left: 0, 
                 bottom: 0, 
-                width: target.get_dimensions().0, 
-                height: target.get_dimensions().1
+                width: self.render_target.get_dimensions().0, 
+                height: self.render_target.get_dimensions().1
             }, 
             &BlitTarget {
                 left: new_x_pos as u32, 

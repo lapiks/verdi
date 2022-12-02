@@ -1,8 +1,17 @@
-use std::{collections::HashMap, path::{PathBuf, Path}, fs::OpenOptions, io::Write};
+use std::{collections::HashMap, path::{PathBuf, Path}, fs::OpenOptions, io::Write, time::Duration};
 
-use verdi_utils::read_at_path;
+use rlua::Lua;
+use verdi_utils::{read_at_path, make_relative_path};
 
 use thiserror::Error;
+
+use crate::{
+    file_watcher::{
+        FileWatcher, 
+        FileWatcherError
+    }, 
+    lua_context::LuaContext
+};
 
 #[derive(Error, Debug)]
 pub enum ScriptError {
@@ -13,14 +22,16 @@ pub enum ScriptError {
 }
 
 pub struct Scripts {
-    scripts: HashMap<PathBuf, Script>
+    scripts: HashMap<PathBuf, Script>,
+    file_watcher: FileWatcher,
 }
 
 impl Scripts {
-    pub fn new() -> Self {
-        Self {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, FileWatcherError> {
+        Ok(Self {
             scripts: HashMap::default(),
-        }
+            file_watcher: FileWatcher::new(path, Duration::from_secs(5))?,
+        })
     }
 
     pub fn add_script(&mut self, script: Script) {
@@ -61,6 +72,29 @@ impl Scripts {
         }
 
         Ok(())
+    }
+
+    pub fn hot_reload(&mut self, lua: &Lua) {
+        if let Some(watcher_event) = self.file_watcher.get_event() {
+            if let notify::EventKind::Modify(_) = watcher_event.kind {
+                for path in watcher_event.paths.iter() {
+                    if let Ok(relative_path) = make_relative_path(path) {
+                        if let Some(script) = self.scripts.get_mut(&relative_path) {
+                            // reload script
+                            script
+                                .reload_from(relative_path)
+                                .expect("Reload script file failed");
+
+                            // update lua context
+                            LuaContext::load_script(
+                                lua, 
+                                script
+                            ).expect("Reload script failed");
+                        }
+                    }
+                }
+            }
+        }
     }
 
     pub fn get_scripts(&self) -> &HashMap<PathBuf, Script> {

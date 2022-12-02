@@ -1,12 +1,20 @@
-use std::{rc::Rc, cell::RefCell, path::{Path, PathBuf}, time::Duration};
+use std::{rc::Rc, cell::RefCell, path::{Path, PathBuf}, sync::{Arc, Mutex}};
 
+use glium::{Display, Frame, glutin::event::{WindowEvent, DeviceEvent}};
 use rlua::Lua;
-use verdi_utils::make_relative_path;
+use verdi_graphics::prelude::{
+    GraphicsChip, 
+    Renderer, 
+    BindGraphicsChip,
+};
+use verdi_input::prelude::{Inputs, BindInputs};
+use verdi_math::IVec2;
 
 use crate::{
     lua_context::LuaContext, 
     prelude::Scripts, 
-    time_step::TimeStep, file_watcher::FileWatcher
+    time_step::TimeStep, 
+    file_watcher::FileWatcherError,
 };
 
 use thiserror::Error;
@@ -18,7 +26,7 @@ pub enum GameError {
     #[error("Cannot evaluate lua code")]
     LuaError(#[from] rlua::Error),
     #[error("File watcher error")]
-    FileWatcherError(#[from] notify::Error),
+    FileWatcherError(#[from] FileWatcherError),
     #[error("Game folder doesn't exists")]
     GameFolderError,
 }
@@ -32,19 +40,38 @@ pub enum GameState {
 }
 
 pub struct Game {
+    gpu: Arc<Mutex<GraphicsChip>>,
+    renderer: Renderer,
+    inputs: Arc<Mutex<Inputs>>,
     path: PathBuf,
     scripts: Rc<RefCell<Scripts>>,
-    file_watcher: FileWatcher,
     pub time_step: TimeStep,
     last_error: String,
 }
 
 impl Game {
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, GameError> {
+    pub fn new<P: AsRef<Path>>(path: P, display: &Display) -> Result<Self, GameError> {
+            let gpu = Arc::new(
+                Mutex::new(
+                    GraphicsChip::new()
+                        .expect("GraphicsChip initialisation failed")
+                )
+            );
+    
+            let inputs = Arc::new(
+                Mutex::new(
+                    Inputs::new()
+                )
+            );
+
+            let renderer = Renderer::new(display, &IVec2 { x: 320, y: 240 });
+
         Ok(Self { 
+            gpu,
+            renderer,
+            inputs,
             path: path.as_ref().to_path_buf(),
-            scripts: Rc::new(RefCell::new(Scripts::new())),
-            file_watcher: FileWatcher::new(path, Duration::from_secs(5))?,
+            scripts: Rc::new(RefCell::new(Scripts::new(path)?)),
             time_step: TimeStep::new(),
             last_error: String::new(),
         })
@@ -54,40 +81,27 @@ impl Game {
         Ok(self.scripts.borrow_mut().load_dir(&self.path)?)
     }
 
-    // called at the start of the game execution
+    /// called at the start of the game execution
     pub fn boot(&mut self, lua: &Lua) -> Result<(), GameError>{
         LuaContext::create_verdi_table(lua)?;
         LuaContext::load_internal_scripts(lua)?;
         LuaContext::load_scripts(lua, &self.scripts.borrow())?;
+
+        BindGraphicsChip::bind(&lua, self.gpu.clone())?;
+        BindInputs::bind(&lua, self.inputs.clone())?;
+
+        self.gpu.lock().unwrap().on_game_start();
+
         LuaContext::call_boot(lua)?;
 
         Ok(())
     }
 
+    /// Called every frame 
     pub fn run(&mut self, lua: &Lua) {
         let delta_time = self.time_step.tick();
         
-        // script hot-reload
-        if let Some(watcher_event) = self.file_watcher.get_event() {
-            if let notify::EventKind::Modify(_) = watcher_event.kind {
-                for path in watcher_event.paths.iter() {
-                    if let Ok(relative_path) = make_relative_path(path) {
-                        if let Some(script) = self.scripts.borrow_mut().get_script_mut(&relative_path) {
-                            // reload script
-                            script
-                                .reload_from(relative_path)
-                                .expect("Reload script file failed");
-
-                            // update lua context
-                            LuaContext::load_script(
-                                lua, 
-                                script
-                            ).expect("Reload script failed");
-                        }
-                    }
-                }
-            }
-        }
+        self.scripts.borrow_mut().hot_reload(lua);
 
         // callbacks
         if let Err(err) = LuaContext::call_run(lua, delta_time) {
@@ -97,6 +111,37 @@ impl Game {
                 self.last_error = current_error;
             }
         }
+    }
+
+    /// Called every frame. Draw as requested during the run call.
+    pub fn render(&mut self, display: &Display, target: &mut Frame) {
+        self.gpu.lock().unwrap().new_frame();
+    
+        // prepare assets for rendering
+        self.renderer.prepare_assets(display, &self.gpu.lock().unwrap());
+
+        // draw game in framebuffer
+        self.renderer.render(display, target, &mut self.gpu.lock().unwrap());
+
+        self.renderer.post_render(&mut self.gpu.lock().unwrap());
+    }
+
+    pub fn frame_ends(&mut self) {
+        // prepare next frame
+        self.gpu.lock().unwrap().frame_ends();
+    }
+
+    pub fn on_window_event(&mut self, event: &WindowEvent) {
+        self.inputs.lock().unwrap().process_win_events(event)
+    }
+
+    pub fn on_device_event(&mut self, event: &DeviceEvent) {
+        self.inputs.lock().unwrap().process_device_events(event);
+    }
+
+    pub fn shutdown(&mut self) {
+        self.gpu.lock().unwrap().on_game_shutdown();
+        self.renderer.on_game_shutdown();
     }
 
     pub fn get_scripts(&self) -> Rc<RefCell<Scripts>> {

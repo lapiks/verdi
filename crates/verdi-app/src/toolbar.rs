@@ -1,8 +1,7 @@
-use verdi_game::prelude::GameState;
-
 use crate::{
     gui::GUIPanel, 
-    app::App
+    app::App, 
+    commands::Command, app_commands::{Run, Paused, Stop}
 };
 
 pub struct Toolbar {
@@ -21,31 +20,42 @@ impl GUIPanel for Toolbar {
         "Toolbar"
     }
 
-    fn show(&mut self, ctx: &egui::Context, _open: &mut bool, app: &mut App) {
+    fn show(&mut self, ctx: &egui::Context, _open: &mut bool, app: &App) -> Option<Box<dyn Command>> {
+        let mut command: Option<Box<dyn Command>> = None;
         egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
-            self.draw(ui, app);
+            command = self.ui(ui, app);
         });
+
+        command
     }
 }
 
 impl Toolbar {
-    fn draw(&mut self, ui: &mut egui::Ui, app: &mut App) {
+    fn ui(&mut self, ui: &mut egui::Ui, app: &App) -> Option<Box<dyn Command>> {
+        let mut command: Option<Box<dyn Command>> = None;
         ui.horizontal_centered(|ui| {
             let game_loaded = app.get_game().is_some();
 
             if ui.button("Run").clicked() && game_loaded {
-                if app.game_state == GameState::Paused {
-                    app.game_state = GameState::Running;
-                }
-                else if app.game_state == GameState::Stopped {
-                    app.game_state = GameState::Start;
-                }
+                command = Some(
+                    Box::new(
+                        Run {}
+                    )
+                );
             }
             if ui.button("Pause").clicked() && game_loaded{
-                app.game_state = GameState::Paused;
+                command = Some(
+                    Box::new(
+                        Paused {}
+                    )
+                );
             }
             if ui.button("Stop").clicked() && game_loaded {
-                app.game_state = GameState::Stopped;
+                command = Some(
+                    Box::new(
+                        Stop {}
+                    )
+                );
             }
             ui.add_space(30.0);
             if game_loaded {
@@ -55,5 +65,7 @@ impl Toolbar {
                 }
             }
         });
+
+        command
     }
 }

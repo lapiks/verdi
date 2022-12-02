@@ -2,22 +2,10 @@ use std::collections::HashMap;
 
 use crate::{
     gui::GUIPanel, 
-    commands::{
-        Command, 
-        Help, 
-        Load, 
-        Shutdown
-    }, 
-    app::App,
+    app::App, 
+    commands::Command, 
+    app_commands::{Help, Load, Shutdown},
 };
-
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum ConsoleError {
-    #[error("Unknown command")]
-    UnknownCommand(),
-}
 
 pub struct Console {
     current_text: String,
@@ -40,24 +28,29 @@ impl GUIPanel for Console {
         "Console"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &mut App) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &App) -> Option<Box<dyn Command>> {
+        let mut cmd: Option<Box<dyn Command>> = None;
         egui::CentralPanel::default().show(ctx, |ui| { 
             if ui.input().key_pressed(egui::Key::Escape) {
                 *open = false;
             }
-            self.draw(ui, app);
+            cmd = self.ui(ui, app);
         });
+
+        cmd
     }
 }
 
 impl Console {
     pub fn init(&mut self) {
         self.add_command(Box::new(Help {}));
-        self.add_command(Box::new(Load {}));
+        self.add_command(Box::new(Load { folder: String::new() }));
         self.add_command(Box::new(Shutdown {}));
     }
 
-    fn draw(&mut self, ui: &mut egui::Ui, app: &mut App) {
+    fn ui(&mut self, ui: &mut egui::Ui, app: &App) -> Option<Box<dyn Command>> {
+        let mut cmd_res: Option<Box<dyn Command>> = None;
+
         ui.label("Verdi-0.1.0");
         ui.label("(C) 2022 JD Games");
         ui.label("Type HELP for help");
@@ -90,8 +83,11 @@ impl Console {
                         if ui.input().key_pressed(egui::Key::Enter) {
                             let new_text = "> ".to_owned() + &self.current_text;
                             self.draw_text(&new_text);
-                            // execute command
-                            if let Err(_) = self.execute(self.current_text.clone(), app) {
+
+                            if let Some(cmd) = self.make_command(self.current_text.clone()) {
+                                cmd_res = Some(cmd);
+                            }
+                            else {
                                 self.draw_text(&"Unknown command".to_owned());
                                 self.new_line();
                             }
@@ -101,9 +97,11 @@ impl Console {
                     
                 }
             );
+
+            cmd_res
     }
 
-    fn execute(&mut self, str_cmd: String, app: &mut App) -> Result<(), ConsoleError> {
+    fn make_command(&mut self, str_cmd: String) -> Option<Box<dyn Command>> {
         let mut split = str_cmd.split_whitespace();
 
         let first_word = split
@@ -117,14 +115,17 @@ impl Console {
         if first_word.to_string() == Help::name() {
             self.draw_help();
         }
-        else if let Some(cmd) = self.commands.get(&first_word.to_string()) {
-            cmd.execute(second_word, app);
-        }
-        else {
-            return Err(ConsoleError::UnknownCommand());
+        
+        if let Some(cmd) = self.commands.get(&first_word.to_string()) {
+            if cmd.name() == Load::name() {
+                return Some(Box::new(Load { folder: second_word.to_string() }));
+            }
+            else if cmd.name() == Shutdown::name() {
+                return Some(Box::new(Shutdown {}));
+            }
         }
 
-        Ok(())
+        None
     }
     
     fn add_command(&mut self, cmd: Box<dyn Command>) {

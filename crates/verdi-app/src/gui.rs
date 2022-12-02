@@ -5,7 +5,7 @@ use crate::{
     code_editor::CodeEditor, 
     console::Console, 
     toolbar::Toolbar, 
-    app::App
+    app::App, commands::Command
 };
 
 pub struct Gui {
@@ -31,29 +31,36 @@ impl Gui {
         self.console.init();
     }
 
-    pub fn render(&mut self, display: &Display, target: &mut Frame, app: &mut App) {
-        self.egui_glium.run(display, |ctx| {
+    pub fn ui(&mut self, app: &App) -> Option<Box<dyn Command>> {
+        let mut cmd: Option<Box<dyn Command>> = None;
+        self.egui_glium.run(app.get_window().get_display(), |ctx| {
             if self.show_console {
-                self.console.show(ctx, &mut self.show_console, app);
+                if let Some(console_cmd) = self.console.show(ctx, &mut self.show_console, app) {
+                    cmd = Some(console_cmd);
+                }
             }
             else {
                 //let mut open_editor = true;
-                self.code_editor.show(ctx, &mut self.show_console, app);
+                if let Some(code_editor_cmd) = self.code_editor.show(ctx, &mut self.show_console, app) {
+                    cmd = Some(code_editor_cmd);
+                }
                 
                 let mut show_toolbar = true;
-                self.toolbar.show(ctx, &mut show_toolbar, app);
+                if let Some(toolbar_cmd) = self.toolbar.show(ctx, &mut show_toolbar, app) {
+                    cmd = Some(toolbar_cmd);
+                }
             }
         });
 
-        self.egui_glium.paint(&display, target);
+        cmd
+    }
+
+    pub fn paint(&mut self, display: &Display, target: &mut Frame) {
+        self.egui_glium.paint(display, target);
     }
 
     pub fn on_event(&mut self, event: &WindowEvent) -> bool {
         self.egui_glium.on_event(event)
-    }
-
-    pub fn get_code_editor_mut(&mut self) -> &mut CodeEditor {
-        &mut self.code_editor
     }
 }
 
@@ -63,5 +70,5 @@ pub trait GUIPanel {
     fn name(&self) -> &'static str;
 
     /// Show the panel
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &mut App);
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &App) -> Option<Box<dyn Command>>;
 }

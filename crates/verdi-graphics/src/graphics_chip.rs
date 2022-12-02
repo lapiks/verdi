@@ -50,8 +50,8 @@ impl From<PrimitiveType> for glium::index::PrimitiveType {
 // Public API
 impl GraphicsChip {
     pub fn new() -> Result<Self, std::io::Error> {
-        let mut assets = Assets::new();
-        let mut uniforms = Uniforms::default();
+        let assets = Assets::new();
+        let uniforms = Uniforms::default();
         let globals = None;
 
         // let streaming_primitive = assets.add_primitive(
@@ -115,7 +115,7 @@ impl GraphicsChip {
         // }   
     }
 
-    pub fn next_frame(&mut self) {
+    pub fn frame_ends(&mut self) {
         self.render_passes.clear();   
         //self.buffer_state.next_frame();
     }

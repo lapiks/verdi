@@ -14,3 +14,4 @@ mod code_editor;
 mod syntax_highlighting;
 mod console;
 mod commands;
+mod app_commands;

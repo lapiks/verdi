@@ -2,13 +2,21 @@ use std::{path::Path, sync::mpsc::{channel, Receiver}, time::Duration};
 
 use notify::{Watcher, RecommendedWatcher, Event, Config, RecursiveMode};
 
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum FileWatcherError {
+    #[error("F")]
+    WatcherError(#[from] notify::Error),
+}
+
 pub struct FileWatcher {
     watcher: RecommendedWatcher,
     receiver: Receiver<notify::Result<Event>>
 }
 
 impl FileWatcher {
-    pub fn new<P: AsRef<Path>>(path: P, delay: Duration) -> Result<Self, notify::Error>  {
+    pub fn new<P: AsRef<Path>>(path: P, delay: Duration) -> Result<Self, FileWatcherError>  {
         let (tx, rx) = channel();
         
         // Automatically select the best implementation for the platform.
