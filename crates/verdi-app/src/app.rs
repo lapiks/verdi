@@ -160,7 +160,7 @@ impl App {
         self.game_state = GameState::Stopped;
 
         if let Some(game) = self.game.as_mut() {
-           // sutdown game 
+           game.shutdown();
         }
 
         self.game = Some(
