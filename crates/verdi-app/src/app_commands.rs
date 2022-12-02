@@ -149,3 +149,26 @@ impl Paused {
         "pause"
     }
 }
+
+#[derive(Clone)]
+pub struct ShowModeler;
+
+impl Command for ShowModeler {
+    fn name(&self) -> &'static str {
+        Shutdown::name()
+    }
+
+    fn desc(&self) -> &'static str {
+        "open 3D modeler"
+    }
+
+    fn execute(&self, app: &mut App) {
+
+    }
+}
+
+impl ShowModeler {
+    pub fn name() -> &'static str {
+        "show_modeler"
+    }
+}

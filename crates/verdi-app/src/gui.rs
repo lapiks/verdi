@@ -5,7 +5,9 @@ use crate::{
     code_editor::CodeEditor, 
     console::Console, 
     toolbar::Toolbar, 
-    app::App, commands::Command
+    app::App, 
+    commands::Command, 
+    modeler::Modeler
 };
 
 pub struct Gui {
@@ -14,6 +16,8 @@ pub struct Gui {
     console: Console,
     show_console: bool,
     toolbar: Toolbar,
+    modeler: Modeler,
+    show_modeler: bool,
 }
 
 impl Gui {
@@ -23,7 +27,9 @@ impl Gui {
             code_editor: CodeEditor::new(),
             console: Console::default(),
             show_console: true,
-            toolbar: Toolbar::new()
+            toolbar: Toolbar::new(),
+            modeler: Modeler::new(),
+            show_modeler: false,
         }
     }
 
@@ -35,16 +41,17 @@ impl Gui {
         let mut cmd: Option<Box<dyn Command>> = None;
         self.egui_glium.run(app.get_window().get_display(), |ctx| {
             if self.show_console {
-                if let Some(console_cmd) = self.console.show(ctx, &mut self.show_console, app) {
-                    cmd = Some(console_cmd);
-                }
+                cmd = self.console.show(ctx, &mut self.show_console, app);
+            }
+            else if self.show_modeler {
+                cmd = self.modeler.show(ctx, &mut self.show_modeler, app);
             }
             else {
                 //let mut open_editor = true;
-                if let Some(code_editor_cmd) = self.code_editor.show(ctx, &mut self.show_console, app) {
-                    cmd = Some(code_editor_cmd);
+                if let Some(editor_cmd) = self.code_editor.show(ctx, &mut self.show_console, app) {
+                    cmd = Some(editor_cmd);
                 }
-                
+
                 let mut show_toolbar = true;
                 if let Some(toolbar_cmd) = self.toolbar.show(ctx, &mut show_toolbar, app) {
                     cmd = Some(toolbar_cmd);

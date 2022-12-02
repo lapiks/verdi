@@ -1,7 +1,7 @@
 use crate::{
     gui::GUIPanel, 
     app::App, 
-    commands::Command, app_commands::{Run, Paused, Stop}
+    commands::Command, app_commands::{Run, Paused, Stop, ShowModeler}
 };
 
 pub struct Toolbar {
@@ -63,6 +63,13 @@ impl Toolbar {
                 if let Some(game) = app.get_game() {
                     ui.label(game.time_step.get_fps().to_string());
                 }
+            }
+            if ui.button("3D Modeler").clicked() {
+                command = Some(
+                    Box::new(
+                        ShowModeler {}
+                    )
+                );
             }
         });
 

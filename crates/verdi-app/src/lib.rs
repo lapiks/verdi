@@ -15,3 +15,4 @@ mod syntax_highlighting;
 mod console;
 mod commands;
 mod app_commands;
+mod modeler;
