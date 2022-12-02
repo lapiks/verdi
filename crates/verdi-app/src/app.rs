@@ -17,6 +17,8 @@ use verdi_game::prelude::{
 use crate::{
     error::AppError, 
     gui::Gui, 
+    app_commands::Load, 
+    commands::Command, 
 };
 
 pub struct App {
@@ -50,6 +52,10 @@ impl App {
         gui.init();
 
         let lua = Lua::new();
+
+        // for accelerating debug
+        let load_cmd = Load {folder: "game_example".to_string()}; 
+        load_cmd.execute(&mut app);
     
         event_loop.run(move |ev, _, control_flow| {
             // request a new frame

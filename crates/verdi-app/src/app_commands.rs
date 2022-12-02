@@ -5,28 +5,6 @@ use crate::{
     prelude::App
 };
 
-// pub struct AppCmd {
-//     cmd: Box<dyn Command>,
-//     arg: String,
-// }
-
-// impl AppCmd {
-//     pub fn new(cmd: Box<dyn Command>) -> Self {
-//         Self {
-//             cmd,
-//             arg: String::default(),
-//         }
-//     }
-
-//     pub fn with_arg(cmd: Box<dyn Command>, arg: String) -> Self {
-//         Self {
-//             cmd,
-//             arg,
-//         }
-//     }
-// }
-
-
 #[derive(Clone)]
 pub struct Load {
     pub folder: String,
