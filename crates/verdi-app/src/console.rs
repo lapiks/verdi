@@ -28,13 +28,13 @@ impl GUIPanel for Console {
         "Console"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &App) -> Option<Box<dyn Command>> {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, _: &App) -> Option<Box<dyn Command>> {
         let mut cmd: Option<Box<dyn Command>> = None;
         egui::CentralPanel::default().show(ctx, |ui| { 
             if ui.input().key_pressed(egui::Key::Escape) {
                 *open = false;
             }
-            cmd = self.ui(ui, app);
+            cmd = self.ui(ui);
         });
 
         cmd
@@ -48,7 +48,7 @@ impl Console {
         self.add_command(Box::new(Shutdown {}));
     }
 
-    fn ui(&mut self, ui: &mut egui::Ui, app: &App) -> Option<Box<dyn Command>> {
+    fn ui(&mut self, ui: &mut egui::Ui) -> Option<Box<dyn Command>> {
         let mut cmd_res: Option<Box<dyn Command>> = None;
 
         ui.label("Verdi-0.1.0");

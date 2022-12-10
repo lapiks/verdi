@@ -1,6 +1,7 @@
 use glium::{
     glutin, 
-    Surface,
+    Surface, 
+    Frame,
 };
 
 use rlua::Lua;
@@ -45,7 +46,7 @@ impl App {
 
         // gui initialisation
         let egui_glium = egui_glium::EguiGlium::new(
-            &app.window.get_display(), 
+            app.window.get_display(), 
             &event_loop
         );
         let mut gui = Gui::new(egui_glium);
@@ -94,7 +95,7 @@ impl App {
             }
 
             // draw GUI
-            if let Some(cmd) = gui.ui(&mut app) {
+            if let Some(cmd) = gui.ui(&app) {
                 // eventually execute a command
                 cmd.execute(&mut app);
             }
@@ -151,6 +152,10 @@ impl App {
     pub fn get_window(&self) -> &Window {
         &self.window
     } 
+
+    pub fn draw_gui(&mut self, target: &mut Frame) {
+
+    }
 
     pub fn load_game<P: AsRef<Path>>(&mut self, path: P) -> Result<(), GameError> {
         if !path.as_ref().exists() {

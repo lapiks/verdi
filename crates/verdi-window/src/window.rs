@@ -37,6 +37,10 @@ impl Window {
         }
     }
 
+    pub fn get_event_loop(&self) -> Option<&EventLoop<()>> {
+        self.event_loop.as_ref()
+    }
+
     pub fn take_event_loop(&mut self) -> Option<EventLoop<()>> {
         self.event_loop.take()
     }
