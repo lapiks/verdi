@@ -2,7 +2,7 @@ use crate::{
     gui::GUIPanel, 
     app::App, 
     commands::Command, 
-    app_commands::{Run, Paused, Stop}
+    app_commands::{Run, Paused, Stop, ShowModeler}
 };
 
 pub struct Toolbar {
