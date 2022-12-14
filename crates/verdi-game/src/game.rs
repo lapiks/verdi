@@ -31,14 +31,6 @@ pub enum GameError {
     GameFolderError,
 }
 
-#[derive(PartialEq)]
-pub enum GameState {
-    Start,
-    Running,
-    Paused,
-    Stopped,
-}
-
 pub struct Game {
     gpu: Arc<Mutex<GraphicsChip>>,
     renderer: Renderer,
@@ -124,6 +116,10 @@ impl Game {
         self.renderer.render(display, target, &mut self.gpu.lock().unwrap());
 
         self.renderer.post_render(&mut self.gpu.lock().unwrap());
+    }
+
+    pub fn frame_starts(&mut self) {
+        self.gpu.lock().unwrap().flush_stream_buffer();
     }
 
     pub fn frame_ends(&mut self) {

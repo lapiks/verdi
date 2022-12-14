@@ -207,7 +207,7 @@ impl GltfLoader {
             .map(|info| info.texture().index())
             .and_then(|i| textures.get(i).cloned());
         
-        let globals = gpu.globals.as_ref().unwrap();
+        let globals = &gpu.globals;
 
         let mut material = Material::new(globals.global_shaders.gouraud);
         material.add_uniform("u_model", globals.global_uniforms.model_matrix);

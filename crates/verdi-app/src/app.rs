@@ -11,7 +11,6 @@ use std::path::Path;
 use verdi_window::prelude::*;
 use verdi_game::prelude::{
     Game, 
-    GameState, 
     GameError
 };
 
@@ -21,6 +20,15 @@ use crate::{
     app_commands::Load, 
     commands::Command, 
 };
+
+#[derive(PartialEq)]
+pub enum GameState {
+    Loaded,
+    Start,
+    Running,
+    Paused,
+    Stopped,
+}
 
 pub struct App {
     window: Window,
@@ -34,7 +42,7 @@ impl App {
         Self {
             window: Window::new(1920, 1080),
             game: None,
-            game_state: GameState::Stopped,
+            game_state: GameState::Loaded,
             shutdown: false,
         }
     }
@@ -83,12 +91,15 @@ impl App {
                 if let Some(game) = app.game.as_mut() {
                     // stop game
                     game.shutdown();
+                    app.game_state = GameState::Loaded;
                 }
             }
 
             if app.game_state == GameState::Running {
                 if let Some(game) = app.game.as_mut() {
                     game.run(&lua);
+
+                    game.frame_starts();
                     game.render(app.window.get_display(), &mut target);
                     game.frame_ends();
                 }
@@ -162,8 +173,6 @@ impl App {
             return Err(GameError::GameFolderError);
         }
 
-        self.game_state = GameState::Stopped;
-
         if let Some(game) = self.game.as_mut() {
            game.shutdown();
         }
@@ -175,6 +184,8 @@ impl App {
         if let Some(game) = self.game.as_mut() {
             game.load()?;
         }
+
+        self.game_state = GameState::Loaded;
 
         Ok(())
     }

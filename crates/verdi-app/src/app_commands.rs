@@ -1,8 +1,6 @@
-use verdi_game::prelude::GameState;
-
 use crate::{
+    app::{App, GameState},
     commands::Command, 
-    prelude::App
 };
 
 #[derive(Clone)]
@@ -92,7 +90,7 @@ impl Command for Run {
         if app.game_state == GameState::Paused {
             app.game_state = GameState::Running;
         }
-        else if app.game_state == GameState::Stopped {
+        else if app.game_state == GameState::Loaded {
             app.game_state = GameState::Start;
         }
     }

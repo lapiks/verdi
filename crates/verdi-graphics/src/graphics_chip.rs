@@ -17,10 +17,10 @@ use verdi_math::prelude::*;
 
 pub struct GraphicsChip {
     pub render_passes: Vec<RenderPass>,
-    //pub buffer_state: StreamBufferState,
+    pub stream_buffer: StreamBufferState,
     pub assets: Assets,
     pub uniforms: Uniforms,
-    pub globals: Option<Globals>,
+    pub globals: Globals,
 }
 
 #[derive(Copy, Clone, PartialEq)]
@@ -50,28 +50,42 @@ impl From<PrimitiveType> for glium::index::PrimitiveType {
 // Public API
 impl GraphicsChip {
     pub fn new() -> Result<Self, std::io::Error> {
-        let assets = Assets::new();
-        let uniforms = Uniforms::default();
-        let globals = None;
+        let mut assets = Assets::new();
+        let mut uniforms = Uniforms::default();
 
-        // let streaming_primitive = assets.add_primitive(
-        //     Primitive::new(
-        //         vec![Vertex::default(); 1024 * 1024],
-        //         None,
-        //         PrimitiveType::Triangles,
-        //         material_2d,
-        //     )
-        // );
+        // create globals
+        let globals = Globals::new(
+            &mut assets, 
+            &mut uniforms,
+        )?;
 
-        // let buffer_state = StreamBufferState {
-        //     primitive_id: streaming_primitive,
-        //     vertex_count: 0,
-        //     current_offset: 0,
-        // };
+        let mat_2d = assets.add_material(
+            *Material::new(globals.global_shaders.gouraud)
+                .add_uniform("u_model", globals.global_uniforms.model_matrix)
+                .add_uniform("u_view", globals.global_uniforms.view_matrix)
+                .add_uniform("u_projection", globals.global_uniforms.perspective_matrix)
+                .add_uniform("u_resolution", globals.global_uniforms.resolution)
+        );
+
+        let streaming_primitive = assets.add_primitive(
+            Primitive::new(
+                vec![Vertex::default(); 1024 * 1024],
+                None,
+                //PrimitiveType::Triangles,
+                PrimitiveType::Lines,
+                mat_2d,
+            )
+        );
+
+        let stream_buffer = StreamBufferState {
+            primitive_id: streaming_primitive,
+            vertex_count: 0,
+            current_offset: 0,
+        };
 
         Ok(Self { 
             render_passes: Vec::new(),
-            //buffer_state,
+            stream_buffer,
             assets,
             uniforms,
             globals,
@@ -79,23 +93,7 @@ impl GraphicsChip {
     }
 
     pub fn on_game_start(&mut self) {
-        // create globals
-        self.globals = Some(
-            Globals::new(
-                &mut self.assets, 
-                &mut self.uniforms
-            ).unwrap()
-        );
 
-        if let Some(globals) = &self.globals {
-            self.assets.add_material(
-                *Material::new(globals.global_shaders.std_2d)
-                    .add_uniform("u_model", globals.global_uniforms.model_matrix)
-                    .add_uniform("u_view", globals.global_uniforms.view_matrix)
-                    .add_uniform("u_projection", globals.global_uniforms.perspective_matrix)
-                    .add_uniform("u_resolution", globals.global_uniforms.resolution)
-            );
-        }
     }
 
     pub fn on_game_shutdown(&mut self) {
@@ -264,13 +262,13 @@ impl GraphicsChip {
     }
 
     pub fn set_clear_color(&mut self, color: &Vec4) {
-        self.globals.as_mut().unwrap().clear_color = *color;
+        self.globals.clear_color = *color;
     }
 
     pub fn translate(&mut self, v: &Vec3) {
         *self.uniforms
             .get_mat4_mut(
-                self.globals.as_ref().unwrap().global_uniforms.view_matrix
+                self.globals.global_uniforms.view_matrix
             ).unwrap() 
                 *= Mat4::from_translation(*v);
     }
@@ -278,7 +276,7 @@ impl GraphicsChip {
     pub fn rotate(&mut self, angle: f32, axis: &Vec3) {
         *self.uniforms
             .get_mat4_mut(
-                self.globals.as_ref().unwrap().global_uniforms.view_matrix
+                self.globals.global_uniforms.view_matrix
             ).unwrap() 
                 *= Mat4::from_axis_angle(*axis, angle);
     }
@@ -286,7 +284,7 @@ impl GraphicsChip {
     pub fn set_fog_start(&mut self, distance: f32) {
         *self.uniforms
             .get_float_mut(
-                self.globals.as_ref().unwrap().global_uniforms.fog_start
+                self.globals.global_uniforms.fog_start
             ).unwrap() 
                 = distance;
     }
@@ -294,7 +292,7 @@ impl GraphicsChip {
     pub fn set_fog_end(&mut self, distance: f32) {
         *self.uniforms
             .get_float_mut(
-                self.globals.as_ref().unwrap().global_uniforms.fog_end
+                self.globals.global_uniforms.fog_end
             ).unwrap() 
                 = distance;
     }
@@ -321,8 +319,8 @@ impl GraphicsChip {
 
         let vertices = [v1, v2];
 
-        // let stream_buffer = self.request_flush(&cmd);
-        // stream_buffer.data.clone_from_slice(&vertices)
+        let stream_buffer = self.request_flush(&cmd);
+        stream_buffer.data.clone_from_slice(&vertices)
     }
 }
 
@@ -351,36 +349,49 @@ pub struct DrawCommand {
 
 // Private impl
 impl GraphicsChip {
-    // fn request_flush(&mut self, cmd: &DrawCommand) -> StreamBuffer {
-    //     let primitive = self.assets.get_primitive_mut(self.buffer_state.primitive_id).expect("Primitive not found");
+    fn request_flush(&mut self, cmd: &DrawCommand) -> StreamBuffer {
+        let primitive = self.assets
+            .get_primitive_mut(self.stream_buffer.primitive_id)
+            .expect("Primitive not found");
 
-    //     if cmd.primitive_type != primitive.primitive_type {
-    //         //self.flush();
+        if cmd.primitive_type != primitive.primitive_type {
+            //self.flush_stream_buffer();
+            self.render_passes.push(
+                RenderPass {
+                    primitive_id: self.stream_buffer.primitive_id,
+                    transform: Transform::identity(),
+                }
+            );
 
-    //         primitive.primitive_type = cmd.primitive_type;
-    //         self.buffer_state.vertex_count = cmd.vertex_count;
-    //         self.buffer_state.current_offset = 0;
-    //     }
-    //     else {
-    //         self.buffer_state.current_offset = self.buffer_state.vertex_count as usize;
-    //         self.buffer_state.vertex_count += cmd.vertex_count;
-    //     }
+            primitive.primitive_type = cmd.primitive_type;
+            self.stream_buffer.vertex_count = cmd.vertex_count;
+            self.stream_buffer.current_offset = 0;
+        }
+        else {
+            self.stream_buffer.current_offset = self.stream_buffer.vertex_count as usize;
+            self.stream_buffer.vertex_count += cmd.vertex_count;
+        }
 
-    //     let new_offset = self.buffer_state.current_offset + cmd.vertex_count as usize;
-    //     let stream_buffer = StreamBuffer {
-    //         data: &mut primitive.vertex_buffer[
-    //             self.buffer_state.current_offset
-    //             ..
-    //             new_offset
-    //         ],
-    //     };
+        let new_offset = self.stream_buffer.current_offset + cmd.vertex_count as usize;
+        let stream_buffer = StreamBuffer {
+            data: &mut primitive.vertex_buffer[
+                self.stream_buffer.current_offset
+                ..
+                new_offset
+            ],
+        };
 
-    //     self.buffer_state.current_offset = new_offset;
+        self.stream_buffer.current_offset = new_offset;
 
-    //     stream_buffer
-    // }
+        stream_buffer
+    }
 
-    // fn flush(&mut self) {
-
-    // }
+    pub fn flush_stream_buffer(&mut self) {
+        self.render_passes.push(
+            RenderPass {
+                primitive_id: self.stream_buffer.primitive_id,
+                transform: Transform::identity(),
+            }
+        )
+    }
 }
