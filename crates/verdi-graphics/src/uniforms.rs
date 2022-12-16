@@ -17,6 +17,7 @@ new_key_type! {
     pub struct Vec2UniformId;
     pub struct Mat4UniformId;
     pub struct TextureUniformId;
+    pub struct BoolUniformId;
 }
 
 #[derive(Copy, Clone)]
@@ -25,6 +26,7 @@ pub enum UniformId {
     Vec2(Vec2UniformId),
     Mat4(Mat4UniformId),
     Texture(TextureUniformId),
+    Bool(BoolUniformId),
 }
 
 //type UniformList<T> = SlotMap<Uniform, T>;
@@ -34,6 +36,7 @@ pub struct Uniforms {
     vec2s: SlotMap<Vec2UniformId, Vec2>,
     mat4s: SlotMap<Mat4UniformId, Mat4>,
     textures: SlotMap<TextureUniformId, TextureUniform>,
+    booleans: SlotMap<BoolUniformId, bool>,
 }
 
 pub struct TextureUniform {
@@ -63,6 +66,7 @@ impl Default for Uniforms {
             vec2s: SlotMap::default(),
             mat4s: SlotMap::default(),
             textures: SlotMap::default(),
+            booleans: SlotMap::default(),
         }
     }
 }
@@ -100,6 +104,11 @@ impl Uniforms {
                 else {
                     None
                 }
+            }
+            UniformId::Bool(uniform_id) => {
+                self.booleans
+                    .get(uniform_id)
+                    .map(|&value| UniformValue::Bool(value))
             }
         }
     }
@@ -216,6 +225,36 @@ impl Uniforms {
         match id {
             UniformId::Texture(id) => {
                 self.textures.get_mut(id)
+            }
+            _ => {
+                // wrong type
+                None
+            }
+        }
+    }
+
+    pub fn add_boolean(&mut self, value: bool) -> UniformId {
+        let id = self.booleans.insert(value);
+
+        UniformId::Bool(id)
+    }
+
+    pub fn get_boolean(&self, id: UniformId) -> Option<&bool> {
+        match id {
+            UniformId::Bool(id) => {
+                self.booleans.get(id)
+            }
+            _ => {
+                // wrong type
+                None
+            }
+        }
+    }
+
+    pub fn get_boolean_mut(&mut self, id: UniformId) -> Option<&mut bool> {
+        match id {
+            UniformId::Bool(id) => {
+                self.booleans.get_mut(id)
             }
             _ => {
                 // wrong type

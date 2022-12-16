@@ -216,6 +216,7 @@ impl GltfLoader {
         material.add_uniform("u_resolution", globals.global_uniforms.resolution);
         material.add_uniform("u_fog_start", globals.global_uniforms.fog_start);
         material.add_uniform("u_fog_end", globals.global_uniforms.fog_end);
+        material.add_uniform("u_enable_lighting", globals.global_uniforms.enable_lighting);
         if let Some(id) = uniform_id {
             material.add_uniform("u_texture", id);
         }

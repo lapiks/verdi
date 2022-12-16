@@ -12,6 +12,7 @@ out vec2 v_uv;
 out float v_fog_density;
 
 // light
+uniform bool u_enable_lighting;
 uniform vec3 u_light;
 
 // matrices
@@ -57,19 +58,27 @@ void main() {
     v_fog_density = clamp(inverse_lerp(u_fog_start, u_fog_end, vertex_depth), 0.0, 1.0);
 
     // lighting
-    const vec3 light_color = vec3(1.0, 1.0, 1.0);
+    if(u_enable_lighting)
+    {
+        const vec3 light_color = vec3(1.0, 1.0, 1.0);
 
-    // ambient
-    const float ambient_strength = 0.1;
-    vec3 ambient_comp = ambient_strength * light_color;
+        // ambient
+        const float ambient_strength = 0.1;
+        vec3 ambient_comp = ambient_strength * light_color;
 
-    // diffuse
-    vec3 v_normal = normalize(mat3(transpose(inverse(u_model))) * normal);
-    vec3 lighting_dir = normalize(u_light - world_vertex.xyz);
-    float light_mag = max(dot(lighting_dir, v_normal), 0.0);
-    vec3 diffuse_comp = light_mag * light_color;
+        // diffuse
+        vec3 v_normal = normalize(mat3(transpose(inverse(u_model))) * normal);
+        vec3 lighting_dir = normalize(u_light - world_vertex.xyz);
+        float light_mag = max(dot(lighting_dir, v_normal), 0.0);
+        vec3 diffuse_comp = light_mag * light_color;
 
-    // final color
-    v_color = vec4(color.xyz * (ambient_comp + diffuse_comp), color.w);
+        // final color
+        v_color = vec4(color.xyz * (ambient_comp + diffuse_comp), color.w);
+    }
+    else 
+    {
+        v_color = color;
+    }
+    
     v_uv = uv;
 }

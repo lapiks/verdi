@@ -65,6 +65,7 @@ impl GraphicsChip {
                 .add_uniform("u_view", globals.global_uniforms.view_matrix)
                 .add_uniform("u_projection", globals.global_uniforms.perspective_matrix)
                 .add_uniform("u_resolution", globals.global_uniforms.resolution)
+                .add_uniform("u_enable_lighting", globals.global_uniforms.enable_lighting)
         );
 
         let streaming_primitive = assets.add_primitive(
@@ -279,6 +280,14 @@ impl GraphicsChip {
                 self.globals.global_uniforms.view_matrix
             ).unwrap() 
                 *= Mat4::from_axis_angle(*axis, angle);
+    }
+
+    pub fn enable_lighting(&mut self, value: bool) {
+        *self.uniforms
+            .get_boolean_mut(
+                self.globals.global_uniforms.enable_lighting
+            ).unwrap() 
+                = value;
     }
 
     pub fn set_fog_start(&mut self, distance: f32) {
