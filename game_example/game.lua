@@ -2,6 +2,13 @@ function verdi.start()
     scene = graphics.newScene("./game_example/assets/tank.gltf")
     mesh = graphics.newMesh()
 
+    vertices = {
+        0, 0, 0,
+        1, 1, 1
+    }
+
+    mesh:setVertices(vertices)
+
     print(scene:getNumNodes())
 
     x = 5
@@ -35,6 +42,7 @@ function verdi.draw(deltaTime)
     graphics.translate(x, -2.5, y)
 
     scene:draw()
+    mesh:draw()
 
     -- for i = 0, scene:getNumNodes() do
     --     local node = scene:getNode(i) 

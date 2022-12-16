@@ -1,7 +1,7 @@
 use std::sync::{Mutex, Arc};
 
 use glium::Display;
-use rlua::{UserData, UserDataMethods};
+use rlua::{UserData, UserDataMethods, Table};
 use slotmap::{new_key_type, Key};
 
 use crate::{
@@ -90,16 +90,25 @@ impl MeshRef {
          }
     }
 
-    pub fn set_vertices(&self) {
+    pub fn set_vertices(&self, table: Table) {
         let gpu = self.gpu.lock().unwrap();
         let mesh = gpu.assets.get_mesh(self.id).unwrap();
+        // todo
+    }
+
+    pub fn draw(&self) {
+        self.gpu.lock().unwrap().draw_mesh(self.id);
     }
 }
 
 impl UserData for MeshRef {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method("setVertices", |_, mesh, ()| {
-            Ok(mesh.set_vertices())
+        methods.add_method("setVertices", |_, mesh, table: Table| {
+            Ok(mesh.set_vertices(table))
+        });
+
+        methods.add_method("draw", |_, mesh, ()| {
+            Ok(mesh.draw())
         });
     }
 }

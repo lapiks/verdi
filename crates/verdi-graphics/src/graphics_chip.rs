@@ -237,6 +237,17 @@ impl GraphicsChip {
         }
     }
 
+    pub fn draw_mesh(&mut self, mesh_id: MeshId) {
+        if let Some(mesh) = self.assets.get_mesh(mesh_id) {
+            self.render_passes.push(
+                RenderPass { 
+                    mesh_id: mesh.id,
+                    transform: Transform::identity(),
+                }
+            );
+        }
+    }
+
     pub fn draw_node(&mut self, node: &Node) {
         // nothing to draw
         if node.mesh.is_none() {
