@@ -5,7 +5,8 @@ use rlua::{UserData, UserDataMethods};
 use crate::{
     transform::Transform, 
     scene::SceneRef, 
-    mesh::MeshId, prelude::GraphicsChip
+    mesh::MeshId, 
+    prelude::GraphicsChip
 };
 
 type NodeId = u64;

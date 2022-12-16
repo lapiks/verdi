@@ -1,6 +1,7 @@
 function verdi.start()
     scene = graphics.newScene("./game_example/assets/tank.gltf")
-    --scene = graphics.newScene("C:/Users/Julien/Documents/Rust/glTF-Sample-Models/2.0/Sponza/glTF/Sponza.gltf")
+    mesh = graphics.newMesh()
+
     print(scene:getNumNodes())
 
     x = 5
@@ -22,6 +23,8 @@ end
 function verdi.draw(deltaTime)
     graphics.setClearColor(0.2, 0.2, 0.2, 1.0)
 
+	graphics.enableLighting(false)
+
     graphics.line(0.0, 0.0, 1.0, 1.0)
 
     graphics.setFogStart(10.0)
@@ -31,7 +34,7 @@ function verdi.draw(deltaTime)
     graphics.rotate(camYaw, 0, 1, 0)
     graphics.translate(x, -2.5, y)
 
-    --scene:draw()
+    scene:draw()
 
     -- for i = 0, scene:getNumNodes() do
     --     local node = scene:getNode(i) 

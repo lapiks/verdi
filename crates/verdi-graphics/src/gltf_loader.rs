@@ -17,7 +17,6 @@ use crate::{
     transform::Transform, 
     vertex::Vertex, 
     scene::Scene, 
-    primitive::Primitive
 };
 
 #[derive(Error, Debug)]
@@ -74,18 +73,18 @@ impl GltfLoader {
 
         let mut meshes = vec![];
         for gltf_mesh in gltf.meshes() {
-            let mesh = GltfLoader::load_mesh(
-                gltf_mesh, 
-                &buffers, 
-                &materials,
-                gpu
-            )?;
-            
-            meshes.push(
-                gpu.assets.add_mesh(
-                    mesh 
-                )
-            );
+            for gltf_primitive in gltf_mesh.primitives() {
+                // creates a mesh per gltf primitive
+                meshes.push(
+                    gpu.assets.add_mesh(
+                        GltfLoader::load_primitive(
+                            gltf_primitive, 
+                            &buffers, 
+                            &materials
+                        )?
+                    )
+                );
+            }
         }
 
         for gltf_node in gltf.nodes() {
@@ -108,24 +107,7 @@ impl GltfLoader {
         Ok(scene)
     }
 
-    fn load_mesh(gltf_mesh: gltf::Mesh, buffers: &Vec<Data>, materials: &Vec<MaterialId>, gpu: &mut GraphicsChip) -> Result<Mesh, GltfError> {
-        let mut mesh = Mesh::new();
-        for gltf_primitive in gltf_mesh.primitives() {
-            mesh.add_primitive(
-                gpu.assets.add_primitive(
-                    GltfLoader::load_primitive(
-                        gltf_primitive, 
-                        buffers, 
-                        materials
-                    )?
-                )
-            );
-        }
-
-        Ok(mesh)
-    }
-
-    fn load_primitive(gltf_primitive: gltf::Primitive, buffers: &Vec<Data>, materials: &Vec<MaterialId>) -> Result<Primitive, GltfError> {
+    fn load_primitive(gltf_primitive: gltf::Primitive, buffers: &Vec<Data>, materials: &Vec<MaterialId>) -> Result<Mesh, GltfError> {
         let reader = gltf_primitive.reader(|buffer| Some(&buffers[buffer.index()]));
 
         let vertex_count = reader.read_positions().unwrap().size_hint();
@@ -173,7 +155,7 @@ impl GltfLoader {
             .and_then(|i| materials.get(i).cloned()).unwrap(); // unwrap ??
 
         Ok(
-            Primitive::new(
+            Mesh::new(
                 vertex_buffer,
                 index_buffer,
                 PrimitiveType::Triangles,

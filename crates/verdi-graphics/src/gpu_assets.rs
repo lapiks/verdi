@@ -1,16 +1,16 @@
 use slotmap::SecondaryMap;
 
 use crate::{
-    gpu_primitive::GpuPrimitive, 
     gpu_image::GpuImage, 
     gpu_program::GpuProgram, 
-    primitive::PrimitiveId, 
+    gpu_mesh::GpuMesh,
     image::ImageId, 
-    program::ProgramId
+    program::ProgramId, 
+    mesh::MeshId, 
 };
 
 pub struct GpuAssets {
-    primitives: SecondaryMap<PrimitiveId, GpuPrimitive>,
+    meshes: SecondaryMap<MeshId, GpuMesh>,
     textures: SecondaryMap<ImageId, GpuImage>,
     programs: SecondaryMap<ProgramId, GpuProgram>,
 }
@@ -18,14 +18,14 @@ pub struct GpuAssets {
 impl GpuAssets {
     pub fn new() -> Self {
         Self { 
-            primitives: SecondaryMap::default(),
+            meshes: SecondaryMap::default(),
             textures: SecondaryMap::default(),
             programs: SecondaryMap::default(),
         }
     }
 
     pub fn clear(&mut self) {
-        self.primitives.clear();
+        self.meshes.clear();
         self.textures.clear();
         self.programs.clear();
     }
@@ -38,12 +38,12 @@ impl GpuAssets {
         self.textures.get(id)
     }
 
-    pub fn add_primitive(&mut self, id: PrimitiveId, gpu_primitive: GpuPrimitive) {
-        self.primitives.insert(id, gpu_primitive);
+    pub fn add_mesh(&mut self, id: MeshId, gpu_mesh: GpuMesh) {
+        self.meshes.insert(id, gpu_mesh);
     }
 
-    pub fn get_primitive(&self, id: PrimitiveId) -> Option<&GpuPrimitive> {
-        self.primitives.get(id)
+    pub fn get_mesh(&self, id: MeshId) -> Option<&GpuMesh> {
+        self.meshes.get(id)
     }
 
     pub fn add_program(&mut self, id: ProgramId, program: GpuProgram) {

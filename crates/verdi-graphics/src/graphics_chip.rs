@@ -7,7 +7,6 @@ use crate::{
     uniforms::Uniforms, 
     gltf_loader::{GltfError, GltfLoader}, 
     node::Node, 
-    primitive::{Primitive, PrimitiveId}, 
     material::Material, 
     globals::Globals, 
     transform::Transform, 
@@ -70,8 +69,8 @@ impl GraphicsChip {
                 .add_uniform("u_enable_lighting", globals.global_uniforms.enable_lighting)
         );
 
-        let streaming_primitive = assets.add_primitive(
-            Primitive::new(
+        let streaming_mesh = assets.add_mesh(
+            Mesh::new(
                 vec![Vertex::default(); 1024 * 1024],
                 None,
                 //PrimitiveType::Triangles,
@@ -81,7 +80,7 @@ impl GraphicsChip {
         );
 
         let stream_buffer = StreamBufferState {
-            primitive_id: streaming_primitive,
+            mesh_id: streaming_mesh,
             vertex_count: 0,
             current_offset: 0,
         };
@@ -228,14 +227,12 @@ impl GraphicsChip {
             }
 
             if let Some(mesh) = self.assets.get_mesh(node.mesh.unwrap()) {
-                for primitive_id in mesh.primitives.iter() {
-                    self.render_passes.push(
-                        RenderPass { 
-                            primitive_id: *primitive_id,
-                            transform: node.transform.clone(),
-                        }
-                    );
-                }
+                self.render_passes.push(
+                    RenderPass { 
+                        mesh_id: mesh.id,
+                        transform: node.transform.clone(),
+                    }
+                );
             }
         }
     }
@@ -247,14 +244,12 @@ impl GraphicsChip {
         }
 
         if let Some(mesh) = self.assets.get_mesh(node.mesh.unwrap()) {
-            for primitive_id in mesh.primitives.iter() {
-                self.render_passes.push(
-                    RenderPass { 
-                        primitive_id: *primitive_id,
-                        transform: node.transform.clone(),
-                    }
-                );
-            }
+            self.render_passes.push(
+                RenderPass { 
+                    mesh_id: mesh.id,
+                    transform: node.transform.clone(),
+                }
+            );
         }
     }
 
@@ -265,7 +260,6 @@ impl GraphicsChip {
     }
     
     pub fn new_mesh(&mut self) -> Result<MeshId, GltfError> {
-        let mut mesh = Mesh::new();
         let vertex_buffer:Vec<Vertex> = Vec::new();
         let index_buffer = None;
 
@@ -282,18 +276,14 @@ impl GraphicsChip {
             material
         );
 
-        mesh.add_primitive(
-            self.assets.add_primitive(
-                Primitive::new(
-                    vertex_buffer,
-                    index_buffer,
-                    PrimitiveType::Triangles,
-                    material_id
-                )
+        Ok(self.assets.add_mesh(
+            Mesh::new(
+                vertex_buffer,
+                index_buffer,
+                PrimitiveType::Triangles,
+                material_id
             )
-        );
-        
-        Ok(self.assets.add_mesh(mesh))
+        ))
     }
 
     pub fn set_clear_color(&mut self, color: &Vec4) {
@@ -368,7 +358,7 @@ impl GraphicsChip {
 }
 
 pub struct StreamBufferState {
-    pub primitive_id: PrimitiveId, 
+    pub mesh_id: MeshId, 
     pub vertex_count: u32,
     pub current_offset: usize,
 }
@@ -393,20 +383,20 @@ pub struct DrawCommand {
 // Private impl
 impl GraphicsChip {
     fn request_flush(&mut self, cmd: &DrawCommand) -> StreamBuffer {
-        let primitive = self.assets
-            .get_primitive_mut(self.stream_buffer.primitive_id)
+        let mesh = self.assets
+            .get_mesh_mut(self.stream_buffer.mesh_id)
             .expect("Primitive not found");
 
-        if cmd.primitive_type != primitive.primitive_type {
+        if cmd.primitive_type != mesh.primitive_type {
             //self.flush_stream_buffer();
             self.render_passes.push(
                 RenderPass {
-                    primitive_id: self.stream_buffer.primitive_id,
+                    mesh_id: self.stream_buffer.mesh_id,
                     transform: Transform::identity(),
                 }
             );
 
-            primitive.primitive_type = cmd.primitive_type;
+            mesh.primitive_type = cmd.primitive_type;
             self.stream_buffer.vertex_count = cmd.vertex_count;
             self.stream_buffer.current_offset = 0;
         }
@@ -417,7 +407,7 @@ impl GraphicsChip {
 
         let new_offset = self.stream_buffer.current_offset + cmd.vertex_count as usize;
         let stream_buffer = StreamBuffer {
-            data: &mut primitive.vertex_buffer[
+            data: &mut mesh.vertex_buffer[
                 self.stream_buffer.current_offset
                 ..
                 new_offset
@@ -432,7 +422,7 @@ impl GraphicsChip {
     pub fn flush_stream_buffer(&mut self) {
         self.render_passes.push(
             RenderPass {
-                primitive_id: self.stream_buffer.primitive_id,
+                mesh_id: self.stream_buffer.mesh_id,
                 transform: Transform::identity(),
             }
         )

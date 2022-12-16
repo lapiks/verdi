@@ -1,10 +1,10 @@
 use crate::{  
-    primitive::PrimitiveId, 
-    transform::Transform,
+    transform::Transform, 
+    mesh::MeshId,
 };
 
 pub struct RenderPass {
-    // plutôt node qui contient primitive + transform
-    pub primitive_id: PrimitiveId,
+    // plutôt node qui contient mesh + transform ?
+    pub mesh_id: MeshId,
     pub transform: Transform
 }

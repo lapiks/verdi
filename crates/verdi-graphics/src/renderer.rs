@@ -13,7 +13,8 @@ use verdi_math::{Mat4, Vec2, IVec2};
 use crate::{
     camera::Camera,
     prelude::GraphicsChip, 
-    gpu_assets::GpuAssets, render_target::RenderTarget,
+    gpu_assets::GpuAssets, 
+    render_target::RenderTarget,
 };
 
 pub struct Renderer {
@@ -43,18 +44,18 @@ impl Renderer {
     pub fn prepare_assets(&mut self, display: &Display, gpu: &GraphicsChip) {
         // à rendre générique
         for render_pass in gpu.render_passes.iter() {
-            let primitive = gpu.assets
-                .get_primitive(render_pass.primitive_id)
+            let mesh = gpu.assets
+                .get_mesh(render_pass.mesh_id)
                 .expect("Missing primitive asset");
 
             // construct gpu primitive
-            primitive.prepare_rendering(
+            mesh.prepare_rendering(
                 display, 
                 &mut self.gpu_assets
             );
 
             // construct gpu objects needed by the material
-            if let Some(material) = gpu.assets.get_material(primitive.material) {
+            if let Some(material) = gpu.assets.get_material(mesh.material) {
                 material.prepare_rendering(
                     display,
                     &gpu.uniforms, 
@@ -192,16 +193,16 @@ impl Renderer {
                 .get_mat4_mut(gpu.globals.global_uniforms.model_matrix)
                 .expect("Model matrix uniform missing") = model_matrix;
 
-            let primitive = gpu.assets
-                .get_primitive(render_pass.primitive_id)
-                .expect("Primitive asset not found");
+            let mesh = gpu.assets
+                .get_mesh(render_pass.mesh_id)
+                .expect("Mesh asset not found");
 
-            let gpu_primitive = self.gpu_assets
-                .get_primitive(render_pass.primitive_id)
-                .expect("Gpu primitive not found");
+            let gpu_mesh = self.gpu_assets
+                .get_mesh(render_pass.mesh_id)
+                .expect("Gpu mesh not found");
 
             let material = gpu.assets
-                .get_material(primitive.material)
+                .get_material(mesh.material)
                 .expect("Material not found");
 
             let uniform_values = material
@@ -211,8 +212,6 @@ impl Renderer {
             let program = self.gpu_assets
                 .get_program(material.program)
                 .expect("Program not found");
-
-            let vertex_buffer = &gpu_primitive.vertex_buffer;
 
             let draw_params = glium::DrawParameters {
                 depth: glium::Depth {
@@ -224,10 +223,10 @@ impl Renderer {
                 .. Default::default()
             };
 
-            if let Some(index_buffer) = &gpu_primitive.index_buffer {
+            if let Some(gl_index_buffer) = &gpu_mesh.index_buffer {
                 framebuffer.draw(
-                    vertex_buffer,
-                    index_buffer,
+                    &gpu_mesh.vertex_buffer,
+                    gl_index_buffer,
                     &program.gl, 
                     &uniform_values,
                     &draw_params
@@ -235,10 +234,10 @@ impl Renderer {
             }
             else {
                 framebuffer.draw(
-                    vertex_buffer,
+                    &gpu_mesh.vertex_buffer,
                     glium::index::NoIndices(
                         glium::index::PrimitiveType::from(
-                            primitive.primitive_type
+                            mesh.primitive_type
                         )
                     ),
                     &program.gl, 

@@ -6,8 +6,7 @@ use crate::{
     material::{Material, MaterialId}, 
     shader::{Shader, ShaderId}, 
     program::{Program, ProgramId}, 
-    scene::{Scene, SceneId}, 
-    primitive::{Primitive, PrimitiveId}
+    scene::{Scene, SceneId},
 };
 
 #[derive(PartialEq)]
@@ -19,7 +18,6 @@ pub enum AssetState {
 pub struct Assets {
     textures: SlotMap<ImageId, Image>,
     meshes: SlotMap<MeshId, Mesh>,
-    primitives: SlotMap<PrimitiveId, Primitive>,
     materials: SlotMap<MaterialId, Material>,
     shaders: SlotMap<ShaderId, Shader>,
     programs: SlotMap<ProgramId, Program>,
@@ -31,7 +29,6 @@ impl Assets {
         Self { 
             textures: SlotMap::default(),
             meshes: SlotMap::default(),
-            primitives: SlotMap::default(),
             materials: SlotMap::default(),
             shaders: SlotMap::default(),
             programs: SlotMap::default(),
@@ -42,7 +39,6 @@ impl Assets {
     pub fn clear(&mut self) {
         self.textures.clear();
         self.meshes.clear();
-        self.primitives.clear();
         self.materials.clear();
         self.shaders.clear();
         self.programs.clear();
@@ -73,20 +69,8 @@ impl Assets {
         self.meshes.get(id)
     }
 
-    pub fn add_primitive(&mut self, primitive: Primitive) -> PrimitiveId {
-        let id = self.primitives.insert(primitive);
-        unsafe {
-            self.primitives.get_unchecked_mut(id).id = id;
-        }
-        id
-    }
-
-    pub fn get_primitive(&self, id: PrimitiveId) -> Option<&Primitive> {
-        self.primitives.get(id)
-    }
-
-    pub fn get_primitive_mut(&mut self, id: PrimitiveId) -> Option<&mut Primitive> {
-        self.primitives.get_mut(id)
+    pub fn get_mesh_mut(&mut self, id: MeshId) -> Option<&mut Mesh> {
+        self.meshes.get_mut(id)
     }
 
     pub fn add_material(&mut self, material: Material) -> MaterialId {
