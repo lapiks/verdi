@@ -1,8 +1,10 @@
-use rlua::UserData;
+use std::sync::{Mutex, Arc};
+
+use rlua::{UserData, UserDataMethods};
 use slotmap::{new_key_type, Key};
 
 use crate::{
-    primitive::PrimitiveId,
+    primitive::PrimitiveId, graphics_chip::GraphicsChip,
 };
 
 use thiserror::Error;
@@ -37,15 +39,30 @@ impl Mesh {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct MeshRef {
+    pub gpu: Arc<Mutex<GraphicsChip>>,
     pub id: MeshId,
 }
 
 impl MeshRef {
-    pub fn new(id: MeshId) -> Self{
-        Self { id }
+    pub fn new(gpu: Arc<Mutex<GraphicsChip>>, id: MeshId) -> Self{
+        Self { 
+            gpu,
+            id,
+         }
+    }
+
+    pub fn set_vertices(&self) {
+        let gpu = self.gpu.lock().unwrap();
+        let mesh = gpu.assets.get_mesh(self.id).unwrap();
     }
 }
 
-impl UserData for MeshRef {}
+impl UserData for MeshRef {
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method("setVertices", |_, mesh, ()| {
+            Ok(mesh.set_vertices())
+        });
+    }
+}

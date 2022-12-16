@@ -56,7 +56,7 @@ impl<'lua> BindGraphicsChip {
     fn new_mesh(gpu: Arc<Mutex<GraphicsChip>>) -> MeshRef {
         let mut gpu_guard = gpu.lock().unwrap();
         let mesh_id = gpu_guard.new_mesh().unwrap();
-        MeshRef::new(mesh_id)
+        MeshRef::new(gpu.clone(), mesh_id)
     }
 
     fn set_clear_color(gpu: Arc<Mutex<GraphicsChip>>, color: &Vec4) {
