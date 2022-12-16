@@ -7,7 +7,7 @@ use crate::{
     prelude::GraphicsChip, 
     graphics_chip::PrimitiveType, 
     image::ImageRef, 
-    scene::SceneRef
+    scene::SceneRef, mesh::MeshRef
 };
 
 pub struct BindGraphicsChip;
@@ -53,6 +53,12 @@ impl<'lua> BindGraphicsChip {
         SceneRef::new(gpu.clone(), scene_id)
     }
     
+    fn new_mesh(gpu: Arc<Mutex<GraphicsChip>>) -> MeshRef {
+        let mut gpu_guard = gpu.lock().unwrap();
+        let mesh_id = gpu_guard.new_mesh().unwrap();
+        MeshRef::new(mesh_id)
+    }
+
     fn set_clear_color(gpu: Arc<Mutex<GraphicsChip>>, color: &Vec4) {
         gpu.lock().unwrap().set_clear_color(color);
     }
@@ -161,6 +167,11 @@ impl<'lua> BindGraphicsChip {
                 let gpu = gpu.clone();
                 let func = lua_ctx.create_function_mut(move |_, path: String| Ok(BindGraphicsChip::new_scene(gpu.clone(), &path)))?;
                 module_table.set("newScene", func)?;
+            }
+            {
+                let gpu = gpu.clone();
+                let func = lua_ctx.create_function_mut(move |_, ()| Ok(BindGraphicsChip::new_mesh(gpu.clone())))?;
+                module_table.set("newMesh", func)?;
             }
             {
                 let gpu = gpu.clone();

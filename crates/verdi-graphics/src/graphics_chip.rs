@@ -9,7 +9,9 @@ use crate::{
     node::Node, 
     primitive::{Primitive, PrimitiveId}, 
     material::Material, 
-    globals::Globals, transform::Transform
+    globals::Globals, 
+    transform::Transform, 
+    mesh::{MeshId, Mesh},
 };
 
 use image::ImageError;
@@ -256,10 +258,42 @@ impl GraphicsChip {
         }
     }
 
-    pub fn new_scene(&mut self, path: &String) -> Result<SceneId, GltfError>{
+    pub fn new_scene(&mut self, path: &String) -> Result<SceneId, GltfError> {
         let scene = GltfLoader::load(path, self)?;
 
         Ok(self.assets.add_scene(scene))
+    }
+    
+    pub fn new_mesh(&mut self) -> Result<MeshId, GltfError> {
+        let mut mesh = Mesh::new();
+        let vertex_buffer:Vec<Vertex> = Vec::new();
+        let index_buffer = None;
+
+        let mut material = Material::new(self.globals.global_shaders.gouraud);
+        material.add_uniform("u_model", self.globals.global_uniforms.model_matrix);
+        material.add_uniform("u_view", self.globals.global_uniforms.view_matrix);
+        material.add_uniform("u_projection", self.globals.global_uniforms.perspective_matrix);
+        material.add_uniform("u_resolution", self.globals.global_uniforms.resolution);
+        material.add_uniform("u_fog_start", self.globals.global_uniforms.fog_start);
+        material.add_uniform("u_fog_end", self.globals.global_uniforms.fog_end);
+        material.add_uniform("u_enable_lighting", self.globals.global_uniforms.enable_lighting);
+
+        let material_id = self.assets.add_material(
+            material
+        );
+
+        mesh.add_primitive(
+            self.assets.add_primitive(
+                Primitive::new(
+                    vertex_buffer,
+                    index_buffer,
+                    PrimitiveType::Triangles,
+                    material_id
+                )
+            )
+        );
+        
+        Ok(self.assets.add_mesh(mesh))
     }
 
     pub fn set_clear_color(&mut self, color: &Vec4) {
