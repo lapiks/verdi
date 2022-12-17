@@ -90,10 +90,23 @@ impl MeshRef {
          }
     }
 
-    pub fn set_vertices(&self, table: Table) {
-        let gpu = self.gpu.lock().unwrap();
-        let mesh = gpu.assets.get_mesh(self.id).unwrap();
-        // todo
+    pub fn set_vertices(&mut self, vertices: Table) {
+        let mut gpu = self.gpu.lock().unwrap();
+        let mesh = gpu.assets.get_mesh_mut(self.id).unwrap();
+        
+        if let Ok(v_length) = vertices.len() {
+            mesh.vertex_buffer.resize(v_length as usize, Vertex::default());
+            // fill mesh
+            for (vertex_index, vertex) in vertices.sequence_values::<Table>().enumerate() {
+                if let Ok(vertex) = vertex {
+                    for (comp_index, comp) in vertex.sequence_values::<f32>().enumerate() {
+                        if let Ok(comp) = comp {
+                            mesh.vertex_buffer[vertex_index].position[comp_index] = comp;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     pub fn draw(&self) {
@@ -103,8 +116,8 @@ impl MeshRef {
 
 impl UserData for MeshRef {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method("setVertices", |_, mesh, table: Table| {
-            Ok(mesh.set_vertices(table))
+        methods.add_method_mut("setVertices", |_, mesh, vertices: Table| {
+            Ok(mesh.set_vertices(vertices))
         });
 
         methods.add_method("draw", |_, mesh, ()| {

@@ -3,8 +3,9 @@ function verdi.start()
     mesh = graphics.newMesh()
 
     vertices = {
-        0, 0, 0,
-        1, 1, 1
+        {0, 0, 0},
+        {1, 1, 0},
+        {0, 1, 0}
     }
 
     mesh:setVertices(vertices)
@@ -32,7 +33,7 @@ function verdi.draw(deltaTime)
 
 	graphics.enableLighting(false)
 
-    graphics.line(0.0, 0.0, 1.0, 1.0)
+    --graphics.line(0.0, 0.0, 1.0, 1.0)
 
     graphics.setFogStart(10.0)
     graphics.setFogEnd(25.0)
@@ -41,7 +42,7 @@ function verdi.draw(deltaTime)
     graphics.rotate(camYaw, 0, 1, 0)
     graphics.translate(x, -2.5, y)
 
-    scene:draw()
+    --scene:draw()
     mesh:draw()
 
     -- for i = 0, scene:getNumNodes() do
