@@ -134,7 +134,7 @@ impl App {
                     }
 
                     // relays event to the gui
-                    if gui.on_event(&event).consumed == false {
+                    if gui.on_event(&event) == false {
                         // relays event to the game inputs
                         if app.game_state == GameState::Running {
                             if let Some(game) = app.game.as_mut() {
