@@ -7,8 +7,7 @@ use thiserror::Error;
 use verdi_math::Mat4;
 
 use crate::{
-    mesh::Mesh, 
-    graphics_chip::PrimitiveType, 
+    mesh::{Mesh, PrimitiveType}, 
     image::Image, 
     uniforms::{UniformId, TextureUniform}, 
     prelude::GraphicsChip, 

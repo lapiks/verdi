@@ -9,6 +9,7 @@ function verdi.start()
     }
 
     mesh:setVertices(vertices)
+	mesh:setPrimitiveType("lines")
 
     print(scene:getNumNodes())
 

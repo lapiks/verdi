@@ -5,7 +5,7 @@ use rlua::{UserData, UserDataMethods, Table};
 use slotmap::{new_key_type, Key};
 
 use crate::{
-    graphics_chip::{GraphicsChip, PrimitiveType},
+    graphics_chip::GraphicsChip,
     vertex::Vertex, 
     material::MaterialId, 
     gpu_assets::GpuAssets, 
@@ -13,6 +13,30 @@ use crate::{
 };
 
 use thiserror::Error;
+
+#[derive(Copy, Clone, PartialEq)]
+pub enum PrimitiveType {
+    Triangles,
+    Points,
+    Lines,
+}
+
+impl From<String> for PrimitiveType {
+    fn from(string: String) -> Self {
+        if string == "triangles" { PrimitiveType::Triangles }
+        else if string == "points" { PrimitiveType::Points }
+        else if string == "lines" { PrimitiveType::Lines }
+        else { PrimitiveType::Triangles }
+    }
+}
+
+impl From<PrimitiveType> for glium::index::PrimitiveType {
+    fn from(p: PrimitiveType) -> Self {
+        if p == PrimitiveType::Triangles { return glium::index::PrimitiveType::TrianglesList; }
+        else if p == PrimitiveType::Lines { return glium::index::PrimitiveType::LinesList; }
+        else { return glium::index::PrimitiveType::Points; }
+    }
+}
 
 #[derive(Error, Debug)]
 pub enum MeshError {
@@ -109,6 +133,13 @@ impl MeshRef {
         }
     }
 
+    pub fn set_primitive_type(&mut self, primitive_type: PrimitiveType) {
+        let mut gpu = self.gpu.lock().unwrap();
+        let mesh = gpu.assets.get_mesh_mut(self.id).unwrap();
+
+        mesh.primitive_type = primitive_type;
+    }
+
     pub fn draw(&self) {
         self.gpu.lock().unwrap().draw_mesh(self.id);
     }
@@ -118,6 +149,10 @@ impl UserData for MeshRef {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("setVertices", |_, mesh, vertices: Table| {
             Ok(mesh.set_vertices(vertices))
+        });
+
+        methods.add_method_mut("setPrimitiveType", |_, mesh, primitive_string: String| {
+            Ok(mesh.set_primitive_type(PrimitiveType::from(primitive_string)))
         });
 
         methods.add_method("draw", |_, mesh, ()| {

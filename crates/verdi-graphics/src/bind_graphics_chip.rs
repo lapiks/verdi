@@ -5,9 +5,8 @@ use verdi_math::prelude::*;
 
 use crate::{
     prelude::GraphicsChip, 
-    graphics_chip::PrimitiveType, 
     image::ImageRef, 
-    scene::SceneRef, mesh::MeshRef
+    scene::SceneRef, mesh::{MeshRef, PrimitiveType}
 };
 
 pub struct BindGraphicsChip;

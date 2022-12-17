@@ -10,7 +10,7 @@ use crate::{
     material::Material, 
     globals::Globals, 
     transform::Transform, 
-    mesh::{MeshId, Mesh},
+    mesh::{MeshId, Mesh, PrimitiveType},
 };
 
 use image::ImageError;
@@ -22,30 +22,6 @@ pub struct GraphicsChip {
     pub assets: Assets,
     pub uniforms: Uniforms,
     pub globals: Globals,
-}
-
-#[derive(Copy, Clone, PartialEq)]
-pub enum PrimitiveType {
-    Triangles,
-    Points,
-    Lines,
-}
-
-impl From<String> for PrimitiveType {
-    fn from(string: String) -> Self {
-        if string == "triangles" { PrimitiveType::Triangles }
-        else if string == "points" { PrimitiveType::Points }
-        else if string == "lines" { PrimitiveType::Lines }
-        else { PrimitiveType::Triangles }
-    }
-}
-
-impl From<PrimitiveType> for glium::index::PrimitiveType {
-    fn from(p: PrimitiveType) -> Self {
-        if p == PrimitiveType::Triangles { return glium::index::PrimitiveType::TrianglesList; }
-        else if p == PrimitiveType::Lines { return glium::index::PrimitiveType::LinesList; }
-        else { return glium::index::PrimitiveType::Points; }
-    }
 }
 
 // Public API

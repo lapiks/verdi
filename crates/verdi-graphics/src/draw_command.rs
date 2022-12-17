@@ -1,7 +1,6 @@
 use crate::{
     vertex::Vertex, 
-    graphics_chip::PrimitiveType, 
-    material::MaterialId
+    material::MaterialId, mesh::PrimitiveType
 };
 
 type VertexBuffer = Vec<Vertex>;
