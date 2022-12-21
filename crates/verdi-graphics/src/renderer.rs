@@ -151,7 +151,7 @@ impl Renderer {
 
     pub fn render(&mut self, display: &Display, frame: &mut Frame, gpu: &mut GraphicsChip) {        
         // the direction of the light
-        let light = [-1.0, 0.4, 0.9f32];
+        //let light = [-1.0, 0.4, 0.9f32];
         
         let mut framebuffer = SimpleFrameBuffer::with_depth_buffer(
             display, 

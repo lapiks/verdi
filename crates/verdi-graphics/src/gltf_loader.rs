@@ -166,13 +166,13 @@ impl GltfLoader {
     fn load_texture(gltf_texture: gltf::Texture, buffers: &Vec<Data>, folder_path: &Path) -> Result<Image, ImageError> {
         gltf_texture.sampler();
         let source = match gltf_texture.source().source() {
-            gltf::image::Source::View { view, mime_type } => {
+            gltf::image::Source::View { view, mime_type: _ } => {
                 let start = view.offset() as usize;
                 let end = (view.offset() + view.length()) as usize;
                 let buffer = &buffers[view.buffer().index()][start..end];
                 Image::from_buffer(buffer)?
             }
-            gltf::image::Source::Uri { uri, mime_type } => {
+            gltf::image::Source::Uri { uri, mime_type: _ } => {
                 let image_path = folder_path.join(uri);
                 Image::new(image_path)?
             }
@@ -195,6 +195,7 @@ impl GltfLoader {
         material.add_uniform("u_view", globals.global_uniforms.view_matrix);
         material.add_uniform("u_projection", globals.global_uniforms.perspective_matrix);
         material.add_uniform("u_resolution", globals.global_uniforms.resolution);
+        material.add_uniform("u_enable_fog", globals.global_uniforms.enable_fog);
         material.add_uniform("u_fog_start", globals.global_uniforms.fog_start);
         material.add_uniform("u_fog_end", globals.global_uniforms.fog_end);
         material.add_uniform("u_enable_lighting", globals.global_uniforms.enable_lighting);

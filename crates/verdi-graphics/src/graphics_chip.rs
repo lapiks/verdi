@@ -42,6 +42,7 @@ impl GraphicsChip {
                 .add_uniform("u_view", globals.global_uniforms.view_matrix)
                 .add_uniform("u_projection", globals.global_uniforms.perspective_matrix)
                 .add_uniform("u_resolution", globals.global_uniforms.resolution)
+                .add_uniform("u_enable_fog", globals.global_uniforms.enable_fog)
                 .add_uniform("u_enable_lighting", globals.global_uniforms.enable_lighting)
         );
 
@@ -297,6 +298,14 @@ impl GraphicsChip {
         *self.uniforms
             .get_boolean_mut(
                 self.globals.global_uniforms.enable_lighting
+            ).unwrap() 
+                = value;
+    }
+
+    pub fn enable_fog(&mut self, value: bool) {
+        *self.uniforms
+            .get_boolean_mut(
+                self.globals.global_uniforms.enable_fog
             ).unwrap() 
                 = value;
     }

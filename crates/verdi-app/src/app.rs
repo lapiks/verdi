@@ -1,7 +1,6 @@
 use glium::{
     glutin, 
-    Surface, 
-    Frame,
+    Surface,
 };
 
 use rlua::Lua;
@@ -163,10 +162,6 @@ impl App {
     pub fn get_window(&self) -> &Window {
         &self.window
     } 
-
-    pub fn draw_gui(&mut self, target: &mut Frame) {
-
-    }
 
     pub fn load_game<P: AsRef<Path>>(&mut self, path: P) -> Result<(), GameError> {
         if !path.as_ref().exists() {

@@ -23,6 +23,7 @@ uniform mat4 u_projection;
 uniform vec2 u_resolution;
 
 // fog
+uniform bool u_enable_fog;
 uniform float u_fog_start;
 uniform float u_fog_end;
 
@@ -54,12 +55,14 @@ void main() {
     gl_Position = snapped_pos;
 
     // fog
-    float vertex_depth = length(view_vertex);
-    v_fog_density = clamp(inverse_lerp(u_fog_start, u_fog_end, vertex_depth), 0.0, 1.0);
+    v_fog_density = 0.0;
+    if(u_enable_fog) {
+        float vertex_depth = length(view_vertex);
+        v_fog_density = clamp(inverse_lerp(u_fog_start, u_fog_end, vertex_depth), 0.0, 1.0);
+    }
 
     // lighting
-    if(u_enable_lighting)
-    {
+    if(u_enable_lighting) {
         const vec3 light_color = vec3(1.0, 1.0, 1.0);
 
         // ambient
@@ -75,8 +78,7 @@ void main() {
         // final color
         v_color = vec4(color.xyz * (ambient_comp + diffuse_comp), color.w);
     }
-    else 
-    {
+    else {
         v_color = color;
     }
     

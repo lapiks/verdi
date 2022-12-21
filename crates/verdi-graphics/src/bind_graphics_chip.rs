@@ -74,6 +74,10 @@ impl<'lua> BindGraphicsChip {
         gpu.lock().unwrap().enable_lighting(value);
     }
 
+    fn enable_fog(gpu: Arc<Mutex<GraphicsChip>>, value: bool) {
+        gpu.lock().unwrap().enable_fog(value);
+    }
+
     fn set_fog_start(gpu: Arc<Mutex<GraphicsChip>>, distance: f32) {
         gpu.lock().unwrap().set_fog_start(distance);
     }
@@ -188,6 +192,11 @@ impl<'lua> BindGraphicsChip {
                 let gpu = gpu.clone();
                 let func = lua_ctx.create_function_mut(move |_, value: bool| Ok(BindGraphicsChip::enable_lighting(gpu.clone(), value)))?;
                 module_table.set("enableLighting", func)?;
+            }
+            {
+                let gpu = gpu.clone();
+                let func = lua_ctx.create_function_mut(move |_, value: bool| Ok(BindGraphicsChip::enable_fog(gpu.clone(), value)))?;
+                module_table.set("enableFog", func)?;
             }
             {
                 let gpu = gpu.clone();

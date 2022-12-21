@@ -29,6 +29,7 @@ pub struct GlobalUniforms {
     pub perspective_matrix: UniformId,
     pub resolution: UniformId,
     pub enable_lighting: UniformId,
+    pub enable_fog: UniformId,
     pub fog_start: UniformId,
     pub fog_end: UniformId,
 }
@@ -41,6 +42,7 @@ impl GlobalUniforms {
             perspective_matrix: uniforms.add_mat4(Mat4::IDENTITY),
             resolution: uniforms.add_vec2(Vec2::ZERO),
             enable_lighting: uniforms.add_boolean(true),
+            enable_fog: uniforms.add_boolean(false),
             fog_start: uniforms.add_float(0.0),
             fog_end: uniforms.add_float(0.0),
         }
