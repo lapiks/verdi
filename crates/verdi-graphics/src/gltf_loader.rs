@@ -4,7 +4,7 @@ use gltf::buffer::Data;
 use image::ImageError;
 
 use thiserror::Error;
-use verdi_math::Mat4;
+use verdi_math::{Mat4, prelude::Transform};
 
 use crate::{
     mesh::{Mesh, PrimitiveType}, 
@@ -12,8 +12,7 @@ use crate::{
     uniforms::{UniformId, TextureUniform}, 
     prelude::GraphicsChip, 
     material::{Material, MaterialId}, 
-    node::Node, 
-    transform::Transform, 
+    node::Node,
     vertex::Vertex, 
     scene::Scene, 
 };

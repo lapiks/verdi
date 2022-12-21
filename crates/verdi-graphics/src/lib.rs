@@ -27,7 +27,6 @@ mod gpu_mesh;
 mod gpu_image;
 mod gpu_program;
 mod node;
-mod transform;
 mod camera;
 mod material;
 mod uniforms;

@@ -1,5 +1,6 @@
+use verdi_math::prelude::Transform;
+
 use crate::{  
-    transform::Transform, 
     mesh::MeshId,
 };
 

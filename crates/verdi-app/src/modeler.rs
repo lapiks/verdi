@@ -13,7 +13,6 @@ impl Modeler {
         None
     }
 }
-
 impl GUIPanel for Modeler {
     fn name(&self) -> &'static str {
         "3D Modeler"

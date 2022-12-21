@@ -9,7 +9,6 @@ use crate::{
     node::Node, 
     material::Material, 
     globals::Globals, 
-    transform::Transform, 
     mesh::{MeshId, Mesh, PrimitiveType},
 };
 

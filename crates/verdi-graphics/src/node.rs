@@ -2,8 +2,9 @@ use std::sync::{Arc, Mutex};
 
 use rlua::{UserData, UserDataMethods};
 
+use verdi_math::prelude::Transform;
+
 use crate::{
-    transform::Transform, 
     scene::SceneRef, 
     mesh::MeshId, 
     prelude::GraphicsChip
