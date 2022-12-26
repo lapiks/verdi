@@ -218,7 +218,7 @@ impl GraphicsChip {
             self.render_passes.push(
                 RenderPass { 
                     mesh_id: mesh.id,
-                    transform: Transform::identity(),
+                    transform: Transform::IDENTITY,
                 }
             );
         }
@@ -387,7 +387,7 @@ impl GraphicsChip {
             self.render_passes.push(
                 RenderPass {
                     mesh_id: self.stream_buffer.mesh_id,
-                    transform: Transform::identity(),
+                    transform: Transform::IDENTITY,
                 }
             );
 
@@ -418,7 +418,7 @@ impl GraphicsChip {
         self.render_passes.push(
             RenderPass {
                 mesh_id: self.stream_buffer.mesh_id,
-                transform: Transform::identity(),
+                transform: Transform::IDENTITY,
             }
         )
     }
