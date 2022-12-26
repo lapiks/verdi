@@ -45,6 +45,15 @@ impl Transform {
     pub fn scale(&mut self, x: f32, y: f32, z: f32) {
         self.scale *= Vec3::new(x, y, z);
     }
+
+    pub fn apply(&mut self, other: &Transform) {
+        self.translation *= other.scale;
+        self.translation = other.rotation * self.translation;
+        self.translation  += other.translation;
+
+        self.rotation *= other.rotation;
+        self.scale *= other.scale;
+    }
 }
 
 impl Default for Transform {
@@ -65,6 +74,10 @@ impl UserData for Transform {
 
         methods.add_method_mut("scale", |_, transform, (x, y, z): (f32, f32, f32)| {
             Ok(transform.scale(x, y, z))
+        });
+
+        methods.add_method_mut("apply", |_, transform, other: Transform| {
+            Ok(transform.apply(&other))
         });
     }
 }
