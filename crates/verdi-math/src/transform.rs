@@ -38,6 +38,10 @@ impl Transform {
         self.translation += Vec3::new(x, y, z);
     }
 
+    pub fn rotate(&mut self, angle: f32, x: f32, y: f32, z: f32) {
+        self.rotation *= Quat::from_axis_angle(Vec3::new(x, y, z), angle);
+    }
+
     pub fn scale(&mut self, x: f32, y: f32, z: f32) {
         self.scale *= Vec3::new(x, y, z);
     }
@@ -53,6 +57,10 @@ impl UserData for Transform {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("translate", |_, transform, (x, y, z): (f32, f32, f32)| {
             Ok(transform.translate(x, y, z))
+        });
+
+        methods.add_method_mut("rotate", |_, transform, (angle, x, y, z): (f32, f32, f32, f32)| {
+            Ok(transform.rotate(angle, x, y, z))
         });
 
         methods.add_method_mut("scale", |_, transform, (x, y, z): (f32, f32, f32)| {

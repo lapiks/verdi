@@ -46,6 +46,7 @@ function verdi.draw(deltaTime)
     graphics.translate(x, -2.5, y)
 
     transform:translate(5.0, 0.0, 0.0)
+    transform:rotate(1.0, 0.0, 1.0, 0.0)
     transform:scale(2.0, 2.0, 2.0)
 
     scene:draw()
