@@ -1,4 +1,4 @@
-use rlua::UserData;
+use rlua::{UserData, UserDataMethods};
 
 use crate::{Vec3, Quat, Mat4};
 
@@ -33,6 +33,14 @@ impl Transform {
     pub fn to_matrix(&self) -> Mat4 {
         Mat4::from_scale_rotation_translation(self.scale, self.rotation, self.translation)
     }
+
+    pub fn translate(&mut self, x: f32, y: f32, z: f32) {
+        self.translation += Vec3::new(x, y, z);
+    }
+
+    pub fn scale(&mut self, x: f32, y: f32, z: f32) {
+        self.scale *= Vec3::new(x, y, z);
+    }
 }
 
 impl Default for Transform {
@@ -41,4 +49,14 @@ impl Default for Transform {
     }
 }
 
-impl UserData for Transform {}
+impl UserData for Transform {
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method_mut("translate", |_, transform, (x, y, z): (f32, f32, f32)| {
+            Ok(transform.translate(x, y, z))
+        });
+
+        methods.add_method_mut("scale", |_, transform, (x, y, z): (f32, f32, f32)| {
+            Ok(transform.scale(x, y, z))
+        });
+    }
+}

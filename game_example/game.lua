@@ -1,6 +1,7 @@
 function verdi.start()
     scene = graphics.newScene("./game_example/assets/tank.gltf")
     mesh = graphics.newMesh()
+    transform = math.newTransform()
 
     vertices = {
         {0, 0, 0},
@@ -43,6 +44,9 @@ function verdi.draw(deltaTime)
     graphics.rotate(camPitch, 1, 0, 0)
     graphics.rotate(camYaw, 0, 1, 0)
     graphics.translate(x, -2.5, y)
+
+    transform:translate(5.0, 0.0, 0.0)
+    transform:scale(2.0, 2.0, 2.0)
 
     scene:draw()
     mesh:draw()
