@@ -2,6 +2,7 @@
 pub mod prelude {
     #[doc(hidden)]
     pub use crate::{
+        bind_math::BindMath,
         transform::Transform,
         // glam types
         Vec2, Vec3, Vec4,

@@ -8,7 +8,7 @@ use verdi_graphics::prelude::{
     BindGraphicsChip,
 };
 use verdi_input::prelude::{Inputs, BindInputs};
-use verdi_math::IVec2;
+use verdi_math::{IVec2, prelude::BindMath};
 
 use crate::{
     lua_context::LuaContext, 
@@ -81,6 +81,7 @@ impl Game {
 
         BindGraphicsChip::bind(&lua, self.gpu.clone())?;
         BindInputs::bind(&lua, self.inputs.clone())?;
+        BindMath::bind(&lua)?;
 
         self.gpu.lock().unwrap().on_game_start();
 

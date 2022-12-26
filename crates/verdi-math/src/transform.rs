@@ -41,15 +41,4 @@ impl Default for Transform {
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct TransformRef {
-    //pub id: TransformId,
-}
-
-impl TransformRef {
-    pub fn new() -> Self {
-        Self { }
-    }
-}
-
-impl UserData for TransformRef {}
+impl UserData for Transform {}

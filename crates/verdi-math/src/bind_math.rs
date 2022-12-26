@@ -1,12 +1,12 @@
 use rlua::{Lua, Result};
 
-use crate::transform::TransformRef;
+use crate::transform::Transform;
 
 pub struct BindMath;
 
 impl<'lua> BindMath {
-    fn new_transform() -> TransformRef {
-        TransformRef {}
+    fn new_transform() -> Transform {
+        Transform::IDENTITY
     }
 
     pub fn bind(lua: &Lua) -> Result<()> {
@@ -19,7 +19,7 @@ impl<'lua> BindMath {
             // add functions
             {
                 //let inputs = inputs.clone();
-                let func = lua_ctx.create_function(move |_, key: String| Ok(BindMath::new_transform()))?;
+                let func = lua_ctx.create_function(move |_, ()| Ok(BindMath::new_transform()))?;
                 module_table.set("newTransform", func)?;
             }
 
