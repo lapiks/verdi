@@ -6,7 +6,7 @@ use verdi_math::prelude::*;
 use crate::{
     prelude::GraphicsChip, 
     image::ImageRef, 
-    scene::SceneRef, mesh::{MeshRef, PrimitiveType}
+    scene::SceneRef, mesh::{MeshRef, PrimitiveType}, material::MaterialRef, uniforms::UniformId
 };
 
 pub struct BindGraphicsChip;
@@ -41,6 +41,7 @@ impl<'lua> BindGraphicsChip {
         gpu.lock().unwrap().bind_texture(image);
     }
 
+    // object construction
     fn new_image(gpu: Arc<Mutex<GraphicsChip>>, path: &String) -> ImageRef {
         let image_id = gpu.lock().unwrap().new_image(path).unwrap();
         ImageRef::new(image_id)
@@ -56,6 +57,17 @@ impl<'lua> BindGraphicsChip {
         let mut gpu_guard = gpu.lock().unwrap();
         let mesh_id = gpu_guard.new_mesh().unwrap();
         MeshRef::new(gpu.clone(), mesh_id)
+    }
+
+    fn new_material(gpu: Arc<Mutex<GraphicsChip>>) -> MaterialRef {
+        let mut gpu_guard = gpu.lock().unwrap();
+        let mat_id = gpu_guard.new_material();
+        MaterialRef::new(gpu.clone(), mat_id)
+    }
+
+    fn new_uniform(gpu: Arc<Mutex<GraphicsChip>>, value: f32) -> UniformId {
+        let mut gpu_guard = gpu.lock().unwrap();
+        gpu_guard.new_uniform_float(value)
     }
 
     fn set_clear_color(gpu: Arc<Mutex<GraphicsChip>>, color: &Vec4) {
@@ -175,6 +187,16 @@ impl<'lua> BindGraphicsChip {
                 let gpu = gpu.clone();
                 let func = lua_ctx.create_function_mut(move |_, ()| Ok(BindGraphicsChip::new_mesh(gpu.clone())))?;
                 module_table.set("newMesh", func)?;
+            }
+            {
+                let gpu = gpu.clone();
+                let func = lua_ctx.create_function_mut(move |_, ()| Ok(BindGraphicsChip::new_material(gpu.clone())))?;
+                module_table.set("newMaterial", func)?;
+            }
+            {
+                let gpu = gpu.clone();
+                let func = lua_ctx.create_function_mut(move |_, value: f32| Ok(BindGraphicsChip::new_uniform(gpu.clone(), value)))?;
+                module_table.set("newUniform", func)?;
             }
             {
                 let gpu = gpu.clone();

@@ -4,10 +4,10 @@ use crate::{
     image::{Image, ImageRef, ImageId}, 
     assets::Assets, 
     scene::SceneId, 
-    uniforms::Uniforms, 
+    uniforms::{Uniforms, UniformId}, 
     gltf_loader::{GltfError, GltfLoader}, 
     node::Node, 
-    material::Material, 
+    material::{Material, MaterialId}, 
     globals::Globals, 
     mesh::{MeshId, Mesh, PrimitiveType},
 };
@@ -271,6 +271,29 @@ impl GraphicsChip {
                 material_id
             )
         ))
+    }
+
+    pub fn new_material(&mut self) -> MaterialId {
+        let mut material = Material::new(self.globals.global_shaders.gouraud);
+        material.add_uniform("u_model", self.globals.global_uniforms.model_matrix);
+        material.add_uniform("u_view", self.globals.global_uniforms.view_matrix);
+        material.add_uniform("u_projection", self.globals.global_uniforms.perspective_matrix);
+        material.add_uniform("u_resolution", self.globals.global_uniforms.resolution);
+        material.add_uniform("u_fog_start", self.globals.global_uniforms.fog_start);
+        material.add_uniform("u_fog_end", self.globals.global_uniforms.fog_end);
+        material.add_uniform("u_enable_lighting", self.globals.global_uniforms.enable_lighting);
+
+        self.assets.add_material(
+            material
+        )
+    }
+
+    pub fn new_uniform_float(&mut self, value: f32) -> UniformId {
+        self.uniforms.add_float(value)
+    }
+
+    pub fn new_uniform_vec2(&mut self, value: Vec2) -> UniformId {
+        self.uniforms.add_vec2(value)
     }
 
     pub fn set_clear_color(&mut self, color: &Vec4) {

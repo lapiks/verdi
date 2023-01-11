@@ -85,6 +85,10 @@ impl Assets {
         self.materials.get(id)
     }
 
+    pub fn get_material_mut(&mut self, id: MaterialId) -> Option<&mut Material> {
+        self.materials.get_mut(id)
+    }
+
     pub fn add_shader(&mut self, shader: Shader) -> ShaderId {
         let id = self.shaders.insert(shader);
         unsafe {

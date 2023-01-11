@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use glium::{
     uniforms::{
         UniformValue, 
@@ -6,13 +8,14 @@ use glium::{
     Display
 };
 
+use rlua::{UserData, UserDataMethods, prelude::LuaValue};
 use slotmap::{new_key_type, Key};
 
 use crate::{
     assets::Assets,
     uniforms::{UniformId, Uniforms}, 
     gpu_assets::{GpuAssets}, 
-    program::ProgramId,
+    program::ProgramId, prelude::GraphicsChip,
 };
 
 const MAX_UNIFORMS: usize = 64;
@@ -93,14 +96,44 @@ impl Material {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct MaterialRef {
+    pub gpu: Arc<Mutex<GraphicsChip>>,
     pub id: MaterialId,
 }
 
 impl MaterialRef {
-    pub fn new(id: MaterialId) -> Self{
-        Self { id }
+    pub fn new(gpu: Arc<Mutex<GraphicsChip>>, id: MaterialId) -> Self{
+        Self { gpu, id }
+    }
+}
+
+impl UserData for MaterialRef {
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method_mut("addUniform", |_, material, (name, value): (String, LuaValue)| {
+            let mut gpu = material.gpu.lock().unwrap();
+            let material = gpu.assets.get_material_mut(material.id).unwrap();
+
+            match value {
+                LuaValue::Nil => todo!(),
+                LuaValue::Boolean(v) => {
+                    material.add_uniform(&name, gpu.uniforms.add_boolean(v));
+                },
+                LuaValue::LightUserData(_) => todo!(),
+                LuaValue::Integer(_) => todo!(),
+                LuaValue::Number(v) => {
+                    material.add_uniform(&name, gpu.uniforms.add_float(v as f32));
+                }
+                LuaValue::String(_) => todo!(),
+                LuaValue::Table(_) => todo!(),
+                LuaValue::Function(_) => todo!(),
+                LuaValue::Thread(_) => todo!(),
+                LuaValue::UserData(_) => todo!(),
+                LuaValue::Error(_) => todo!(),
+            };
+
+            Ok(())
+        });
     }
 }
 

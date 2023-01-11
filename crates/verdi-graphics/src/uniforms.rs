@@ -4,6 +4,7 @@ use glium::uniforms::{
     MinifySamplerFilter,
     MagnifySamplerFilter
 };
+use rlua::UserData;
 use slotmap::{new_key_type, SlotMap};
 use verdi_math::{Mat4, Vec2};
 
@@ -28,6 +29,8 @@ pub enum UniformId {
     Texture(TextureUniformId),
     Bool(BoolUniformId),
 }
+
+impl UserData for UniformId {}
 
 //type UniformList<T> = SlotMap<Uniform, T>;
 

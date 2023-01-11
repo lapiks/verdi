@@ -10,7 +10,7 @@ function verdi.start()
     }
 
     mesh:setVertices(vertices)
-	mesh:setPrimitiveType("lines")
+	mesh:setPrimitiveType("triangles")
 
     print(scene:getNumNodes())
 
@@ -37,7 +37,7 @@ function verdi.draw(deltaTime)
 
     --graphics.line(0.0, 0.0, 1.0, 1.0)
 
-    graphics.enableFog(true)
+    graphics.enableFog(false)
     graphics.setFogStart(10.0)
     graphics.setFogEnd(25.0)
 

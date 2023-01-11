@@ -181,7 +181,7 @@ impl GltfLoader {
     }
 
     fn load_material(gltf_material: gltf::Material, textures: &Vec<UniformId>, gpu: &GraphicsChip) -> Material {
-        let uniform_id = gltf_material
+        let texture_id = gltf_material
             .pbr_metallic_roughness()
             .base_color_texture()
             .map(|info| info.texture().index())
@@ -189,7 +189,7 @@ impl GltfLoader {
         
         let globals = &gpu.globals;
 
-        let mut material = Material::new(globals.global_shaders.gouraud);
+        let mut material = Material::new(globals.global_shaders.gouraud_textured);
         material.add_uniform("u_model", globals.global_uniforms.model_matrix);
         material.add_uniform("u_view", globals.global_uniforms.view_matrix);
         material.add_uniform("u_projection", globals.global_uniforms.perspective_matrix);
@@ -198,8 +198,9 @@ impl GltfLoader {
         material.add_uniform("u_fog_start", globals.global_uniforms.fog_start);
         material.add_uniform("u_fog_end", globals.global_uniforms.fog_end);
         material.add_uniform("u_enable_lighting", globals.global_uniforms.enable_lighting);
-        if let Some(id) = uniform_id {
+        if let Some(id) = texture_id {
             material.add_uniform("u_texture", id);
+
         }
 
         material
