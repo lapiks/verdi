@@ -36,13 +36,7 @@ impl GraphicsChip {
         )?;
 
         let mat_2d = assets.add_material(
-            Material::new(globals.global_shaders.gouraud)
-                .add_uniform("u_model", globals.global_uniforms.model_matrix)
-                .add_uniform("u_view", globals.global_uniforms.view_matrix)
-                .add_uniform("u_projection", globals.global_uniforms.perspective_matrix)
-                .add_uniform("u_resolution", globals.global_uniforms.resolution)
-                .add_uniform("u_enable_fog", globals.global_uniforms.enable_fog)
-                .add_uniform("u_enable_lighting", globals.global_uniforms.enable_lighting)
+            Material::new(globals.global_shaders.gouraud, &globals.global_uniforms)
                 .clone()
         );
 
@@ -251,18 +245,7 @@ impl GraphicsChip {
         let vertex_buffer:Vec<Vertex> = Vec::new();
         let index_buffer = None;
 
-        let mut material = Material::new(self.globals.global_shaders.gouraud);
-        material.add_uniform("u_model", self.globals.global_uniforms.model_matrix);
-        material.add_uniform("u_view", self.globals.global_uniforms.view_matrix);
-        material.add_uniform("u_projection", self.globals.global_uniforms.perspective_matrix);
-        material.add_uniform("u_resolution", self.globals.global_uniforms.resolution);
-        material.add_uniform("u_fog_start", self.globals.global_uniforms.fog_start);
-        material.add_uniform("u_fog_end", self.globals.global_uniforms.fog_end);
-        material.add_uniform("u_enable_lighting", self.globals.global_uniforms.enable_lighting);
-
-        let material_id = self.assets.add_material(
-            material
-        );
+        let material_id = self.new_material();
 
         Ok(self.assets.add_mesh(
             Mesh::new(
@@ -275,11 +258,7 @@ impl GraphicsChip {
     }
 
     pub fn new_material(&mut self) -> MaterialId {
-        let mut material = Material::new(self.globals.global_shaders.gouraud);
-        material.add_uniform("u_model", self.globals.global_uniforms.model_matrix);
-        material.add_uniform("u_view", self.globals.global_uniforms.view_matrix);
-        material.add_uniform("u_projection", self.globals.global_uniforms.perspective_matrix);
-        material.add_uniform("u_resolution", self.globals.global_uniforms.resolution);
+        let mut material = Material::new(self.globals.global_shaders.gouraud, &self.globals.global_uniforms);
         material.add_uniform("u_fog_start", self.globals.global_uniforms.fog_start);
         material.add_uniform("u_fog_end", self.globals.global_uniforms.fog_end);
         material.add_uniform("u_enable_lighting", self.globals.global_uniforms.enable_lighting);

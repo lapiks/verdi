@@ -189,20 +189,16 @@ impl GltfLoader {
         
         let globals = &gpu.globals;
 
-        let mut material = Material::new(globals.global_shaders.gouraud_textured);
-        material.add_uniform("u_model", globals.global_uniforms.model_matrix);
-        material.add_uniform("u_view", globals.global_uniforms.view_matrix);
-        material.add_uniform("u_projection", globals.global_uniforms.perspective_matrix);
-        material.add_uniform("u_resolution", globals.global_uniforms.resolution);
+        let mut material = Material::new(globals.global_shaders.gouraud_textured, &globals.global_uniforms);
         material.add_uniform("u_enable_fog", globals.global_uniforms.enable_fog);
         material.add_uniform("u_fog_start", globals.global_uniforms.fog_start);
         material.add_uniform("u_fog_end", globals.global_uniforms.fog_end);
         material.add_uniform("u_enable_lighting", globals.global_uniforms.enable_lighting);
+
         if let Some(id) = texture_id {
             material.add_uniform("u_texture", id);
-
         }
 
-        material
+        material.to_owned()
     }
 }

@@ -15,7 +15,7 @@ use crate::{
     assets::Assets,
     uniforms::{UniformId, Uniforms}, 
     gpu_assets::{GpuAssets}, 
-    program::ProgramId, prelude::GraphicsChip,
+    program::ProgramId, prelude::GraphicsChip, globals::GlobalUniforms,
 };
 
 const MAX_UNIFORMS: usize = 64;
@@ -32,8 +32,14 @@ pub struct Material {
 }
 
 impl Material {
-    pub fn new(program: ProgramId) -> Self {
-        let uniforms = vec![None; MAX_UNIFORMS];
+    pub fn new(program: ProgramId, global_uniforms: &GlobalUniforms) -> Self {
+        let mut uniforms = vec![None; MAX_UNIFORMS];
+        // add global uniforms to the material
+        uniforms[0] = Some(("u_model".to_string(), global_uniforms.model_matrix));
+        uniforms[1] = Some(("u_view".to_string(), global_uniforms.view_matrix));
+        uniforms[2] = Some(("u_projection".to_string(), global_uniforms.perspective_matrix));
+        uniforms[3] = Some(("u_resolution".to_string(), global_uniforms.resolution));
+
         Self {
             program,
             uniforms,

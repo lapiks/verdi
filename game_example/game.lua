@@ -33,11 +33,11 @@ end
 function verdi.draw(deltaTime)
     graphics.setClearColor(0.0, 0.0, 0.0, 1.0)
 
-	graphics.enableLighting(false)
+	graphics.enableLighting(true)
 
     --graphics.line(0.0, 0.0, 1.0, 1.0)
 
-    graphics.enableFog(false)
+    graphics.enableFog(true)
     graphics.setFogStart(10.0)
     graphics.setFogEnd(25.0)
 
