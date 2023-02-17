@@ -10,7 +10,7 @@ use crate::{
 pub struct Globals {
     pub global_shaders: GlobalShaders,
     pub global_uniforms: GlobalUniforms, 
-    pub clear_color: Vec4,
+    pub clear_color: Vec4, // Pourrait aller dans une struct PipelineState
 }
 
 impl Globals {

@@ -18,9 +18,9 @@ use verdi_math::prelude::*;
 pub struct GraphicsChip {
     pub render_passes: Vec<RenderPass>,
     pub stream_buffer: StreamBufferState,
-    pub assets: Assets,
-    pub uniforms: Uniforms,
-    pub globals: Globals,
+    pub assets: Assets, // à sortir pour pouvoir être partager par plusieurs GraphicsChip (Rc)
+    pub uniforms: Uniforms, // à sortir pour pouvoir être partager par plusieurs GraphicsChip (Rc)
+    pub globals: Globals, // à sortir pour pouvoir être partager par plusieurs GraphicsChip (Rc)
 }
 
 // Public API

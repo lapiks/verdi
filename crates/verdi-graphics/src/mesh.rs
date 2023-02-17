@@ -57,7 +57,7 @@ pub struct Mesh {
     pub vertex_buffer: VertexBuffer,
     pub index_buffer: Option<IndexBuffer>,
     pub primitive_type: PrimitiveType,
-    pub material: MaterialId,
+    pub material: MaterialId, // toutes les instances d'un même mesh devront utiliser un même matériau
     pub id: MeshId,
 }
 

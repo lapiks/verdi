@@ -17,9 +17,11 @@ use crate::{
     render_target::RenderTarget,
 };
 
+// Low level interface to GPU. 
+// Given some renderable GPU assets, the Renderer is able to draw them using the render function. 
 pub struct Renderer {
     render_target: RenderTarget,
-    gpu_assets: GpuAssets,
+    gpu_assets: GpuAssets, // devrait être sorti du renderer
 }
 
 impl Renderer {
