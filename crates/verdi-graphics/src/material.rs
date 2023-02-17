@@ -1,4 +1,4 @@
-use std::{sync::{Arc, Mutex}, borrow::Borrow};
+use std::{sync::{Arc, Mutex}};
 
 use glium::{
     uniforms::{
@@ -113,7 +113,6 @@ impl UserData for MaterialRef {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("addUniform", |_, material, (name, value): (String, LuaValue)| {
             let mut uniform_id = None;
-    
             {
                 let mut gpu = material.gpu.lock().unwrap();
     
