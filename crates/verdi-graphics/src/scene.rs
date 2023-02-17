@@ -4,7 +4,7 @@ use rlua::{UserData, UserDataMethods};
 use slotmap::{new_key_type, Key};
 
 use crate::{
-    node::{Node, NodeRef}, 
+    node::{Node, NodeHandle}, 
     graphics_chip::GraphicsChip,
 };
 
@@ -38,12 +38,12 @@ impl Scene {
 }
 
 #[derive(Clone)]
-pub struct SceneRef {
+pub struct SceneHandle {
     pub gpu: Arc<Mutex<GraphicsChip>>,
     pub id: SceneId,
 }
 
-impl SceneRef {
+impl SceneHandle {
     pub fn new(gpu: Arc<Mutex<GraphicsChip>>, id: SceneId) -> Self{
         Self {
             gpu,
@@ -55,8 +55,8 @@ impl SceneRef {
         self.gpu.lock().unwrap().draw_scene(self.id);
     }
 
-    pub fn get_node(&self, index: usize) -> NodeRef {
-        NodeRef {
+    pub fn get_node(&self, index: usize) -> NodeHandle {
+        NodeHandle {
             scene: self.clone(),
             node_index: index as u64,
         }
@@ -70,7 +70,7 @@ impl SceneRef {
 
 }
 
-impl UserData for SceneRef {
+impl UserData for SceneHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method("getNumNodes", |_, scene, ()| {
             Ok(scene.get_len())

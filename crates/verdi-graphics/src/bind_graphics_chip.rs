@@ -5,8 +5,8 @@ use verdi_math::prelude::*;
 
 use crate::{
     prelude::GraphicsChip, 
-    image::ImageRef, 
-    scene::SceneRef, mesh::{MeshRef, PrimitiveType}, material::MaterialRef, uniforms::UniformId
+    image::ImageHandle, 
+    scene::SceneHandle, mesh::{MeshHandle, PrimitiveType}, material::MaterialHandle, uniforms::UniformId
 };
 
 pub struct BindGraphicsChip;
@@ -37,32 +37,32 @@ impl<'lua> BindGraphicsChip {
         gpu.lock().unwrap().color(color);
     }
 
-    fn bind_texture(gpu: Arc<Mutex<GraphicsChip>>, image: ImageRef) {
+    fn bind_texture(gpu: Arc<Mutex<GraphicsChip>>, image: ImageHandle) {
         gpu.lock().unwrap().bind_texture(image);
     }
 
     // object construction
-    fn new_image(gpu: Arc<Mutex<GraphicsChip>>, path: &String) -> ImageRef {
+    fn new_image(gpu: Arc<Mutex<GraphicsChip>>, path: &String) -> ImageHandle {
         let image_id = gpu.lock().unwrap().new_image(path).unwrap();
-        ImageRef::new(image_id)
+        ImageHandle::new(image_id)
     }
 
-    fn new_scene(gpu: Arc<Mutex<GraphicsChip>>, path: &String) -> SceneRef {
+    fn new_scene(gpu: Arc<Mutex<GraphicsChip>>, path: &String) -> SceneHandle {
         let mut gpu_guard = gpu.lock().unwrap();
         let scene_id = gpu_guard.new_scene(path).unwrap();
-        SceneRef::new(gpu.clone(), scene_id)
+        SceneHandle::new(gpu.clone(), scene_id)
     }
     
-    fn new_mesh(gpu: Arc<Mutex<GraphicsChip>>) -> MeshRef {
+    fn new_mesh(gpu: Arc<Mutex<GraphicsChip>>) -> MeshHandle {
         let mut gpu_guard = gpu.lock().unwrap();
         let mesh_id = gpu_guard.new_mesh().unwrap();
-        MeshRef::new(gpu.clone(), mesh_id)
+        MeshHandle::new(gpu.clone(), mesh_id)
     }
 
-    fn new_material(gpu: Arc<Mutex<GraphicsChip>>) -> MaterialRef {
+    fn new_material(gpu: Arc<Mutex<GraphicsChip>>) -> MaterialHandle {
         let mut gpu_guard = gpu.lock().unwrap();
         let mat_id = gpu_guard.new_material();
-        MaterialRef::new(gpu.clone(), mat_id)
+        MaterialHandle::new(gpu.clone(), mat_id)
     }
 
     fn new_uniform(gpu: Arc<Mutex<GraphicsChip>>, value: f32) -> UniformId {
@@ -175,7 +175,7 @@ impl<'lua> BindGraphicsChip {
             }
             {
                 let gpu = gpu.clone();
-                let func = lua_ctx.create_function_mut(move |_, image: ImageRef| Ok(BindGraphicsChip::bind_texture(gpu.clone(), image)))?;
+                let func = lua_ctx.create_function_mut(move |_, image: ImageHandle| Ok(BindGraphicsChip::bind_texture(gpu.clone(), image)))?;
                 module_table.set("bindTexture", func)?;
             }
             {

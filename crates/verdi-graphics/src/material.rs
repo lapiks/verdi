@@ -104,18 +104,18 @@ impl Material {
 }
 
 #[derive(Clone)]
-pub struct MaterialRef {
+pub struct MaterialHandle {
     pub gpu: Arc<Mutex<GraphicsChip>>,
     pub id: MaterialId,
 }
 
-impl MaterialRef {
+impl MaterialHandle {
     pub fn new(gpu: Arc<Mutex<GraphicsChip>>, id: MaterialId) -> Self{
         Self { gpu, id }
     }
 }
 
-impl UserData for MaterialRef {
+impl UserData for MaterialHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("addUniform", |_, material, (name, value): (String, LuaValue)| {
             let mut uniform_id = None;

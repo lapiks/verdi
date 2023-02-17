@@ -40,11 +40,11 @@ impl Program {
 }
 
 #[derive(Clone, Copy)]
-pub struct ProgramRef {
+pub struct ProgramHandle {
     pub id: ProgramId,
 }
 
-impl ProgramRef {
+impl ProgramHandle {
     pub fn new(id: ProgramId) -> Self{
         Self { id }
     }

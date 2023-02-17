@@ -23,11 +23,11 @@ impl Shader {
 }
 
 #[derive(Clone, Copy)]
-pub struct ShaderRef {
+pub struct ShaderHandle {
     pub id: ShaderId,
 }
 
-impl ShaderRef {
+impl ShaderHandle {
     pub fn new(id: ShaderId) -> Self{
         Self { id }
     }

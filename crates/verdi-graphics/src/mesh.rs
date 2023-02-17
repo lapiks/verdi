@@ -101,12 +101,12 @@ impl Mesh {
 }
 
 #[derive(Clone)]
-pub struct MeshRef {
+pub struct MeshHandle {
     pub gpu: Arc<Mutex<GraphicsChip>>,
     pub id: MeshId,
 }
 
-impl MeshRef {
+impl MeshHandle {
     pub fn new(gpu: Arc<Mutex<GraphicsChip>>, id: MeshId) -> Self{
         Self { 
             gpu,
@@ -145,7 +145,7 @@ impl MeshRef {
     }
 }
 
-impl UserData for MeshRef {
+impl UserData for MeshHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("setVertices", |_, mesh, vertices: Table| {
             Ok(mesh.set_vertices(vertices))

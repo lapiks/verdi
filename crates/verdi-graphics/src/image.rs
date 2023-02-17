@@ -83,14 +83,14 @@ impl Image {
 }
 
 #[derive(Clone, Copy)]
-pub struct ImageRef {
+pub struct ImageHandle {
     pub id: ImageId,
 }
 
-impl ImageRef {
+impl ImageHandle {
     pub fn new(id: ImageId) -> Self{
         Self { id }
     }
 }
 
-impl UserData for ImageRef {}
+impl UserData for ImageHandle {}

@@ -1,7 +1,7 @@
 use crate::{
     vertex::Vertex, 
     render_pass::RenderPass, 
-    image::{Image, ImageRef, ImageId}, 
+    image::{Image, ImageHandle, ImageId}, 
     assets::Assets, 
     scene::SceneId, 
     uniforms::{Uniforms, UniformId}, 
@@ -180,7 +180,7 @@ impl GraphicsChip {
         Ok(self.assets.add_texture(image))
     }
 
-    pub fn bind_texture(&mut self, image: ImageRef) {
+    pub fn bind_texture(&mut self, image: ImageHandle) {
         // match self.render_passes.last_mut() {
         //     Some(render_pass) => {
         //         render_pass.current_texture = Some(image);

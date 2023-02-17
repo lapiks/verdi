@@ -5,7 +5,7 @@ use rlua::{UserData, UserDataMethods};
 use verdi_math::prelude::Transform;
 
 use crate::{
-    scene::SceneRef, 
+    scene::SceneHandle, 
     mesh::MeshId, 
     prelude::GraphicsChip
 };
@@ -26,13 +26,13 @@ impl Node {
 }
 
 #[derive(Clone)]
-pub struct NodeRef {
-    pub scene: SceneRef,
+pub struct NodeHandle {
+    pub scene: SceneHandle,
     pub node_index: NodeId,
 }
 
-impl NodeRef {
-    pub fn new(scene: SceneRef, node_index: NodeId) -> Self {
+impl NodeHandle {
+    pub fn new(scene: SceneHandle, node_index: NodeId) -> Self {
         Self {
             scene,
             node_index,
@@ -49,7 +49,7 @@ impl NodeRef {
     }
 }
 
-impl UserData for NodeRef {
+impl UserData for NodeHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method("draw", |_, node, ()| {
             Ok(node.draw())
