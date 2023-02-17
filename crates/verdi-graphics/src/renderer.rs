@@ -77,6 +77,16 @@ impl Renderer {
             }   
         }
 
+        if self.gpu_assets.get_program(gpu.globals.global_shaders.gouraud_textured).is_none() {
+            if let Some(program) = gpu.assets.get_program(gpu.globals.global_shaders.gouraud_textured) {
+                program.prepare_rendering(
+                    display, 
+                    &gpu.assets, 
+                    &mut self.gpu_assets
+                )
+            }   
+        }
+
         if self.gpu_assets.get_program(gpu.globals.global_shaders.std_2d).is_none() {
             if let Some(program) = gpu.assets.get_program(gpu.globals.global_shaders.std_2d) {
                 program.prepare_rendering(

@@ -36,13 +36,14 @@ impl GraphicsChip {
         )?;
 
         let mat_2d = assets.add_material(
-            *Material::new(globals.global_shaders.gouraud)
+            Material::new(globals.global_shaders.gouraud)
                 .add_uniform("u_model", globals.global_uniforms.model_matrix)
                 .add_uniform("u_view", globals.global_uniforms.view_matrix)
                 .add_uniform("u_projection", globals.global_uniforms.perspective_matrix)
                 .add_uniform("u_resolution", globals.global_uniforms.resolution)
                 .add_uniform("u_enable_fog", globals.global_uniforms.enable_fog)
                 .add_uniform("u_enable_lighting", globals.global_uniforms.enable_lighting)
+                .clone()
         );
 
         let streaming_mesh = assets.add_mesh(

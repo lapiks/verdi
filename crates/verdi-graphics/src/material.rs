@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::{sync::{Arc, Mutex}, borrow::Borrow};
 
 use glium::{
     uniforms::{
@@ -24,39 +24,40 @@ new_key_type! {
     pub struct MaterialId;
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Material {
     pub program: ProgramId,
-    uniforms: [Option<(&'static str, UniformId)>; MAX_UNIFORMS],
+    uniforms: Vec<Option<(String, UniformId)>>,
     pub id: MaterialId,
 }
 
 impl Material {
     pub fn new(program: ProgramId) -> Self {
+        let uniforms = vec![None; MAX_UNIFORMS];
         Self {
             program,
-            uniforms: [None; MAX_UNIFORMS],
+            uniforms,
             id: MaterialId::null(),
         }
     }
 
-    pub fn add_uniform(&mut self, name: &'static str, id: UniformId) -> &mut Self {
+    pub fn add_uniform(&mut self, name: &str, id: UniformId) -> &mut Self {
         for uniform in &mut self.uniforms[..] {
             if uniform.is_none() {
-                *uniform = Some((name, id));
+                *uniform = Some((name.to_string(), id));
                 break;
             }
         }
         self
     }
 
-    pub fn get_uniform_values<'a>(&self, uniforms: &'a Uniforms, gpu_assets: &'a GpuAssets) -> Option<UniformValues<'a>> {
+    pub fn get_uniform_values<'a>(&'a self, uniforms: &'a Uniforms, gpu_assets: &'a GpuAssets) -> Option<UniformValues<'a>> {
         // construct uniform values from the material uniforms description 
         let mut uniform_values = [None; MAX_UNIFORMS];
-        for (uniform_value, uniform_id) in uniform_values.iter_mut().zip(self.uniforms) {
+        for (uniform_value, uniform_id) in uniform_values.iter_mut().zip(&self.uniforms) {
             if let Some((name, id)) = uniform_id {
-                if let Some(value) = uniforms.get_value(id, gpu_assets) {
-                    *uniform_value = Some((name, value));
+                if let Some(value) = uniforms.get_value(*id, gpu_assets) {
+                    *uniform_value = Some((&name[..], value));
                 }
                 else {
                     // missing uniform
@@ -77,11 +78,11 @@ impl Material {
     }
 
     pub fn prepare_rendering(&self, display: &Display, uniforms: &Uniforms, assets: &Assets, gpu_assets: &mut GpuAssets) {
-        for uniform_id in self.uniforms {
+        for uniform_id in &self.uniforms {
             if uniform_id.is_some() {
-                match uniform_id.unwrap().1 {
+                match uniform_id.as_ref().unwrap().1 {
                     UniformId::Texture(_) => {
-                        if let Some(texture_uniform) = uniforms.get_texture(uniform_id.unwrap().1) {
+                        if let Some(texture_uniform) = uniforms.get_texture(uniform_id.as_ref().unwrap().1) {
                             if let Some(texture) = assets.get_texture(texture_uniform.id) {
                                 texture.prepare_rendering(display, gpu_assets);
                             }
@@ -111,27 +112,36 @@ impl MaterialRef {
 impl UserData for MaterialRef {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("addUniform", |_, material, (name, value): (String, LuaValue)| {
-            let mut gpu = material.gpu.lock().unwrap();
-            let material = gpu.assets.get_material_mut(material.id).unwrap();
-
-            match value {
-                LuaValue::Nil => todo!(),
-                LuaValue::Boolean(v) => {
-                    material.add_uniform(&name, gpu.uniforms.add_boolean(v));
-                },
-                LuaValue::LightUserData(_) => todo!(),
-                LuaValue::Integer(_) => todo!(),
-                LuaValue::Number(v) => {
-                    material.add_uniform(&name, gpu.uniforms.add_float(v as f32));
-                }
-                LuaValue::String(_) => todo!(),
-                LuaValue::Table(_) => todo!(),
-                LuaValue::Function(_) => todo!(),
-                LuaValue::Thread(_) => todo!(),
-                LuaValue::UserData(_) => todo!(),
-                LuaValue::Error(_) => todo!(),
-            };
-
+            let mut uniform_id = None;
+    
+            {
+                let mut gpu = material.gpu.lock().unwrap();
+    
+                match value {
+                    LuaValue::Nil => todo!(),
+                    LuaValue::Boolean(v) => {
+                        uniform_id = Some(gpu.uniforms.add_boolean(v));
+                    },
+                    LuaValue::LightUserData(_) => todo!(),
+                    LuaValue::Integer(_) => todo!(),
+                    LuaValue::Number(v) => {
+                        uniform_id = Some(gpu.uniforms.add_float(v as f32));
+                    }
+                    LuaValue::String(_) => todo!(),
+                    LuaValue::Table(_) => todo!(),
+                    LuaValue::Function(_) => todo!(),
+                    LuaValue::Thread(_) => todo!(),
+                    LuaValue::UserData(_) => todo!(),
+                    LuaValue::Error(_) => todo!(),
+                };
+            }
+    
+            if let Some(uniform_id) = uniform_id {
+                let mut gpu = material.gpu.lock().unwrap();
+                let material = gpu.assets.get_material_mut(material.id).unwrap();
+                material.add_uniform(&name, uniform_id);
+            }
+    
             Ok(())
         });
     }
@@ -139,7 +149,7 @@ impl UserData for MaterialRef {
 
 pub struct UniformValues<'a> {
     //program: &'a GpuProgram,
-    uniform_values: [Option<(&'static str, UniformValue<'a>)>; MAX_UNIFORMS],
+    uniform_values: [Option<(&'a str, UniformValue<'a>)>; MAX_UNIFORMS],
 }
 
 impl<'material> GliumUniforms for UniformValues<'material> {
