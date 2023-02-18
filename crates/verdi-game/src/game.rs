@@ -5,10 +5,11 @@ use rlua::Lua;
 use verdi_graphics::prelude::{
     GraphicsChip, 
     Renderer, 
-    BindGraphicsChip,
+    BindGraphicsChip, 
+    RenderTarget,
 };
 use verdi_input::prelude::{Inputs, BindInputs};
-use verdi_math::{IVec2, prelude::BindMath};
+use verdi_math::prelude::BindMath;
 
 use crate::{
     lua_context::LuaContext, 
@@ -31,9 +32,11 @@ pub enum GameError {
     GameFolderError,
 }
 
+/// The Game system.
 pub struct Game {
     gpu: Arc<Mutex<GraphicsChip>>,
     renderer: Renderer,
+    render_target: RenderTarget,
     inputs: Arc<Mutex<Inputs>>,
     path: PathBuf,
     scripts: Rc<RefCell<Scripts>>,
@@ -56,11 +59,18 @@ impl Game {
                 )
             );
 
-            let renderer = Renderer::new(display, &IVec2 { x: 320, y: 240 });
+            let renderer = Renderer::new();
+
+            let render_target = RenderTarget::new(
+                display, 
+                320, 
+                240)
+                .expect("Render target creation failed");
 
         Ok(Self { 
             gpu,
             renderer,
+            render_target,
             inputs,
             path: path.as_ref().to_path_buf(),
             scripts: Rc::new(RefCell::new(Scripts::new(path)?)),
@@ -114,7 +124,7 @@ impl Game {
         self.renderer.prepare_assets(display, &self.gpu.lock().unwrap());
 
         // draw game in framebuffer
-        self.renderer.render(display, target, &mut self.gpu.lock().unwrap());
+        self.renderer.render(&self.render_target, display, target, &mut self.gpu.lock().unwrap());
 
         self.renderer.post_render(&mut self.gpu.lock().unwrap());
     }

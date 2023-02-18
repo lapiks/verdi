@@ -18,6 +18,7 @@ use crate::{
     gui::Gui, 
     app_commands::Load, 
     commands::Command, 
+    world_editor::WorldEditor, 
 };
 
 #[derive(PartialEq)]
@@ -29,11 +30,14 @@ pub enum GameState {
     Stopped,
 }
 
+/// The global application. Render the Game, the WorldEditor and the UI.
+/// Handle events and disptach them to the different systems.
 pub struct App {
     window: Window,
     game: Option<Game>,
     pub game_state: GameState,
-    pub shutdown: bool
+    world_editor: WorldEditor,
+    pub shutdown: bool,
 }
 
 impl App {
@@ -42,6 +46,7 @@ impl App {
             window: Window::new(1920, 1080),
             game: None,
             game_state: GameState::Loaded,
+            world_editor: WorldEditor::new(),
             shutdown: false,
         }
     }

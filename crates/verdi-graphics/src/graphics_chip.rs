@@ -15,6 +15,7 @@ use crate::{
 use image::ImageError;
 use verdi_math::prelude::*;
 
+/// High level access to rendering features.
 pub struct GraphicsChip {
     pub render_passes: Vec<RenderPass>,
     pub stream_buffer: StreamBufferState,
