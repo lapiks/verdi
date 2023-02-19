@@ -5,8 +5,9 @@ use glium::{
 
 use rlua::Lua;
 
-use std::path::Path;
+use std::{path::Path, sync::{Arc, Mutex}};
 
+use verdi_graphics::prelude::DataBase;
 use verdi_window::prelude::*;
 use verdi_game::prelude::{
     Game, 
@@ -34,6 +35,7 @@ pub enum GameState {
 /// Handle events and disptach them to the different systems.
 pub struct App {
     window: Window,
+    database: Arc<Mutex<DataBase>>,
     game: Option<Game>,
     pub game_state: GameState,
     world_editor: WorldEditor,
@@ -42,11 +44,14 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
+        let database = Arc::new(Mutex::new(DataBase::new()));
+        let world_editor = WorldEditor::new(database.clone());
         Self {
             window: Window::new(1920, 1080),
+            database,
             game: None,
             game_state: GameState::Loaded,
-            world_editor: WorldEditor::new(),
+            world_editor,
             shutdown: false,
         }
     }
@@ -178,7 +183,7 @@ impl App {
         }
 
         self.game = Some(
-            Game::new(path, self.window.get_display())?
+            Game::new(path, self.window.get_display(), self.database.clone())?
         );
 
         if let Some(game) = self.game.as_mut() {

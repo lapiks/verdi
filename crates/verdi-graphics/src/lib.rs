@@ -6,6 +6,7 @@ pub mod prelude {
         bind_graphics_chip::BindGraphicsChip,
         renderer::Renderer,
         render_target::RenderTarget,
+        data_base::DataBase,
     };
 }
 
@@ -35,3 +36,4 @@ mod program;
 mod shader;
 mod screen_quad;
 mod gltf_loader;
+mod data_base;

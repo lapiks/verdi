@@ -10,11 +10,11 @@ use crate::{
     mesh::{Mesh, PrimitiveType}, 
     image::Image, 
     uniforms::{UniformId, TextureUniform}, 
-    prelude::GraphicsChip, 
     material::{Material, MaterialId}, 
     node::Node,
     vertex::Vertex, 
     scene::Scene, 
+    data_base::DataBase, 
 };
 
 #[derive(Error, Debug)]
@@ -30,7 +30,7 @@ pub enum GltfError {
 pub struct GltfLoader;
 
 impl GltfLoader {
-    pub fn load<P: AsRef<Path>>(path: P, gpu: &mut GraphicsChip) -> Result<Scene, GltfError> {
+    pub fn load<P: AsRef<Path>>(path: P, render_resources: &mut DataBase) -> Result<Scene, GltfError> {
         let mut scene = Scene::new();
 
         let gltf = gltf::Gltf::open(path.as_ref())?;
@@ -41,7 +41,7 @@ impl GltfLoader {
 
         let mut texture_uniforms = vec![];
         for gltf_texture in gltf.textures() {
-            let image_id = gpu.assets.add_texture(
+            let image_id = render_resources.assets.add_texture(
                 GltfLoader::load_texture(
                     gltf_texture, 
                     &buffers,
@@ -50,7 +50,7 @@ impl GltfLoader {
             );
 
             texture_uniforms.push(
-                gpu.uniforms.add_texture(
+                render_resources.uniforms.add_texture(
                     TextureUniform::new(image_id)
                 )
             );
@@ -59,11 +59,11 @@ impl GltfLoader {
         let mut materials = vec![];
         for gltf_material in gltf.materials() {
             materials.push(
-                gpu.assets.add_material(
+                render_resources.assets.add_material(
                     GltfLoader::load_material(
                         gltf_material,
                         &texture_uniforms, 
-                        gpu
+                        render_resources
                     )
                 )
             )
@@ -74,7 +74,7 @@ impl GltfLoader {
             for gltf_primitive in gltf_mesh.primitives() {
                 // creates a mesh per gltf primitive
                 meshes.push(
-                    gpu.assets.add_mesh(
+                    render_resources.assets.add_mesh(
                         GltfLoader::load_primitive(
                             gltf_primitive, 
                             &buffers, 
@@ -180,14 +180,14 @@ impl GltfLoader {
         Ok(source)
     }
 
-    fn load_material(gltf_material: gltf::Material, textures: &Vec<UniformId>, gpu: &GraphicsChip) -> Material {
+    fn load_material(gltf_material: gltf::Material, textures: &Vec<UniformId>, render_resources: &DataBase) -> Material {
         let texture_id = gltf_material
             .pbr_metallic_roughness()
             .base_color_texture()
             .map(|info| info.texture().index())
             .and_then(|i| textures.get(i).cloned());
         
-        let globals = &gpu.globals;
+        let globals = &render_resources.globals;
 
         let mut material = Material::new(globals.global_shaders.gouraud_textured, &globals.global_uniforms);
         material.add_uniform("u_enable_fog", globals.global_uniforms.enable_fog);

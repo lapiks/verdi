@@ -75,6 +75,10 @@ impl Default for Uniforms {
 }
 
 impl Uniforms {
+    pub fn new() -> Self {
+        Uniforms::default()
+    }
+
     pub fn clear(&mut self) {
         self.floats.clear();
         self.vec2s.clear();

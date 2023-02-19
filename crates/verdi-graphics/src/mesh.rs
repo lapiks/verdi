@@ -115,8 +115,9 @@ impl MeshHandle {
     }
 
     pub fn set_vertices(&mut self, vertices: Table) {
-        let mut gpu = self.gpu.lock().unwrap();
-        let mesh = gpu.assets.get_mesh_mut(self.id).unwrap();
+        let gpu = self.gpu.lock().unwrap();
+        let mut db_lock = gpu.database.lock().unwrap();
+        let mesh = db_lock.assets.get_mesh_mut(self.id).unwrap();
         
         if let Ok(v_length) = vertices.len() {
             mesh.vertex_buffer.resize(v_length as usize, Vertex::default());
@@ -134,8 +135,9 @@ impl MeshHandle {
     }
 
     pub fn set_primitive_type(&mut self, primitive_type: PrimitiveType) {
-        let mut gpu = self.gpu.lock().unwrap();
-        let mesh = gpu.assets.get_mesh_mut(self.id).unwrap();
+        let gpu = self.gpu.lock().unwrap();
+        let mut db_lock = gpu.database.lock().unwrap();
+        let mesh = db_lock.assets.get_mesh_mut(self.id).unwrap();
 
         mesh.primitive_type = primitive_type;
     }

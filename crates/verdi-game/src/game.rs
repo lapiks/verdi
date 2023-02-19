@@ -7,6 +7,7 @@ use verdi_graphics::prelude::{
     Renderer, 
     BindGraphicsChip, 
     RenderTarget,
+    DataBase,
 };
 use verdi_input::prelude::{Inputs, BindInputs};
 use verdi_math::prelude::BindMath;
@@ -45,10 +46,10 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new<P: AsRef<Path>>(path: P, display: &Display) -> Result<Self, GameError> {
+    pub fn new<P: AsRef<Path>>(path: P, display: &Display, database: Arc<Mutex<DataBase>>) -> Result<Self, GameError> {
             let gpu = Arc::new(
                 Mutex::new(
-                    GraphicsChip::new()
+                    GraphicsChip::new(database)
                         .expect("GraphicsChip initialisation failed")
                 )
             );

@@ -1,3 +1,5 @@
+use std::{sync::{Arc, Mutex}};
+
 use crate::{
     vertex::Vertex, 
     render_pass::RenderPass, 
@@ -9,7 +11,8 @@ use crate::{
     node::Node, 
     material::{Material, MaterialId}, 
     globals::Globals, 
-    mesh::{MeshId, Mesh, PrimitiveType},
+    mesh::{MeshId, Mesh, PrimitiveType}, 
+    prelude::DataBase,
 };
 
 use image::ImageError;
@@ -19,14 +22,12 @@ use verdi_math::prelude::*;
 pub struct GraphicsChip {
     pub render_passes: Vec<RenderPass>,
     pub stream_buffer: StreamBufferState,
-    pub assets: Assets, // à sortir pour pouvoir être partager par plusieurs GraphicsChip (Rc)
-    pub uniforms: Uniforms, // à sortir pour pouvoir être partager par plusieurs GraphicsChip (Rc)
-    pub globals: Globals, // à sortir pour pouvoir être partager par plusieurs GraphicsChip (Rc)
+    pub database: Arc<Mutex<DataBase>>,
 }
 
 // Public API
 impl GraphicsChip {
-    pub fn new() -> Result<Self, std::io::Error> {
+    pub fn new(database: Arc<Mutex<DataBase>>) -> Result<Self, std::io::Error> {
         let mut assets = Assets::new();
         let mut uniforms = Uniforms::default();
 
@@ -60,9 +61,7 @@ impl GraphicsChip {
         Ok(Self { 
             render_passes: Vec::new(),
             stream_buffer,
-            assets,
-            uniforms,
-            globals,
+            database,
         })
     }
 
@@ -71,9 +70,9 @@ impl GraphicsChip {
     }
 
     pub fn on_game_shutdown(&mut self) {
-        self.assets.clear();
+        self.database.lock().unwrap().assets.clear();
         self.render_passes.clear();
-        self.uniforms.clear();
+        self.database.lock().unwrap().uniforms.clear();
     }
 
     pub fn new_frame(&mut self) {
@@ -178,7 +177,7 @@ impl GraphicsChip {
     pub fn new_image(&mut self, path: &String) -> Result<ImageId, ImageError> {
         let image = Image::new(path)?;
 
-        Ok(self.assets.add_texture(image))
+        Ok(self.database.lock().unwrap().assets.add_texture(image))
     }
 
     pub fn bind_texture(&mut self, image: ImageHandle) {
@@ -191,14 +190,15 @@ impl GraphicsChip {
     }
 
     pub fn draw_scene(&mut self, scene_id: SceneId) {
-        let scene = self.assets.get_scene(scene_id).unwrap();
+        let db_lock = self.database.lock().unwrap();
+        let scene = db_lock.assets.get_scene(scene_id).unwrap();
         for node in scene.nodes.iter() {
             // nothing to draw
             if node.mesh.is_none() {
                 continue;
             }
 
-            if let Some(mesh) = self.assets.get_mesh(node.mesh.unwrap()) {
+            if let Some(mesh) = db_lock.assets.get_mesh(node.mesh.unwrap()) {
                 self.render_passes.push(
                     RenderPass { 
                         mesh_id: mesh.id,
@@ -210,7 +210,7 @@ impl GraphicsChip {
     }
 
     pub fn draw_mesh(&mut self, mesh_id: MeshId) {
-        if let Some(mesh) = self.assets.get_mesh(mesh_id) {
+        if let Some(mesh) = self.database.lock().unwrap().assets.get_mesh(mesh_id) {
             self.render_passes.push(
                 RenderPass { 
                     mesh_id: mesh.id,
@@ -226,7 +226,7 @@ impl GraphicsChip {
             return;
         }
 
-        if let Some(mesh) = self.assets.get_mesh(node.mesh.unwrap()) {
+        if let Some(mesh) = self.database.lock().unwrap().assets.get_mesh(node.mesh.unwrap()) {
             self.render_passes.push(
                 RenderPass { 
                     mesh_id: mesh.id,
@@ -237,9 +237,9 @@ impl GraphicsChip {
     }
 
     pub fn new_scene(&mut self, path: &String) -> Result<SceneId, GltfError> {
-        let scene = GltfLoader::load(path, self)?;
+        let scene = GltfLoader::load(path, &mut self.database.lock().unwrap())?;
 
-        Ok(self.assets.add_scene(scene))
+        Ok(self.database.lock().unwrap().assets.add_scene(scene))
     }
     
     pub fn new_mesh(&mut self) -> Result<MeshId, GltfError> {
@@ -248,7 +248,7 @@ impl GraphicsChip {
 
         let material_id = self.new_material();
 
-        Ok(self.assets.add_mesh(
+        Ok(self.database.lock().unwrap().assets.add_mesh(
             Mesh::new(
                 vertex_buffer,
                 index_buffer,
@@ -259,82 +259,79 @@ impl GraphicsChip {
     }
 
     pub fn new_material(&mut self) -> MaterialId {
-        let mut material = Material::new(self.globals.global_shaders.gouraud, &self.globals.global_uniforms);
-        material.add_uniform("u_fog_start", self.globals.global_uniforms.fog_start);
-        material.add_uniform("u_fog_end", self.globals.global_uniforms.fog_end);
-        material.add_uniform("u_enable_lighting", self.globals.global_uniforms.enable_lighting);
+        let mut db_lock = self.database.lock().unwrap();
+        let mut material = Material::new(db_lock.globals.global_shaders.gouraud, &db_lock.globals.global_uniforms);
+        material.add_uniform("u_fog_start", db_lock.globals.global_uniforms.fog_start);
+        material.add_uniform("u_fog_end", db_lock.globals.global_uniforms.fog_end);
+        material.add_uniform("u_enable_lighting", db_lock.globals.global_uniforms.enable_lighting);
 
-        self.assets.add_material(
+        db_lock.assets.add_material(
             material
         )
     }
 
     pub fn new_uniform_float(&mut self, value: f32) -> UniformId {
-        self.uniforms.add_float(value)
+        self.database.lock().unwrap().uniforms.add_float(value)
     }
 
     pub fn new_uniform_vec2(&mut self, value: Vec2) -> UniformId {
-        self.uniforms.add_vec2(value)
+        self.database.lock().unwrap().uniforms.add_vec2(value)
     }
 
     pub fn set_clear_color(&mut self, color: &Vec4) {
-        self.globals.clear_color = *color;
+        self.database.lock().unwrap().globals.clear_color = *color;
     }
 
     pub fn translate(&mut self, v: &Vec3) {
-        *self.uniforms
+        *self.database.lock().unwrap().uniforms
             .get_mat4_mut(
-                self.globals.global_uniforms.view_matrix
+                self.database.lock().unwrap().globals.global_uniforms.view_matrix
             ).unwrap() 
                 *= Mat4::from_translation(*v);
     }
 
     pub fn rotate(&mut self, angle: f32, axis: &Vec3) {
-        *self.uniforms
+        *self.database.lock().unwrap().uniforms
             .get_mat4_mut(
-                self.globals.global_uniforms.view_matrix
+                self.database.lock().unwrap().globals.global_uniforms.view_matrix
             ).unwrap() 
                 *= Mat4::from_axis_angle(*axis, angle);
     }
 
     pub fn enable_lighting(&mut self, value: bool) {
-        *self.uniforms
+        let mut db_lock = self.database.lock().unwrap();
+        *db_lock.uniforms
             .get_boolean_mut(
-                self.globals.global_uniforms.enable_lighting
+                self.database.lock().unwrap().globals.global_uniforms.enable_lighting
             ).unwrap() 
                 = value;
     }
 
     pub fn enable_fog(&mut self, value: bool) {
-        *self.uniforms
+        *self.database.lock().unwrap().uniforms
             .get_boolean_mut(
-                self.globals.global_uniforms.enable_fog
+                self.database.lock().unwrap().globals.global_uniforms.enable_fog
             ).unwrap() 
                 = value;
     }
 
     pub fn set_fog_start(&mut self, distance: f32) {
-        *self.uniforms
+        *self.database.lock().unwrap().uniforms
             .get_float_mut(
-                self.globals.global_uniforms.fog_start
+                self.database.lock().unwrap().globals.global_uniforms.fog_start
             ).unwrap() 
                 = distance;
     }
 
     pub fn set_fog_end(&mut self, distance: f32) {
-        *self.uniforms
+        *self.database.lock().unwrap().uniforms
             .get_float_mut(
-                self.globals.global_uniforms.fog_end
+                self.database.lock().unwrap().globals.global_uniforms.fog_end
             ).unwrap() 
                 = distance;
     }
 
     pub fn draw_line(&mut self, p1: &Vec2, p2: &Vec2) {
-        let cmd = DrawCommand {
-            primitive_type: PrimitiveType::Lines,
-            vertex_count: 2,
-        };
-
         let v1 = Vertex {
             position: [p1.x, p1.y, 0.0],
             uv: [0.0, 0.0],
@@ -349,10 +346,14 @@ impl GraphicsChip {
             color: [1.0, 0.0, 0.0, 1.0],
         };
 
-        let vertices = [v1, v2];
+        let mut vertices = [v1, v2];
+        let cmd = DrawCommand {
+            primitive_type: PrimitiveType::Lines,
+            vertex_count: 2,
+            data: &mut vertices,
+        };
 
-        let stream_buffer = self.request_flush(&cmd);
-        stream_buffer.data.clone_from_slice(&vertices)
+        self.request_flush(&cmd);
     }
 }
 
@@ -373,16 +374,18 @@ pub struct StreamBuffer<'a> {
     pub data: &'a mut [Vertex],
 }
 
-pub struct DrawCommand {
+pub struct DrawCommand<'a> {
     pub primitive_type: PrimitiveType,
     pub vertex_count: u32,
+    pub data: &'a mut [Vertex],
     // material_id
 }
 
 // Private impl
 impl GraphicsChip {
-    fn request_flush(&mut self, cmd: &DrawCommand) -> StreamBuffer {
-        let mesh = self.assets
+    fn request_flush(&mut self, cmd: &DrawCommand) {
+        let mut db_lock = self.database.lock().unwrap();
+        let mesh = db_lock.assets
             .get_mesh_mut(self.stream_buffer.mesh_id)
             .expect("Primitive not found");
 
@@ -415,7 +418,7 @@ impl GraphicsChip {
 
         self.stream_buffer.current_offset = new_offset;
 
-        stream_buffer
+        stream_buffer.data.clone_from_slice(&cmd.data);
     }
 
     pub fn flush_stream_buffer(&mut self) {

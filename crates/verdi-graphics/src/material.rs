@@ -120,17 +120,18 @@ impl UserData for MaterialHandle {
         methods.add_method_mut("addUniform", |_, material, (name, value): (String, LuaValue)| {
             let mut uniform_id = None;
             {
-                let mut gpu = material.gpu.lock().unwrap();
-    
+                let gpu = material.gpu.lock().unwrap();
+                let mut db_lock = gpu.database.lock().unwrap();
+
                 match value {
                     LuaValue::Nil => todo!(),
                     LuaValue::Boolean(v) => {
-                        uniform_id = Some(gpu.uniforms.add_boolean(v));
+                        uniform_id = Some(db_lock.uniforms.add_boolean(v));
                     },
                     LuaValue::LightUserData(_) => todo!(),
                     LuaValue::Integer(_) => todo!(),
                     LuaValue::Number(v) => {
-                        uniform_id = Some(gpu.uniforms.add_float(v as f32));
+                        uniform_id = Some(db_lock.uniforms.add_float(v as f32));
                     }
                     LuaValue::String(_) => todo!(),
                     LuaValue::Table(_) => todo!(),
@@ -142,8 +143,9 @@ impl UserData for MaterialHandle {
             }
     
             if let Some(uniform_id) = uniform_id {
-                let mut gpu = material.gpu.lock().unwrap();
-                let material = gpu.assets.get_material_mut(material.id).unwrap();
+                let gpu = material.gpu.lock().unwrap();
+                let mut db_lock = gpu.database.lock().unwrap();
+                let material = db_lock.assets.get_material_mut(material.id).unwrap();
                 material.add_uniform(&name, uniform_id);
             }
     

@@ -64,7 +64,8 @@ impl SceneHandle {
 
     pub fn get_len(&self) -> Option<u64> {
         let gpu = self.gpu.lock().unwrap();
-        let scene = gpu.assets.get_scene(self.id).unwrap();
+        let db_lock = gpu.database.lock().unwrap();
+        let scene = db_lock.assets.get_scene(self.id).unwrap();
         Some(scene.nodes.len() as u64)
     }
 

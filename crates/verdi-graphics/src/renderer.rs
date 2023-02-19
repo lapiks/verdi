@@ -14,7 +14,7 @@ use crate::{
     camera::Camera,
     prelude::GraphicsChip, 
     gpu_assets::GpuAssets, 
-    render_target::RenderTarget,
+    render_target::RenderTarget, 
 };
 
 // Low level interface to GPU. 
@@ -35,9 +35,11 @@ impl Renderer {
     }
 
     pub fn prepare_assets(&mut self, display: &Display, gpu: &GraphicsChip) {
+        let db_lock = gpu.database.lock().unwrap();
+
         // à rendre générique
         for render_pass in gpu.render_passes.iter() {
-            let mesh = gpu.assets
+            let mesh = db_lock.assets
                 .get_mesh(render_pass.mesh_id)
                 .expect("Missing primitive asset");
 
@@ -48,11 +50,11 @@ impl Renderer {
             );
 
             // construct gpu objects needed by the material
-            if let Some(material) = gpu.assets.get_material(mesh.material) {
+            if let Some(material) = gpu.database.lock().unwrap().assets.get_material(mesh.material) {
                 material.prepare_rendering(
                     display,
-                    &gpu.uniforms, 
-                    &gpu.assets,
+                    &gpu.database.lock().unwrap().uniforms, 
+                    &gpu.database.lock().unwrap().assets,
                     &mut self.gpu_assets
                 );
             }             
@@ -60,31 +62,31 @@ impl Renderer {
         
         // construct gpu programs
         // Pas fou !
-        if self.gpu_assets.get_program(gpu.globals.global_shaders.gouraud).is_none() {
-            if let Some(program) = gpu.assets.get_program(gpu.globals.global_shaders.gouraud) {
+        if self.gpu_assets.get_program(gpu.database.lock().unwrap().globals.global_shaders.gouraud).is_none() {
+            if let Some(program) = gpu.database.lock().unwrap().assets.get_program(gpu.database.lock().unwrap().globals.global_shaders.gouraud) {
                 program.prepare_rendering(
                     display, 
-                    &gpu.assets, 
+                    &gpu.database.lock().unwrap().assets, 
                     &mut self.gpu_assets
                 )
             }   
         }
 
-        if self.gpu_assets.get_program(gpu.globals.global_shaders.gouraud_textured).is_none() {
-            if let Some(program) = gpu.assets.get_program(gpu.globals.global_shaders.gouraud_textured) {
+        if self.gpu_assets.get_program(gpu.database.lock().unwrap().globals.global_shaders.gouraud_textured).is_none() {
+            if let Some(program) = gpu.database.lock().unwrap().assets.get_program(gpu.database.lock().unwrap().globals.global_shaders.gouraud_textured) {
                 program.prepare_rendering(
                     display, 
-                    &gpu.assets, 
+                    &gpu.database.lock().unwrap().assets, 
                     &mut self.gpu_assets
                 )
             }   
         }
 
-        if self.gpu_assets.get_program(gpu.globals.global_shaders.std_2d).is_none() {
-            if let Some(program) = gpu.assets.get_program(gpu.globals.global_shaders.std_2d) {
+        if self.gpu_assets.get_program(gpu.database.lock().unwrap().globals.global_shaders.std_2d).is_none() {
+            if let Some(program) = gpu.database.lock().unwrap().assets.get_program(gpu.database.lock().unwrap().globals.global_shaders.std_2d) {
                 program.prepare_rendering(
                     display, 
-                    &gpu.assets, 
+                    &gpu.database.lock().unwrap().assets, 
                     &mut self.gpu_assets
                 )
             }   
@@ -155,6 +157,8 @@ impl Renderer {
     pub fn render(&mut self, render_target: &RenderTarget, display: &Display, frame: &mut Frame, gpu: &mut GraphicsChip) {        
         // the direction of the light
         //let light = [-1.0, 0.4, 0.9f32];
+
+        let db_lock = gpu.database.lock().unwrap();
         
         let mut framebuffer = SimpleFrameBuffer::with_depth_buffer(
             display, 
@@ -162,7 +166,7 @@ impl Renderer {
             render_target.get_depth_target()
         ).unwrap();
 
-        let clear_color = gpu.globals.clear_color;
+        let clear_color = db_lock.globals.clear_color;
         framebuffer.clear_color_and_depth(
             (
                 clear_color.x,
@@ -178,12 +182,12 @@ impl Renderer {
             render_target.get_dimensions().1
         );
 
-        *gpu.uniforms
-            .get_mat4_mut(gpu.globals.global_uniforms.perspective_matrix)
+        *gpu.database.lock().unwrap().uniforms
+            .get_mat4_mut(db_lock.globals.global_uniforms.perspective_matrix)
             .expect("Perspective matrix uniform missing") = perspective_matrix;
 
-        *gpu.uniforms
-            .get_vec2_mut(gpu.globals.global_uniforms.resolution)
+        *gpu.database.lock().unwrap().uniforms
+            .get_vec2_mut(db_lock.globals.global_uniforms.resolution)
             .expect("Resolution uniform missing") = Vec2::new(
                 render_target.get_dimensions().0 as f32, 
                 render_target.get_dimensions().1 as f32
@@ -192,11 +196,11 @@ impl Renderer {
         for render_pass in gpu.render_passes.iter() {
             // model matrix
             let model_matrix = render_pass.transform.to_matrix();
-            *gpu.uniforms
-                .get_mat4_mut(gpu.globals.global_uniforms.model_matrix)
+            *gpu.database.lock().unwrap().uniforms
+                .get_mat4_mut(db_lock.globals.global_uniforms.model_matrix)
                 .expect("Model matrix uniform missing") = model_matrix;
 
-            let mesh = gpu.assets
+            let mesh = db_lock.assets
                 .get_mesh(render_pass.mesh_id)
                 .expect("Mesh asset not found");
 
@@ -204,12 +208,12 @@ impl Renderer {
                 .get_mesh(render_pass.mesh_id)
                 .expect("Gpu mesh not found");
 
-            let material = gpu.assets
+            let material = db_lock.assets
                 .get_material(mesh.material)
                 .expect("Material not found");
 
             let uniform_values = material
-                .get_uniform_values(&gpu.uniforms, &self.gpu_assets)
+                .get_uniform_values(&db_lock.uniforms, &self.gpu_assets)
                 .expect("Unable to generate uniform values");
 
             let program = self.gpu_assets
@@ -274,8 +278,8 @@ impl Renderer {
     }
 
     pub fn post_render(&self, gpu: &mut GraphicsChip) {
-        *gpu.uniforms
-            .get_mat4_mut(gpu.globals.global_uniforms.view_matrix)
+        *gpu.database.lock().unwrap().uniforms
+            .get_mat4_mut(gpu.database.lock().unwrap().globals.global_uniforms.view_matrix)
             .expect("View matrix uniform missing") = Mat4::IDENTITY;
     }
 }
