@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use rlua::{UserData, UserDataMethods};
+use mlua::{UserData, UserDataMethods};
 
 use verdi_math::prelude::Transform;
 

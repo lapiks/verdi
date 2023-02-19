@@ -8,7 +8,7 @@ use glium::glutin::{
         MouseButton as GlutinMouseButton
     }
 };
-use rlua::UserData;
+use mlua::UserData;
 use verdi_math::Vec2;
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]

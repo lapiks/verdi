@@ -1,6 +1,6 @@
 use std::sync::{Mutex, Arc};
 
-use rlua::{UserData, UserDataMethods};
+use mlua::{UserData, UserDataMethods};
 use slotmap::{new_key_type, Key};
 
 use crate::{

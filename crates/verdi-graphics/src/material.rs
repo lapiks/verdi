@@ -8,7 +8,7 @@ use glium::{
     Display
 };
 
-use rlua::{UserData, UserDataMethods, prelude::LuaValue};
+use mlua::{UserData, UserDataMethods, prelude::LuaValue};
 use slotmap::{new_key_type, Key};
 
 use crate::{

@@ -1,6 +1,6 @@
 use std::sync::{Mutex, Arc};
 
-use rlua::{Lua, Result};
+use mlua::{Lua, Result};
 
 use crate::inputs::{Inputs, Key, MouseButton};
 
@@ -21,34 +21,30 @@ impl<'lua> BindInputs {
     }
 
     pub fn bind(lua: &Lua, inputs: Arc<Mutex<Inputs>>) -> Result<()> {
-        lua.context(move |lua_ctx| {
-            let globals = lua_ctx.globals();
-    
-            // create inputs module table
-            let module_table = lua_ctx.create_table()?;
-            
-            // add functions
-            {
-                let inputs = inputs.clone();
-                let func = lua_ctx.create_function(move |_, key: String| Ok(BindInputs::get_key_down(inputs.clone(), &key)))?;
-                module_table.set("getKeyDown", func)?;
-            }
-            {
-                let inputs = inputs.clone();
-                let func = lua_ctx.create_function(move |_, button: String| Ok(BindInputs::get_button_down(inputs.clone(), &button)))?;
-                module_table.set("getButtonDown", func)?;
-            }
-            {
-                let inputs = inputs.clone();
-                let func = lua_ctx.create_function(move |_, ()| Ok(BindInputs::get_mouse_delta(inputs.clone())))?;
-                module_table.set("getMouseDelta", func)?;
-            }
+        let globals = lua.globals();
 
-            // add table to globals
-            globals.set("input", module_table)?;
-    
-            Ok(())
-        })?;
+        // create inputs module table
+        let module_table = lua.create_table()?;
+        
+        // add functions
+        {
+            let inputs = inputs.clone();
+            let func = lua.create_function(move |_, key: String| Ok(BindInputs::get_key_down(inputs.clone(), &key)))?;
+            module_table.set("getKeyDown", func)?;
+        }
+        {
+            let inputs = inputs.clone();
+            let func = lua.create_function(move |_, button: String| Ok(BindInputs::get_button_down(inputs.clone(), &button)))?;
+            module_table.set("getButtonDown", func)?;
+        }
+        {
+            let inputs = inputs.clone();
+            let func = lua.create_function(move |_, ()| Ok(BindInputs::get_mouse_delta(inputs.clone())))?;
+            module_table.set("getMouseDelta", func)?;
+        }
+
+        // add table to globals
+        globals.set("input", module_table)?;
 
         Ok(())
     }

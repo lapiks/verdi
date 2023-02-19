@@ -4,7 +4,7 @@ use glium::uniforms::{
     MinifySamplerFilter,
     MagnifySamplerFilter
 };
-use rlua::UserData;
+use mlua::UserData;
 use slotmap::{new_key_type, SlotMap};
 use verdi_math::{Mat4, Vec2};
 

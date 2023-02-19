@@ -1,4 +1,4 @@
-use rlua::{UserData, UserDataMethods};
+use mlua::{UserData, UserDataMethods};
 
 use crate::{Vec3, Quat, Mat4};
 

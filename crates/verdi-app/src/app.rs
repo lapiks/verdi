@@ -3,7 +3,7 @@ use glium::{
     Surface,
 };
 
-use rlua::Lua;
+use mlua::Lua;
 
 use std::{path::Path, sync::{Arc, Mutex}};
 

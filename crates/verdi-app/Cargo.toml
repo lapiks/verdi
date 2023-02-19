@@ -16,5 +16,5 @@ glium = "*"
 egui = { version = "0.20.1", default-features = true }
 egui_glium = "0.20.1"
 syntect = "5.0"
-rlua = "0.19.4"
+mlua = { version = "0.8", features = ["lua54", "vendored"] }
 thiserror = "1.0.34"

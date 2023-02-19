@@ -7,9 +7,9 @@ use glam::{
     Quat
 };
 
-use rlua::UserData;
+use mlua::UserData;
 
-// wrapping glam types in our own types to be able to implement external rlua UserData trait on them
+// wrapping glam types in our own types to be able to implement external mlua UserData trait on them
 
 // Vec2
 #[derive(Clone, Copy, PartialEq)]

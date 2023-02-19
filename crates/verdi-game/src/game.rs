@@ -1,7 +1,7 @@
 use std::{rc::Rc, cell::RefCell, path::{Path, PathBuf}, sync::{Arc, Mutex}};
 
 use glium::{Display, Frame, glutin::event::{WindowEvent, DeviceEvent}};
-use rlua::Lua;
+use mlua::Lua;
 use verdi_graphics::prelude::{
     GraphicsChip, 
     Renderer, 
@@ -26,7 +26,7 @@ pub enum GameError {
     #[error("Reading lua script failed")]
     ReadLuaScriptFailed(#[from] std::io::Error),
     #[error("Cannot evaluate lua code")]
-    LuaError(#[from] rlua::Error),
+    LuaError(#[from] mlua::Error),
     #[error("File watcher error")]
     FileWatcherError(#[from] FileWatcherError),
     #[error("Game folder doesn't exists")]

@@ -1,7 +1,7 @@
 use std::sync::{Mutex, Arc};
 
 use glium::Display;
-use rlua::{UserData, UserDataMethods, Table};
+use mlua::{UserData, UserDataMethods, Table};
 use slotmap::{new_key_type, Key};
 
 use crate::{

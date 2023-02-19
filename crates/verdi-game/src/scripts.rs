@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::{PathBuf, Path}, fs::OpenOptions, io::Write, time::Duration};
 
-use rlua::Lua;
+use mlua::Lua;
 use verdi_utils::{read_at_path, make_relative_path};
 
 use thiserror::Error;

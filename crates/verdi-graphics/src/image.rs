@@ -2,7 +2,7 @@
 use std::path::Path;
 use glium::Display;
 use image::{io::Reader as ImageReader, RgbaImage, ImageError};
-use rlua::UserData;
+use mlua::UserData;
 use slotmap::{new_key_type, Key};
 
 use crate::{

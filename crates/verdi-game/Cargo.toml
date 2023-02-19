@@ -11,6 +11,6 @@ verdi-input = { path = "../verdi-input" }
 verdi-utils = { path = "../verdi-utils" }
 verdi-math = { path = "../verdi-math" }
 glium = "*"
-rlua = "0.19.4"
+mlua = { version = "0.8", features = ["lua54", "vendored"] }
 thiserror = "1.0.34"
 notify = "5.0.0"
