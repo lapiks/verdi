@@ -41,8 +41,8 @@ impl NodeHandle {
 
     pub fn draw(&self) {
         let gpu = self.scene.gpu.lock().unwrap();
-        let db_lock = gpu.database.lock().unwrap();
-        let scene = db_lock.assets.get_scene(self.scene.id).unwrap();
+        let db = gpu.database.borrow();
+        let scene = db.assets.get_scene(self.scene.id).unwrap();
         let node = scene.get_node(self.node_index).unwrap();
 
         let mut gpu_mut = self.scene.gpu.lock().unwrap();

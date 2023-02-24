@@ -1,9 +1,10 @@
-use std::sync::{Arc, Mutex};
+use std::{rc::Rc, cell::RefCell};
 
 use verdi_graphics::prelude::{
     GraphicsChip, 
     Renderer, 
-    DataBase,
+    DataBase, 
+    Globals,
 };
 
 pub struct WorldEditor {
@@ -12,8 +13,8 @@ pub struct WorldEditor {
 }
 
 impl WorldEditor {
-    pub fn new(db: Arc<Mutex<DataBase>>) -> Self {
-        let gpu = GraphicsChip::new(db)
+    pub fn new(db: Rc<RefCell<DataBase>>, globals: Rc<Globals>) -> Self {
+        let gpu = GraphicsChip::new(db, globals)
             .expect("World Editor GraphicsChip initialisation failed");
 
         Self {

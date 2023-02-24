@@ -1,28 +1,29 @@
-use verdi_math::{Vec2, Vec4, Mat4};
+use verdi_math::{Vec2, Mat4};
 
 use crate::{
     uniforms::{UniformId, Uniforms}, 
     program::{ProgramId, Program}, 
     assets::Assets, 
-    shader::Shader
+    shader::Shader, database::DataBase
 };
 
+#[derive(Clone)]
 pub struct Globals {
     pub global_shaders: GlobalShaders,
-    pub global_uniforms: GlobalUniforms, 
-    pub clear_color: Vec4, // Pourrait aller dans une struct PipelineState
+    pub global_uniforms: GlobalUniforms,
 }
 
 impl Globals {
-    pub fn new(assets: &mut Assets, uniforms: &mut Uniforms) -> Result<Self, std::io::Error> {
+    pub fn new(database: &mut DataBase) -> Result<Self, std::io::Error> {
         Ok(Self {
-            global_shaders: GlobalShaders::new(assets)?,
-            global_uniforms: GlobalUniforms::new(uniforms),
-            clear_color: Vec4::new(0.0, 0.0, 0.0, 1.0),
+            global_shaders: GlobalShaders::new(&mut database.assets)?,
+            global_uniforms: GlobalUniforms::new(&mut database.uniforms),
         })
     }
 }
 
+/// Indicates where to find the global uniforms in the uniform database.
+#[derive(Clone)]
 pub struct GlobalUniforms {
     pub model_matrix: UniformId,
     pub view_matrix: UniformId,
@@ -35,7 +36,7 @@ pub struct GlobalUniforms {
 }
 
 impl GlobalUniforms {
-    pub fn new(uniforms: &mut Uniforms) -> Self{
+    pub fn new(uniforms: &mut Uniforms) -> Self {
         Self {
             model_matrix: uniforms.add_mat4(Mat4::IDENTITY),
             view_matrix: uniforms.add_mat4(Mat4::IDENTITY),
@@ -46,9 +47,11 @@ impl GlobalUniforms {
             fog_start: uniforms.add_float(0.0),
             fog_end: uniforms.add_float(0.0),
         }
-    }    
+    }
 }
 
+/// Indicates where to find the global shaders in the database
+#[derive(Clone)]
 pub struct GlobalShaders {
     pub gouraud: ProgramId,
     pub gouraud_textured: ProgramId,

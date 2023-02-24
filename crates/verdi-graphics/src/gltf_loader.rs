@@ -14,7 +14,8 @@ use crate::{
     node::Node,
     vertex::Vertex, 
     scene::Scene, 
-    data_base::DataBase, 
+    database::DataBase, 
+    globals::Globals, 
 };
 
 #[derive(Error, Debug)]
@@ -30,7 +31,7 @@ pub enum GltfError {
 pub struct GltfLoader;
 
 impl GltfLoader {
-    pub fn load<P: AsRef<Path>>(path: P, render_resources: &mut DataBase) -> Result<Scene, GltfError> {
+    pub fn load<P: AsRef<Path>>(path: P, render_resources: &mut DataBase, globals: &Globals) -> Result<Scene, GltfError> {
         let mut scene = Scene::new();
 
         let gltf = gltf::Gltf::open(path.as_ref())?;
@@ -63,7 +64,7 @@ impl GltfLoader {
                     GltfLoader::load_material(
                         gltf_material,
                         &texture_uniforms, 
-                        render_resources
+                        globals
                     )
                 )
             )
@@ -180,14 +181,12 @@ impl GltfLoader {
         Ok(source)
     }
 
-    fn load_material(gltf_material: gltf::Material, textures: &Vec<UniformId>, render_resources: &DataBase) -> Material {
+    fn load_material(gltf_material: gltf::Material, textures: &Vec<UniformId>, globals: &Globals) -> Material {
         let texture_id = gltf_material
             .pbr_metallic_roughness()
             .base_color_texture()
             .map(|info| info.texture().index())
             .and_then(|i| textures.get(i).cloned());
-        
-        let globals = &render_resources.globals;
 
         let mut material = Material::new(globals.global_shaders.gouraud_textured, &globals.global_uniforms);
         material.add_uniform("u_enable_fog", globals.global_uniforms.enable_fog);

@@ -1,4 +1,4 @@
-use std::{sync::{Arc, Mutex}};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     vertex::Vertex, 
@@ -12,7 +12,7 @@ use crate::{
     material::{Material, MaterialId}, 
     globals::Globals, 
     mesh::{MeshId, Mesh, PrimitiveType}, 
-    prelude::DataBase,
+    prelude::DataBase, render_state::RenderState,
 };
 
 use image::ImageError;
@@ -22,27 +22,20 @@ use verdi_math::prelude::*;
 pub struct GraphicsChip {
     pub render_passes: Vec<RenderPass>,
     pub stream_buffer: StreamBufferState,
-    pub database: Arc<Mutex<DataBase>>,
+    pub database: Rc<RefCell<DataBase>>,
+    pub globals: Rc<Globals>,
+    pub render_state: RenderState,
 }
 
 // Public API
 impl GraphicsChip {
-    pub fn new(database: Arc<Mutex<DataBase>>) -> Result<Self, std::io::Error> {
-        let mut assets = Assets::new();
-        let mut uniforms = Uniforms::default();
-
-        // create globals
-        let globals = Globals::new(
-            &mut assets, 
-            &mut uniforms,
-        )?;
-
-        let mat_2d = assets.add_material(
+    pub fn new(database: Rc<RefCell<DataBase>>, globals: Rc<Globals>) -> Result<Self, std::io::Error> {
+        let mat_2d = database.borrow_mut().assets.add_material(
             Material::new(globals.global_shaders.gouraud, &globals.global_uniforms)
                 .clone()
         );
 
-        let streaming_mesh = assets.add_mesh(
+        let streaming_mesh = database.borrow_mut().assets.add_mesh(
             Mesh::new(
                 vec![Vertex::default(); 1024 * 1024],
                 None,
@@ -62,6 +55,8 @@ impl GraphicsChip {
             render_passes: Vec::new(),
             stream_buffer,
             database,
+            globals,
+            render_state: RenderState::new(),
         })
     }
 
@@ -70,9 +65,9 @@ impl GraphicsChip {
     }
 
     pub fn on_game_shutdown(&mut self) {
-        self.database.lock().unwrap().assets.clear();
+        self.database.borrow_mut().assets.clear();
         self.render_passes.clear();
-        self.database.lock().unwrap().uniforms.clear();
+        self.database.borrow_mut().uniforms.clear();
     }
 
     pub fn new_frame(&mut self) {
@@ -177,7 +172,7 @@ impl GraphicsChip {
     pub fn new_image(&mut self, path: &String) -> Result<ImageId, ImageError> {
         let image = Image::new(path)?;
 
-        Ok(self.database.lock().unwrap().assets.add_texture(image))
+        Ok(self.database.borrow_mut().assets.add_texture(image))
     }
 
     pub fn bind_texture(&mut self, image: ImageHandle) {
@@ -190,15 +185,15 @@ impl GraphicsChip {
     }
 
     pub fn draw_scene(&mut self, scene_id: SceneId) {
-        let db_lock = self.database.lock().unwrap();
-        let scene = db_lock.assets.get_scene(scene_id).unwrap();
+        let db = self.database.borrow();
+        let scene = db.assets.get_scene(scene_id).unwrap();
         for node in scene.nodes.iter() {
             // nothing to draw
             if node.mesh.is_none() {
                 continue;
             }
 
-            if let Some(mesh) = db_lock.assets.get_mesh(node.mesh.unwrap()) {
+            if let Some(mesh) = db.assets.get_mesh(node.mesh.unwrap()) {
                 self.render_passes.push(
                     RenderPass { 
                         mesh_id: mesh.id,
@@ -210,7 +205,7 @@ impl GraphicsChip {
     }
 
     pub fn draw_mesh(&mut self, mesh_id: MeshId) {
-        if let Some(mesh) = self.database.lock().unwrap().assets.get_mesh(mesh_id) {
+        if let Some(mesh) = self.database.borrow().assets.get_mesh(mesh_id) {
             self.render_passes.push(
                 RenderPass { 
                     mesh_id: mesh.id,
@@ -226,7 +221,7 @@ impl GraphicsChip {
             return;
         }
 
-        if let Some(mesh) = self.database.lock().unwrap().assets.get_mesh(node.mesh.unwrap()) {
+        if let Some(mesh) = self.database.borrow().assets.get_mesh(node.mesh.unwrap()) {
             self.render_passes.push(
                 RenderPass { 
                     mesh_id: mesh.id,
@@ -237,9 +232,9 @@ impl GraphicsChip {
     }
 
     pub fn new_scene(&mut self, path: &String) -> Result<SceneId, GltfError> {
-        let scene = GltfLoader::load(path, &mut self.database.lock().unwrap())?;
+        let scene = GltfLoader::load(path, &mut self.database.borrow_mut(), &self.globals)?;
 
-        Ok(self.database.lock().unwrap().assets.add_scene(scene))
+        Ok(self.database.borrow_mut().assets.add_scene(scene))
     }
     
     pub fn new_mesh(&mut self) -> Result<MeshId, GltfError> {
@@ -248,7 +243,7 @@ impl GraphicsChip {
 
         let material_id = self.new_material();
 
-        Ok(self.database.lock().unwrap().assets.add_mesh(
+        Ok(self.database.borrow_mut().assets.add_mesh(
             Mesh::new(
                 vertex_buffer,
                 index_buffer,
@@ -259,74 +254,72 @@ impl GraphicsChip {
     }
 
     pub fn new_material(&mut self) -> MaterialId {
-        let mut db_lock = self.database.lock().unwrap();
-        let mut material = Material::new(db_lock.globals.global_shaders.gouraud, &db_lock.globals.global_uniforms);
-        material.add_uniform("u_fog_start", db_lock.globals.global_uniforms.fog_start);
-        material.add_uniform("u_fog_end", db_lock.globals.global_uniforms.fog_end);
-        material.add_uniform("u_enable_lighting", db_lock.globals.global_uniforms.enable_lighting);
+        let mut material = Material::new(self.globals.global_shaders.gouraud, &self.globals.global_uniforms);
+        material.add_uniform("u_fog_start", self.globals.global_uniforms.fog_start);
+        material.add_uniform("u_fog_end", self.globals.global_uniforms.fog_end);
+        material.add_uniform("u_enable_lighting", self.globals.global_uniforms.enable_lighting);
 
-        db_lock.assets.add_material(
+        self.database.borrow_mut().assets.add_material(
             material
         )
     }
 
     pub fn new_uniform_float(&mut self, value: f32) -> UniformId {
-        self.database.lock().unwrap().uniforms.add_float(value)
+        self.database.borrow_mut().uniforms.add_float(value)
     }
 
     pub fn new_uniform_vec2(&mut self, value: Vec2) -> UniformId {
-        self.database.lock().unwrap().uniforms.add_vec2(value)
+        self.database.borrow_mut().uniforms.add_vec2(value)
     }
 
     pub fn set_clear_color(&mut self, color: &Vec4) {
-        self.database.lock().unwrap().globals.clear_color = *color;
+        self.render_state.clear_color = *color;
     }
 
     pub fn translate(&mut self, v: &Vec3) {
-        *self.database.lock().unwrap().uniforms
+        *self.database.borrow_mut().uniforms
             .get_mat4_mut(
-                self.database.lock().unwrap().globals.global_uniforms.view_matrix
+                self.globals.global_uniforms.view_matrix
             ).unwrap() 
                 *= Mat4::from_translation(*v);
     }
 
     pub fn rotate(&mut self, angle: f32, axis: &Vec3) {
-        *self.database.lock().unwrap().uniforms
+        *self.database.borrow_mut().uniforms
             .get_mat4_mut(
-                self.database.lock().unwrap().globals.global_uniforms.view_matrix
+                self.globals.global_uniforms.view_matrix
             ).unwrap() 
                 *= Mat4::from_axis_angle(*axis, angle);
     }
 
     pub fn enable_lighting(&mut self, value: bool) {
-        let mut db_lock = self.database.lock().unwrap();
-        *db_lock.uniforms
+        *self.database.borrow_mut().uniforms
             .get_boolean_mut(
-                self.database.lock().unwrap().globals.global_uniforms.enable_lighting
+                self.globals.global_uniforms.enable_lighting
             ).unwrap() 
                 = value;
     }
 
     pub fn enable_fog(&mut self, value: bool) {
-        *self.database.lock().unwrap().uniforms
+        *self.database.borrow_mut().uniforms
             .get_boolean_mut(
-                self.database.lock().unwrap().globals.global_uniforms.enable_fog
+                self.globals.global_uniforms.enable_fog
             ).unwrap() 
                 = value;
     }
 
     pub fn set_fog_start(&mut self, distance: f32) {
-        *self.database.lock().unwrap().uniforms
+        *self.database.borrow_mut().uniforms
             .get_float_mut(
-                self.database.lock().unwrap().globals.global_uniforms.fog_start
+                self.globals.global_uniforms.fog_start
             ).unwrap() 
                 = distance;
     }
 
     pub fn set_fog_end(&mut self, distance: f32) {
-        *self.database.lock().unwrap().uniforms
+        *self.database.borrow_mut().uniforms
             .get_float_mut(
-                self.database.lock().unwrap().globals.global_uniforms.fog_end
+                self.globals.global_uniforms.fog_end
             ).unwrap() 
                 = distance;
     }
@@ -384,8 +377,8 @@ pub struct DrawCommand<'a> {
 // Private impl
 impl GraphicsChip {
     fn request_flush(&mut self, cmd: &DrawCommand) {
-        let mut db_lock = self.database.lock().unwrap();
-        let mesh = db_lock.assets
+        let mut db = self.database.borrow_mut();
+        let mesh = db.assets
             .get_mesh_mut(self.stream_buffer.mesh_id)
             .expect("Primitive not found");
 

@@ -5,9 +5,9 @@ use glium::{
 
 use mlua::Lua;
 
-use std::{path::Path, sync::{Arc, Mutex}};
+use std::{path::Path, cell::RefCell, rc::Rc};
 
-use verdi_graphics::prelude::DataBase;
+use verdi_graphics::prelude::{DataBase, Globals};
 use verdi_window::prelude::*;
 use verdi_game::prelude::{
     Game, 
@@ -35,7 +35,8 @@ pub enum GameState {
 /// Handle events and disptach them to the different systems.
 pub struct App {
     window: Window,
-    database: Arc<Mutex<DataBase>>,
+    database: Rc<RefCell<DataBase>>,
+    globals: Rc<Globals>,
     game: Option<Game>,
     pub game_state: GameState,
     world_editor: WorldEditor,
@@ -44,11 +45,21 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
-        let database = Arc::new(Mutex::new(DataBase::new()));
-        let world_editor = WorldEditor::new(database.clone());
+        let database = Rc::new(
+            RefCell::new(
+                DataBase::new()
+            )
+        );
+        let globals = Rc::new(
+            Globals::new(
+                &mut database.borrow_mut()
+            ).expect("Globals creation failed")
+        );
+        let world_editor = WorldEditor::new(database.clone(), globals.clone());
         Self {
             window: Window::new(1920, 1080),
             database,
+            globals,
             game: None,
             game_state: GameState::Loaded,
             world_editor,
@@ -183,7 +194,7 @@ impl App {
         }
 
         self.game = Some(
-            Game::new(path, self.window.get_display(), self.database.clone())?
+            Game::new(path, self.window.get_display(), self.database.clone(), self.globals.clone())?
         );
 
         if let Some(game) = self.game.as_mut() {
