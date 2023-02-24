@@ -24,6 +24,7 @@ new_key_type! {
     pub struct MaterialId;
 }
 
+/// A material defines the program and uniforms to use when rendering a mesh.
 #[derive(Clone)]
 pub struct Material {
     pub program: ProgramId,

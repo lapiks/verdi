@@ -7,6 +7,7 @@ use crate::{
     shader::Shader, database::DataBase
 };
 
+/// Indicates where to find some globals (shader and uniforms) in the database
 #[derive(Clone)]
 pub struct Globals {
     pub global_shaders: GlobalShaders,

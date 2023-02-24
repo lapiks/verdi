@@ -1,11 +1,10 @@
 use verdi_math::Vec4;
 
-use crate::uniforms::Uniforms;
-
 pub struct RenderState {
     pub clear_color: Vec4,
 }
 
+/// A struct defining some global render state.
 impl RenderState {
     pub fn new() -> Self {
         Self {

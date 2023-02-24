@@ -17,10 +17,13 @@ use crate::{
     render_target::RenderTarget, 
 };
 
-// Low level interface to GPU. 
-// Given some renderable GPU assets, the Renderer is able to draw them using the render function. 
+// Le renderer pourrait être plus bas niveau. 
+// Une fonction render() pourrait prendre en paramètre un Renderable définissant toutes les infos nécessaire pour rendre un mesh.
+
+/// Low level interface to GPU. 
+/// Given some renderable GPU assets, the Renderer is able to draw them using the render function. 
 pub struct Renderer {
-    gpu_assets: GpuAssets, // devrait être sorti du renderer. Dans DataBase ?
+    gpu_assets: GpuAssets, // devrait être sorti du renderer. Dans GpuDataBase ?
 }
 
 impl Renderer {
