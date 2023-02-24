@@ -39,7 +39,7 @@ pub struct Game {
     gpu: Arc<Mutex<GraphicsChip>>,
     renderer: Renderer,
     render_target: RenderTarget,
-    inputs: Arc<Mutex<Inputs>>,
+    inputs: Rc<RefCell<Inputs>>,
     path: PathBuf,
     scripts: Rc<RefCell<Scripts>>,
     pub time_step: TimeStep,
@@ -52,12 +52,6 @@ impl Game {
                 Mutex::new(
                     GraphicsChip::new(database, globals)
                         .expect("GraphicsChip initialisation failed")
-                )
-            );
-    
-            let inputs = Arc::new(
-                Mutex::new(
-                    Inputs::new()
                 )
             );
 
@@ -73,7 +67,7 @@ impl Game {
             gpu,
             renderer,
             render_target,
-            inputs,
+            inputs: Rc::new(RefCell::new(Inputs::new())),
             path: path.as_ref().to_path_buf(),
             scripts: Rc::new(RefCell::new(Scripts::new(path)?)),
             time_step: TimeStep::new(),
@@ -82,7 +76,7 @@ impl Game {
     }
 
     pub fn load(&mut self) -> Result<(), GameError> {
-        Ok(self.scripts.borrow_mut().load_dir(&self.path)?)
+        Ok(self.scripts.as_ref().borrow_mut().load_dir(&self.path)?)
     }
 
     /// called at the start of the game execution
@@ -106,7 +100,7 @@ impl Game {
     pub fn run(&mut self, lua: &Lua) {
         let delta_time = self.time_step.tick();
         
-        self.scripts.borrow_mut().hot_reload(lua);
+        self.scripts.as_ref().borrow_mut().hot_reload(lua);
 
         // callbacks
         if let Err(err) = LuaContext::call_run(lua, delta_time) {
@@ -141,11 +135,11 @@ impl Game {
     }
 
     pub fn on_window_event(&mut self, event: &WindowEvent) {
-        self.inputs.lock().unwrap().process_win_events(event)
+        self.inputs.borrow_mut().process_win_events(event)
     }
 
     pub fn on_device_event(&mut self, event: &DeviceEvent) {
-        self.inputs.lock().unwrap().process_device_events(event);
+        self.inputs.borrow_mut().process_device_events(event);
     }
 
     pub fn shutdown(&mut self) {
