@@ -10,6 +10,7 @@ verdi-graphics = { path = "../verdi-graphics" }
 verdi-input = { path = "../verdi-input" }
 verdi-utils = { path = "../verdi-utils" }
 verdi-math = { path = "../verdi-math" }
+verdi-ecs = { path = "../verdi-ecs" }
 glium = "*"
 mlua = { version = "0.8", features = ["lua54", "vendored"] }
 thiserror = "1.0.34"

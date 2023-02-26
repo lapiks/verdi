@@ -1,5 +1,38 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::entity::{EntityId, EntityRef};
 use crate::component::{ComponentVec};
+
+#[derive(Clone)]
+pub struct WorldHandle {
+    inner: Rc<RefCell<World>>,
+}
+
+impl WorldHandle {
+    pub fn new(world: Rc<RefCell<World>>) -> Self {
+        Self {
+            inner: world,
+        }
+    }
+
+    pub fn spawn(&self) -> EntityRef {
+        EntityRef::new(
+            self.inner.clone(), 
+            self.inner.borrow_mut().spawn()
+        )
+    }
+
+    pub fn entity(&self, entity: EntityId) -> Option<EntityRef>{
+        if let Some(entity_id) = self.inner.borrow_mut().entity(entity) {
+            return Some(EntityRef::new(
+                self.inner.clone(), 
+                entity_id
+            ));
+        }
+        None
+    }
+}
 
 pub struct World {
     entities_count: usize,
@@ -22,7 +55,7 @@ impl World {
         }
     }
 
-    pub fn spawn(&mut self) -> EntityRef {
+    pub fn spawn(&mut self) -> EntityId {
         let entity_id = self.entities_count;
         // add a new empty entry in each component columns
         for component_vec in self.component_vecs.iter_mut() {
@@ -30,7 +63,8 @@ impl World {
         }
         self.entities_count += 1;
         self.entities.push(entity_id as EntityId);
-        EntityRef::new(self, entity_id as EntityId)
+
+        entity_id as EntityId
     }
 
     pub fn despawn(&mut self, entity: EntityId) -> EntityResult {
@@ -46,9 +80,9 @@ impl World {
         }
     }
 
-    pub fn entity(&mut self, entity: EntityId) -> Option<EntityRef> {
+    pub fn entity(&mut self, entity: EntityId) -> Option<EntityId> {
         let id = self.entities.get(entity as usize)?;
-        Some(EntityRef::new(self, *id))
+        Some(*id)
     }
 
     pub(crate) fn add_component_to_entity<ComponentType: 'static>(

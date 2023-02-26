@@ -2,6 +2,7 @@ use std::{rc::Rc, cell::RefCell, path::{Path, PathBuf}};
 
 use glium::{Display, Frame, glutin::event::{WindowEvent, DeviceEvent}};
 use mlua::Lua;
+use verdi_ecs::prelude::{WorldHandle, World};
 use verdi_graphics::prelude::{
     GraphicsChip, 
     Renderer, 
@@ -36,6 +37,7 @@ pub enum GameError {
 
 /// The Game system.
 pub struct Game {
+    world: WorldHandle,
     gpu: Rc<RefCell<GraphicsChip>>,
     renderer: Renderer,
     render_target: RenderTarget,
@@ -63,7 +65,14 @@ impl Game {
                 240)
                 .expect("Render target creation failed");
 
+            let world = Rc::new(
+                RefCell::new(
+                    World::new()
+                )
+            );
+
         Ok(Self { 
+            world: WorldHandle::new(world),
             gpu,
             renderer,
             render_target,
