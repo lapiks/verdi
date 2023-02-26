@@ -1,6 +1,6 @@
 use std::{rc::Rc, cell::RefCell};
 
-use mlua::UserData;
+use mlua::{UserData, UserDataMethods};
 
 use crate::world::World;
 
@@ -34,4 +34,18 @@ impl EntityRef {
     }
 }
 
-impl UserData for EntityRef {}
+impl UserData for EntityRef {
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        // methods.add_method_mut("add", |_, mesh, ()| {
+        //     Ok()
+        // });
+
+        // methods.add_method_mut("remove", |_, mesh, ()| {
+        //     Ok()
+        // });
+
+        // methods.add_method("id", |_, entity, ()| {
+        //     Ok(entity.id())
+        // });
+    }
+}

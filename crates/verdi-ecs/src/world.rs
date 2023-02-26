@@ -23,7 +23,12 @@ impl WorldHandle {
         )
     }
 
-    pub fn entity(&self, entity: EntityId) -> Option<EntityRef>{
+    pub fn despawn(&self, entity: EntityId) {
+        // que retourner à lua ? EntityError ?
+        self.inner.borrow_mut().despawn(entity);
+    }
+
+    pub fn entity(&self, entity: EntityId) -> Option<EntityRef> {
         if let Some(entity_id) = self.inner.borrow_mut().entity(entity) {
             return Some(EntityRef::new(
                 self.inner.clone(), 

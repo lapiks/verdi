@@ -1,17 +1,13 @@
 use mlua::{Lua, Result};
 
 use crate::{
-    world::{WorldHandle}, 
-    entity::EntityRef
+    world::WorldHandle, 
+    entity::EntityId
 };
 
 pub struct BindWorld;
 
 impl<'lua> BindWorld {
-    fn spawn(world: WorldHandle) -> EntityRef {
-        world.spawn()
-    }
-
     pub fn bind(lua: &Lua, world: WorldHandle) -> Result<()> {
         let globals = lua.globals();
 
@@ -20,8 +16,19 @@ impl<'lua> BindWorld {
         
         // add functions
         {
-            let func = lua.create_function(move |_, ()| Ok(BindWorld::spawn(world.clone())))?;
+            let world = world.clone();
+            let func = lua.create_function(move |_, ()| Ok(world.spawn()))?;
             module_table.set("spawn", func)?;
+        }
+        {
+            let world = world.clone();
+            let func = lua.create_function(move |_, entity: EntityId| Ok(world.despawn(entity)))?;
+            module_table.set("despawn", func)?;
+        }
+        {
+            let world = world.clone();
+            let func = lua.create_function(move |_, entity: EntityId| Ok(world.entity(entity)))?;
+            module_table.set("entity", func)?;
         }
 
         // add table to globals
