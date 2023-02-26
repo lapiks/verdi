@@ -11,12 +11,9 @@ pub struct DataBase {
 
 impl DataBase {
     pub fn new() -> Self {
-        let mut assets = Assets::new();
-        let mut uniforms = Uniforms::new();
-
         Self {
-            assets,
-            uniforms,
+            assets: Assets::new(),
+            uniforms: Uniforms::new(),
         }
     }
 }
