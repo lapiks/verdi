@@ -1,4 +1,4 @@
-use std::sync::{Mutex, Arc};
+use std::{cell::RefCell, rc::Rc};
 
 use glium::Display;
 use mlua::{UserData, UserDataMethods, Table};
@@ -102,12 +102,12 @@ impl Mesh {
 
 #[derive(Clone)]
 pub struct MeshHandle {
-    pub gpu: Arc<Mutex<GraphicsChip>>,
+    pub gpu: Rc<RefCell<GraphicsChip>>,
     pub id: MeshId,
 }
 
 impl MeshHandle {
-    pub fn new(gpu: Arc<Mutex<GraphicsChip>>, id: MeshId) -> Self{
+    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, id: MeshId) -> Self{
         Self { 
             gpu,
             id,
@@ -115,18 +115,17 @@ impl MeshHandle {
     }
 
     pub fn set_vertices(&mut self, vertices: Table) {
-        let gpu = self.gpu.lock().unwrap();
-        let mut db = gpu.database.borrow_mut();
-        let mesh = db.assets.get_mesh_mut(self.id).unwrap();
-        
-        if let Ok(v_length) = vertices.len() {
-            mesh.vertex_buffer.resize(v_length as usize, Vertex::default());
-            // fill mesh
-            for (vertex_index, vertex) in vertices.sequence_values::<Table>().enumerate() {
-                if let Ok(vertex) = vertex {
-                    for (comp_index, comp) in vertex.sequence_values::<f32>().enumerate() {
-                        if let Ok(comp) = comp {
-                            mesh.vertex_buffer[vertex_index].position[comp_index] = comp;
+        if let Some(mesh) = self.gpu.borrow().database.borrow_mut().assets.get_mesh_mut(self.id)
+        {
+            if let Ok(v_length) = vertices.len() {
+                mesh.vertex_buffer.resize(v_length as usize, Vertex::default());
+                // fill mesh
+                for (vertex_index, vertex) in vertices.sequence_values::<Table>().enumerate() {
+                    if let Ok(vertex) = vertex {
+                        for (comp_index, comp) in vertex.sequence_values::<f32>().enumerate() {
+                            if let Ok(comp) = comp {
+                                mesh.vertex_buffer[vertex_index].position[comp_index] = comp;
+                            }
                         }
                     }
                 }
@@ -135,15 +134,14 @@ impl MeshHandle {
     }
 
     pub fn set_primitive_type(&mut self, primitive_type: PrimitiveType) {
-        let gpu = self.gpu.lock().unwrap();
-        let mut db = gpu.database.borrow_mut();
-        let mesh = db.assets.get_mesh_mut(self.id).unwrap();
-
-        mesh.primitive_type = primitive_type;
+        if let Some(mesh) = self.gpu.borrow().database.borrow_mut().assets.get_mesh_mut(self.id)
+        {
+            mesh.primitive_type = primitive_type;
+        }
     }
 
     pub fn draw(&self) {
-        self.gpu.lock().unwrap().draw_mesh(self.id);
+        self.gpu.borrow_mut().draw_mesh(self.id);
     }
 }
 

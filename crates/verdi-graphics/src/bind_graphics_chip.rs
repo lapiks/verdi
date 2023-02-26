@@ -1,4 +1,4 @@
-use std::sync::{Mutex, Arc};
+use std::{rc::Rc, cell::RefCell};
 use mlua::{Lua, Result};
 
 use verdi_math::prelude::*;
@@ -12,97 +12,93 @@ use crate::{
 pub struct BindGraphicsChip;
 
 impl<'lua> BindGraphicsChip {
-    fn begin_object(gpu: Arc<Mutex<GraphicsChip>>, primitive_type: &String) {
+    fn begin_object(gpu: &mut GraphicsChip, primitive_type: &String) {
         let enum_val = PrimitiveType::from(primitive_type.clone());
-        gpu.lock().unwrap().begin(enum_val);
+        gpu.begin(enum_val);
     }
 
-    fn end_object(gpu: Arc<Mutex<GraphicsChip>>) {
-        gpu.lock().unwrap().end();
+    fn end_object(gpu: &mut GraphicsChip) {
+        gpu.end();
     }
 
-    fn vertex(gpu: Arc<Mutex<GraphicsChip>>, coords: &Vec3) {
-        gpu.lock().unwrap().vertex(coords);
+    fn vertex(gpu: &mut GraphicsChip, coords: &Vec3) {
+        gpu.vertex(coords);
     }
 
-    fn normal(gpu: Arc<Mutex<GraphicsChip>>, coords: &Vec3) {
-        gpu.lock().unwrap().normal(coords);
+    fn normal(gpu: &mut GraphicsChip, coords: &Vec3) {
+        gpu.normal(coords);
     }
 
-    fn tex_coord(gpu: Arc<Mutex<GraphicsChip>>, coords: &Vec2) {
-        gpu.lock().unwrap().tex_coord(coords);
+    fn tex_coord(gpu: &mut GraphicsChip, coords: &Vec2) {
+        gpu.tex_coord(coords);
     }
 
-    fn color(gpu: Arc<Mutex<GraphicsChip>>, color: &Vec4) {
-        gpu.lock().unwrap().color(color);
+    fn color(gpu: &mut GraphicsChip, color: &Vec4) {
+        gpu.color(color);
     }
 
-    fn bind_texture(gpu: Arc<Mutex<GraphicsChip>>, image: ImageHandle) {
-        gpu.lock().unwrap().bind_texture(image);
+    fn bind_texture(gpu: &mut GraphicsChip, image: ImageHandle) {
+        gpu.bind_texture(image);
     }
 
     // object construction
-    fn new_image(gpu: Arc<Mutex<GraphicsChip>>, path: &String) -> ImageHandle {
-        let image_id = gpu.lock().unwrap().new_image(path).unwrap();
+    fn new_image(gpu: &mut GraphicsChip, path: &String) -> ImageHandle {
+        let image_id = gpu.new_image(path).unwrap();
         ImageHandle::new(image_id)
     }
 
-    fn new_scene(gpu: Arc<Mutex<GraphicsChip>>, path: &String) -> SceneHandle {
-        let mut gpu_guard = gpu.lock().unwrap();
-        let scene_id = gpu_guard.new_scene(path).unwrap();
+    fn new_scene(gpu: Rc<RefCell<GraphicsChip>>, path: &String) -> SceneHandle {
+        let scene_id = gpu.borrow_mut().new_scene(path).unwrap();
         SceneHandle::new(gpu.clone(), scene_id)
     }
     
-    fn new_mesh(gpu: Arc<Mutex<GraphicsChip>>) -> MeshHandle {
-        let mut gpu_guard = gpu.lock().unwrap();
-        let mesh_id = gpu_guard.new_mesh().unwrap();
+    fn new_mesh(gpu: Rc<RefCell<GraphicsChip>>) -> MeshHandle {
+        let mesh_id = gpu.borrow_mut().new_mesh().unwrap();
         MeshHandle::new(gpu.clone(), mesh_id)
     }
 
-    fn new_material(gpu: Arc<Mutex<GraphicsChip>>) -> MaterialHandle {
-        let mut gpu_guard = gpu.lock().unwrap();
-        let mat_id = gpu_guard.new_material();
+    fn new_material(gpu: Rc<RefCell<GraphicsChip>>) -> MaterialHandle {
+        let mat_id = gpu.borrow_mut().new_material();
         MaterialHandle::new(gpu.clone(), mat_id)
     }
 
-    fn new_uniform(gpu: Arc<Mutex<GraphicsChip>>, value: f32) -> UniformId {
-        let mut gpu_guard = gpu.lock().unwrap();
-        gpu_guard.new_uniform_float(value)
+    fn new_uniform(gpu: &mut GraphicsChip, value: f32) -> UniformId {
+        gpu.new_uniform_float(value)
     }
 
-    fn set_clear_color(gpu: Arc<Mutex<GraphicsChip>>, color: &Vec4) {
-        gpu.lock().unwrap().set_clear_color(color);
+    fn set_clear_color(gpu: &mut GraphicsChip, color: &Vec4) {
+        gpu.set_clear_color(color);
     }
 
-    fn translate(gpu: Arc<Mutex<GraphicsChip>>, v: &Vec3) {
-        gpu.lock().unwrap().translate(v);
+    fn translate(gpu: &mut GraphicsChip, v: &Vec3) {
+        gpu.translate(v);
     }
 
-    fn rotate(gpu: Arc<Mutex<GraphicsChip>>, angle: f32, axis: &Vec3) {
-        gpu.lock().unwrap().rotate(angle, axis);
+    fn rotate(gpu: &mut GraphicsChip, angle: f32, axis: &Vec3) {
+        gpu.rotate(angle, axis);
     }
 
-    fn enable_lighting(gpu: Arc<Mutex<GraphicsChip>>, value: bool) {
-        gpu.lock().unwrap().enable_lighting(value);
+    fn enable_lighting(gpu: &mut GraphicsChip, value: bool) {
+        gpu.enable_lighting(value);
     }
 
-    fn enable_fog(gpu: Arc<Mutex<GraphicsChip>>, value: bool) {
-        gpu.lock().unwrap().enable_fog(value);
+    fn enable_fog(gpu: &mut GraphicsChip, value: bool) {
+        gpu.enable_fog(value);
     }
 
-    fn set_fog_start(gpu: Arc<Mutex<GraphicsChip>>, distance: f32) {
-        gpu.lock().unwrap().set_fog_start(distance);
+    fn set_fog_start(gpu: &mut GraphicsChip, distance: f32) {
+        gpu.set_fog_start(distance);
     }
 
-    fn set_fog_end(gpu: Arc<Mutex<GraphicsChip>>, distance: f32) {
-        gpu.lock().unwrap().set_fog_end(distance);
+    fn set_fog_end(gpu: &mut GraphicsChip, distance: f32) {
+        gpu.set_fog_end(distance);
     }
 
-    fn draw_line(gpu: Arc<Mutex<GraphicsChip>>, p1: &Vec2, p2: &Vec2) {
-        gpu.lock().unwrap().draw_line(p1, p2);
+    fn draw_line(gpu: &mut GraphicsChip, p1: &Vec2, p2: &Vec2) {
+        gpu.draw_line(p1, p2);
     }
 
-    pub fn bind(lua: &Lua, gpu: Arc<Mutex<GraphicsChip>>) -> Result<()> {
+    pub fn bind(lua: &Lua, gpu: Rc<RefCell<GraphicsChip>>) -> Result<()> {
         let globals = lua.globals();
 
         // create graphics module table
@@ -111,12 +107,12 @@ impl<'lua> BindGraphicsChip {
         // add functions
         {
             let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, primitive_type: String| Ok(BindGraphicsChip::begin_object(gpu.clone(), &primitive_type)))?;
+            let func = lua.create_function_mut(move |_, primitive_type: String| Ok(BindGraphicsChip::begin_object(&mut gpu.borrow_mut(), &primitive_type)))?;
             module_table.set("beginObject", func)?;
         }
         {
             let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, ()| Ok(BindGraphicsChip::end_object(gpu.clone())))?;
+            let func = lua.create_function_mut(move |_, ()| Ok(BindGraphicsChip::end_object(&mut gpu.borrow_mut())))?;
             module_table.set("endObject", func)?;
         }
         {
@@ -124,7 +120,7 @@ impl<'lua> BindGraphicsChip {
             let func = lua.create_function_mut(
                 move |_, (x, y ,z): (f32 , f32, f32)| Ok(
                     BindGraphicsChip::vertex(
-                        gpu.clone(), 
+                        &mut gpu.borrow_mut(), 
                         &Vec3::new(x, y, z)
                     )
                 )
@@ -136,7 +132,7 @@ impl<'lua> BindGraphicsChip {
             let func = lua.create_function_mut(
                 move |_, (x, y ,z): (f32 , f32, f32)| Ok(
                     BindGraphicsChip::normal(
-                        gpu.clone(), 
+                        &mut gpu.borrow_mut(), 
                         &Vec3::new(x, y, z)
                     )
                 )
@@ -148,7 +144,7 @@ impl<'lua> BindGraphicsChip {
             let func = lua.create_function_mut(
                 move |_, (u, v): (f32 , f32)| Ok(
                     BindGraphicsChip::tex_coord(
-                        gpu.clone(), 
+                        &mut gpu.borrow_mut(), 
                         &Vec2::new(u, v)
                     )
                 )
@@ -160,7 +156,7 @@ impl<'lua> BindGraphicsChip {
             let func = lua.create_function_mut(
                 move |_, (r, g, b, a): (f32 , f32, f32, f32)| Ok(
                     BindGraphicsChip::color(
-                        gpu.clone(), 
+                        &mut gpu.borrow_mut(), 
                         &Vec4::new(r, g, b, a)
                     )  
                 )
@@ -169,12 +165,12 @@ impl<'lua> BindGraphicsChip {
         }
         {
             let gpu = gpu.clone();
-            let func = lua.create_function(move |_, path: String| Ok(BindGraphicsChip::new_image(gpu.clone(), &path)))?;
+            let func = lua.create_function(move |_, path: String| Ok(BindGraphicsChip::new_image(&mut gpu.borrow_mut(), &path)))?;
             module_table.set("newImage", func)?;
         }
         {
             let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, image: ImageHandle| Ok(BindGraphicsChip::bind_texture(gpu.clone(), image)))?;
+            let func = lua.create_function_mut(move |_, image: ImageHandle| Ok(BindGraphicsChip::bind_texture(&mut gpu.borrow_mut(), image)))?;
             module_table.set("bindTexture", func)?;
         }
         {
@@ -194,7 +190,7 @@ impl<'lua> BindGraphicsChip {
         }
         {
             let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, value: f32| Ok(BindGraphicsChip::new_uniform(gpu.clone(), value)))?;
+            let func = lua.create_function_mut(move |_, value: f32| Ok(BindGraphicsChip::new_uniform(&mut gpu.borrow_mut(), value)))?;
             module_table.set("newUniform", func)?;
         }
         {
@@ -202,7 +198,7 @@ impl<'lua> BindGraphicsChip {
             let func = lua.create_function_mut(
                 move |_, (r, g, b, a): (f32, f32, f32, f32)| Ok(
                     BindGraphicsChip::set_clear_color(
-                        gpu.clone(), 
+                        &mut gpu.borrow_mut(), 
                         &Vec4::new(r, g, b, a)
                     )
                 )
@@ -211,22 +207,22 @@ impl<'lua> BindGraphicsChip {
         }
         {
             let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, value: bool| Ok(BindGraphicsChip::enable_lighting(gpu.clone(), value)))?;
+            let func = lua.create_function_mut(move |_, value: bool| Ok(BindGraphicsChip::enable_lighting(&mut gpu.borrow_mut(), value)))?;
             module_table.set("enableLighting", func)?;
         }
         {
             let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, value: bool| Ok(BindGraphicsChip::enable_fog(gpu.clone(), value)))?;
+            let func = lua.create_function_mut(move |_, value: bool| Ok(BindGraphicsChip::enable_fog(&mut gpu.borrow_mut(), value)))?;
             module_table.set("enableFog", func)?;
         }
         {
             let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, distance: f32| Ok(BindGraphicsChip::set_fog_start(gpu.clone(), distance)))?;
+            let func = lua.create_function_mut(move |_, distance: f32| Ok(BindGraphicsChip::set_fog_start(&mut gpu.borrow_mut(), distance)))?;
             module_table.set("setFogStart", func)?;
         }
         {
             let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, distance: f32| Ok(BindGraphicsChip::set_fog_end(gpu.clone(), distance)))?;
+            let func = lua.create_function_mut(move |_, distance: f32| Ok(BindGraphicsChip::set_fog_end(&mut gpu.borrow_mut(), distance)))?;
             module_table.set("setFogEnd", func)?;
         }
         {
@@ -234,7 +230,7 @@ impl<'lua> BindGraphicsChip {
             let func = lua.create_function_mut(
                 move |_, (x1, y1, x2, y2): (f32, f32, f32, f32)| Ok(
                     BindGraphicsChip::draw_line(
-                        gpu.clone(), 
+                        &mut gpu.borrow_mut(), 
                         &Vec2::new(x1, y1), 
                         &Vec2::new(x2, y2)
                     )
@@ -247,7 +243,7 @@ impl<'lua> BindGraphicsChip {
             let func = lua.create_function_mut(
                 move |_, (x, y, z): (f32, f32, f32)| Ok(
                     BindGraphicsChip::translate(
-                        gpu.clone(),
+                        &mut gpu.borrow_mut(),
                         &Vec3::new(x, y, z)
                     )
                 )
@@ -259,7 +255,7 @@ impl<'lua> BindGraphicsChip {
             let func = lua.create_function_mut(
                 move |_, (angle, x, y, z): (f32, f32, f32, f32)| Ok(
                     BindGraphicsChip::rotate(
-                        gpu.clone(),
+                        &mut gpu.borrow_mut(),
                         angle,
                         &Vec3::new(x, y, z)
                     )

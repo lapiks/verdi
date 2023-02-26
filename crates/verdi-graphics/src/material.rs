@@ -1,4 +1,4 @@
-use std::{sync::{Arc, Mutex}};
+use std::{rc::Rc, cell::RefCell};
 
 use glium::{
     uniforms::{
@@ -106,12 +106,12 @@ impl Material {
 
 #[derive(Clone)]
 pub struct MaterialHandle {
-    pub gpu: Arc<Mutex<GraphicsChip>>,
+    pub gpu: Rc<RefCell<GraphicsChip>>,
     pub id: MaterialId,
 }
 
 impl MaterialHandle {
-    pub fn new(gpu: Arc<Mutex<GraphicsChip>>, id: MaterialId) -> Self{
+    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, id: MaterialId) -> Self{
         Self { gpu, id }
     }
 }
@@ -121,7 +121,7 @@ impl UserData for MaterialHandle {
         methods.add_method_mut("addUniform", |_, material, (name, value): (String, LuaValue)| {
             let mut uniform_id = None;
             {
-                let gpu = material.gpu.lock().unwrap();
+                let gpu = material.gpu.borrow_mut();
                 match value {
                     LuaValue::Nil => todo!(),
                     LuaValue::Boolean(v) => {
@@ -142,7 +142,7 @@ impl UserData for MaterialHandle {
             }
     
             if let Some(uniform_id) = uniform_id {
-                let gpu = material.gpu.lock().unwrap();
+                let gpu = material.gpu.borrow();
                 let material = gpu.database.borrow_mut().assets
                     .get_material_mut(material.id).unwrap()
                     .add_uniform(&name, uniform_id);

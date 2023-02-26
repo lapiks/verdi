@@ -1,4 +1,4 @@
-use std::sync::{Mutex, Arc};
+use std::{rc::Rc, cell::RefCell};
 
 use mlua::{UserData, UserDataMethods};
 use slotmap::{new_key_type, Key};
@@ -30,21 +30,21 @@ impl Scene {
         self.nodes.get(index as usize)
     }
 
-    pub fn draw(&self, gpu: Arc<Mutex<GraphicsChip>>) {
+    pub fn draw(&self, gpu: &mut GraphicsChip) {
         for node in self.nodes.iter() {
-            node.draw(gpu.clone());
+            node.draw(gpu);
         }
     }
 }
 
 #[derive(Clone)]
 pub struct SceneHandle {
-    pub gpu: Arc<Mutex<GraphicsChip>>,
+    pub gpu: Rc<RefCell<GraphicsChip>>,
     pub id: SceneId,
 }
 
 impl SceneHandle {
-    pub fn new(gpu: Arc<Mutex<GraphicsChip>>, id: SceneId) -> Self{
+    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, id: SceneId) -> Self{
         Self {
             gpu,
             id
@@ -52,18 +52,19 @@ impl SceneHandle {
     }
 
     pub fn draw(&self) {
-        self.gpu.lock().unwrap().draw_scene(self.id);
+        self.gpu.borrow_mut().draw_scene(self.id);
     }
 
     pub fn get_node(&self, index: usize) -> NodeHandle {
         NodeHandle {
+            gpu: self.gpu.clone(),
             scene: self.clone(),
             node_index: index as u64,
         }
     }
 
     pub fn get_len(&self) -> Option<u64> {
-        let gpu = self.gpu.lock().unwrap();
+        let gpu = self.gpu.borrow();
         let db = gpu.database.borrow();
         let scene = db.assets.get_scene(self.id).unwrap();
         Some(scene.nodes.len() as u64)

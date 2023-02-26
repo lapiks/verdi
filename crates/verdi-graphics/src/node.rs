@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::{cell::RefCell, rc::Rc};
 
 use mlua::{UserData, UserDataMethods};
 
@@ -20,33 +20,38 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn draw(&self, gpu: Arc<Mutex<GraphicsChip>>) {
-        gpu.lock().unwrap().draw_node(&self);
+    pub fn draw(&self, gpu: &mut GraphicsChip) {
+        gpu.draw_node(&self);
     }
 }
 
 #[derive(Clone)]
 pub struct NodeHandle {
+    pub gpu: Rc<RefCell<GraphicsChip>>,
     pub scene: SceneHandle,
     pub node_index: NodeId,
 }
 
 impl NodeHandle {
-    pub fn new(scene: SceneHandle, node_index: NodeId) -> Self {
+    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, scene: SceneHandle, node_index: NodeId) -> Self {
         Self {
+            gpu,
             scene,
             node_index,
         }
     }
 
     pub fn draw(&self) {
-        let gpu = self.scene.gpu.lock().unwrap();
+        // a revoir
+        let gpu = self.gpu.borrow();
         let db = gpu.database.borrow();
-        let scene = db.assets.get_scene(self.scene.id).unwrap();
-        let node = scene.get_node(self.node_index).unwrap();
-
-        let mut gpu_mut = self.scene.gpu.lock().unwrap();
-        gpu_mut.draw_node(node);
+        let scene = db.assets.get_scene(self.scene.id);
+        if let Some(scene) = scene {
+            let node = scene.get_node(self.node_index);
+            if let Some(node) = node {
+                node.draw(&mut self.gpu.borrow_mut());
+            }
+        }
     }
 }
 

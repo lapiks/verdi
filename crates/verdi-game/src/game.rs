@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell, path::{Path, PathBuf}, sync::{Arc, Mutex}};
+use std::{rc::Rc, cell::RefCell, path::{Path, PathBuf}};
 
 use glium::{Display, Frame, glutin::event::{WindowEvent, DeviceEvent}};
 use mlua::Lua;
@@ -36,7 +36,7 @@ pub enum GameError {
 
 /// The Game system.
 pub struct Game {
-    gpu: Arc<Mutex<GraphicsChip>>,
+    gpu: Rc<RefCell<GraphicsChip>>,
     renderer: Renderer,
     render_target: RenderTarget,
     inputs: Rc<RefCell<Inputs>>,
@@ -48,8 +48,8 @@ pub struct Game {
 
 impl Game {
     pub fn new<P: AsRef<Path>>(path: P, display: &Display, database: Rc<RefCell<DataBase>>, globals: Rc<Globals>) -> Result<Self, GameError> {
-            let gpu = Arc::new(
-                Mutex::new(
+            let gpu = Rc::new(
+                RefCell::new(
                     GraphicsChip::new(database, globals)
                         .expect("GraphicsChip initialisation failed")
                 )
@@ -89,7 +89,7 @@ impl Game {
         BindInputs::bind(&lua, self.inputs.clone())?;
         BindMath::bind(&lua)?;
 
-        self.gpu.lock().unwrap().on_game_start();
+        self.gpu.borrow_mut().on_game_start();
 
         LuaContext::call_boot(lua)?;
 
@@ -114,24 +114,24 @@ impl Game {
 
     /// Called every frame. Draw as requested during the run call.
     pub fn render(&mut self, display: &Display, target: &mut Frame) {
-        self.gpu.lock().unwrap().new_frame();
+        self.gpu.borrow_mut().new_frame();
     
         // prepare assets for rendering
-        self.renderer.prepare_assets(display, &self.gpu.lock().unwrap());
+        self.renderer.prepare_assets(display, &self.gpu.borrow());
 
         // draw game in framebuffer
-        self.renderer.render(&self.render_target, display, target, &mut self.gpu.lock().unwrap());
+        self.renderer.render(&self.render_target, display, target, &mut self.gpu.borrow_mut());
 
-        self.renderer.post_render(&mut self.gpu.lock().unwrap());
+        self.renderer.post_render(&mut self.gpu.borrow_mut());
     }
 
     pub fn frame_starts(&mut self) {
-        self.gpu.lock().unwrap().flush_stream_buffer();
+        self.gpu.borrow_mut().flush_stream_buffer();
     }
 
     pub fn frame_ends(&mut self) {
         // prepare next frame
-        self.gpu.lock().unwrap().frame_ends();
+        self.gpu.borrow_mut().frame_ends();
     }
 
     pub fn on_window_event(&mut self, event: &WindowEvent) {
@@ -143,7 +143,7 @@ impl Game {
     }
 
     pub fn shutdown(&mut self) {
-        self.gpu.lock().unwrap().on_game_shutdown();
+        self.gpu.borrow_mut().on_game_shutdown();
         self.renderer.on_game_shutdown();
     }
 
