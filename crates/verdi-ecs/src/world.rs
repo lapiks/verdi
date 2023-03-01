@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::entity::{EntityId, EntityRef};
+use crate::entity::{EntityId, EntityHandle};
 use crate::component::{ComponentVec};
 
 #[derive(Clone)]
@@ -16,8 +16,8 @@ impl WorldHandle {
         }
     }
 
-    pub fn spawn(&self) -> EntityRef {
-        EntityRef::new(
+    pub fn spawn(&self) -> EntityHandle {
+        EntityHandle::new(
             self.inner.clone(), 
             self.inner.borrow_mut().spawn()
         )
@@ -28,14 +28,18 @@ impl WorldHandle {
         self.inner.borrow_mut().despawn(entity);
     }
 
-    pub fn entity(&self, entity: EntityId) -> Option<EntityRef> {
+    pub fn entity(&self, entity: EntityId) -> Option<EntityHandle> {
         if let Some(entity_id) = self.inner.borrow_mut().entity(entity) {
-            return Some(EntityRef::new(
+            return Some(EntityHandle::new(
                 self.inner.clone(), 
                 entity_id
             ));
         }
         None
+    }
+
+    pub fn register_component<ComponentType: 'static>(&self) {
+        self.inner.borrow_mut().register_component::<ComponentType>();
     }
 }
 
@@ -117,7 +121,7 @@ impl World {
         new_component_vec[entity as usize] = Some(component);
 
         // Register the new component type
-        self.register_component::<ComponentType>(new_component_vec);
+        self.push_component_vec::<ComponentType>(new_component_vec);
     }
 
     pub(crate) fn remove_component_from_entity<ComponentType: 'static>(
@@ -134,9 +138,21 @@ impl World {
         }
     }
 
-    fn register_component<ComponentType: 'static>(&mut self, component_vec: Vec<Option<ComponentType>>) {
+    fn push_component_vec<ComponentType: 'static>(&mut self, component_vec: Vec<Option<ComponentType>>) {
         self.component_vecs.push(
             Box::new(component_vec));
+    }
+
+    fn register_component<ComponentType: 'static>(&mut self) {
+        let mut new_component_vec: Vec<Option<ComponentType>> = Vec::with_capacity(self.entities_count);
+
+        // The existing entities don't have this component, so we give them `None`
+        for _ in 0..self.entities_count {
+            new_component_vec.push_none();
+        }
+
+        // Register the new component type
+        self.push_component_vec::<ComponentType>(new_component_vec);
     }
 
     fn unregister_component<ComponentType: 'static>(&mut self) {

@@ -2,7 +2,7 @@ use std::{rc::Rc, cell::RefCell, path::{Path, PathBuf}};
 
 use glium::{Display, Frame, glutin::event::{WindowEvent, DeviceEvent}};
 use mlua::Lua;
-use verdi_ecs::prelude::{WorldHandle, World};
+use verdi_ecs::prelude::{WorldHandle, World, BindWorld};
 use verdi_graphics::prelude::{
     GraphicsChip, 
     Renderer, 
@@ -91,12 +91,14 @@ impl Game {
     /// called at the start of the game execution
     pub fn boot(&mut self, lua: &Lua) -> Result<(), GameError>{
         LuaContext::create_verdi_table(lua)?;
-        LuaContext::load_internal_scripts(lua)?;
-        LuaContext::load_scripts(lua, &self.scripts.borrow())?;
 
+        BindWorld::bind(lua, self.world.clone())?;
         BindGraphicsChip::bind(&lua, self.gpu.clone())?;
         BindInputs::bind(&lua, self.inputs.clone())?;
         BindMath::bind(&lua)?;
+        
+        LuaContext::load_internal_scripts(lua)?;
+        LuaContext::load_scripts(lua, &self.scripts.borrow())?;
 
         self.gpu.borrow_mut().on_game_start();
 

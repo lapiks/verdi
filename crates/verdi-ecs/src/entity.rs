@@ -6,12 +6,12 @@ use crate::world::World;
 
 pub type EntityId = u64;
 
-pub struct EntityRef {
+pub struct EntityHandle {
     world: Rc<RefCell<World>>,
     entity: EntityId,
 }
 
-impl EntityRef {
+impl EntityHandle {
     pub(crate) fn new(world: Rc<RefCell<World>>, entity: EntityId) -> Self {
         Self { 
             world, 
@@ -34,7 +34,7 @@ impl EntityRef {
     }
 }
 
-impl UserData for EntityRef {
+impl UserData for EntityHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         // methods.add_method_mut("add", |_, mesh, ()| {
         //     Ok()
@@ -44,8 +44,8 @@ impl UserData for EntityRef {
         //     Ok()
         // });
 
-        // methods.add_method("id", |_, entity, ()| {
-        //     Ok(entity.id())
-        // });
+        methods.add_method("id", |_, entity, ()| {
+            Ok(entity.id())
+        });
     }
 }

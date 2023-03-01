@@ -1,7 +1,15 @@
+local position = world.newComponent({ x = 0, y = 0, z = 0 })
+
 function verdi.start()
     scene = graphics.newScene("./game_example/assets/tank.gltf")
     mesh = graphics.newMesh()
     transform = math.newTransform()
+
+    entity = world.spawn()
+    print(entity:id())
+
+    entity2 = world.spawn()
+    print(entity2:id())
 
     vertices = {
         {0, 0, 0},
