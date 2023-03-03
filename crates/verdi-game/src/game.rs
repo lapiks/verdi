@@ -2,6 +2,7 @@ use std::{rc::Rc, cell::RefCell, path::{Path, PathBuf}};
 
 use glium::{Display, Frame, glutin::event::{WindowEvent, DeviceEvent}};
 use mlua::Lua;
+use verdi_audio::prelude::{AudioHandle, Audio, BindAudio};
 use verdi_ecs::prelude::{WorldHandle, World, BindWorld};
 use verdi_graphics::prelude::{
     GraphicsChip, 
@@ -42,6 +43,7 @@ pub struct Game {
     renderer: Renderer,
     render_target: RenderTarget,
     inputs: Rc<RefCell<Inputs>>,
+    audio: AudioHandle,
     path: PathBuf,
     scripts: Rc<RefCell<Scripts>>,
     pub time_step: TimeStep,
@@ -71,12 +73,19 @@ impl Game {
                 )
             );
 
+            let audio = Rc::new(
+                RefCell::new(
+                    Audio::new()
+                )
+            );
+
         Ok(Self { 
             world: WorldHandle::new(world),
             gpu,
             renderer,
             render_target,
             inputs: Rc::new(RefCell::new(Inputs::new())),
+            audio: AudioHandle::new(audio),
             path: path.as_ref().to_path_buf(),
             scripts: Rc::new(RefCell::new(Scripts::new(path)?)),
             time_step: TimeStep::new(),
@@ -96,6 +105,7 @@ impl Game {
         BindGraphicsChip::bind(&lua, self.gpu.clone())?;
         BindInputs::bind(&lua, self.inputs.clone())?;
         BindMath::bind(&lua)?;
+        BindAudio::bind(&lua, self.audio.clone())?;
         
         LuaContext::load_internal_scripts(lua)?;
         LuaContext::load_scripts(lua, &self.scripts.borrow())?;

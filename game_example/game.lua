@@ -32,6 +32,9 @@ function verdi.start()
     rotSpeed = 1
 
     test.func()
+
+    local audioClip = audio.newClip("./game_example/assets/Mgła - Age of Excuse - 01 Age of Excuse I.mp3")
+    audio.play(audioClip)
 end
 
 function verdi.update() 
