@@ -28,7 +28,7 @@ impl AudioHandle {
 
 pub struct Audio {
     clips: SlotMap<AudioClipId, AudioClip>,
-    stream: Option<OutputStream>,
+    stream: Option<OutputStream>, // must not be dropped
     stream_handle: Option<OutputStreamHandle>,
     sinks: Vec<Sink>,
 }
