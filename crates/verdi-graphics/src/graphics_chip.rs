@@ -183,10 +183,10 @@ impl GraphicsChip {
         // };
     }
 
-    pub fn draw_scene(&mut self, scene_id: ModelId) {
+    pub fn draw_model(&mut self, model_id: ModelId) {
         let db = self.database.borrow();
-        let scene = db.assets.get_scene(scene_id).unwrap();
-        for node in scene.nodes.iter() {
+        let model = db.assets.get_model(model_id).unwrap();
+        for node in model.nodes.iter() {
             // nothing to draw
             if node.mesh.is_none() {
                 continue;
@@ -231,9 +231,9 @@ impl GraphicsChip {
     }
 
     pub fn new_model(&mut self, path: &String) -> Result<ModelId, GltfError> {
-        let scene = GltfLoader::load(path, &mut self.database.borrow_mut(), &self.globals)?;
+        let model = GltfLoader::load(path, &mut self.database.borrow_mut(), &self.globals)?;
 
-        Ok(self.database.borrow_mut().assets.add_scene(scene))
+        Ok(self.database.borrow_mut().assets.add_model(model))
     }
     
     pub fn new_mesh(&mut self) -> Result<MeshId, GltfError> {

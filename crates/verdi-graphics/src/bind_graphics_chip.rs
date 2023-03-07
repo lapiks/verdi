@@ -48,8 +48,8 @@ impl<'lua> BindGraphicsChip {
     }
 
     fn new_model(gpu: Rc<RefCell<GraphicsChip>>, path: &String) -> ModelHandle {
-        let scene_id = gpu.borrow_mut().new_model(path).unwrap();
-        ModelHandle::new(gpu.clone(), scene_id)
+        let model_id = gpu.borrow_mut().new_model(path).unwrap();
+        ModelHandle::new(gpu.clone(), model_id)
     }
     
     fn new_mesh(gpu: Rc<RefCell<GraphicsChip>>) -> MeshHandle {

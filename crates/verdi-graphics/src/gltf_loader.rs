@@ -32,7 +32,7 @@ pub struct GltfLoader;
 
 impl GltfLoader {
     pub fn load<P: AsRef<Path>>(path: P, render_resources: &mut DataBase, globals: &Globals) -> Result<Model, GltfError> {
-        let mut scene = Model::new();
+        let mut model = Model::new();
 
         let gltf = gltf::Gltf::open(path.as_ref())?;
 
@@ -87,7 +87,7 @@ impl GltfLoader {
         }
 
         for gltf_node in gltf.nodes() {
-            scene.nodes.push( 
+            model.nodes.push( 
                 Node {
                     mesh: gltf_node
                         .mesh()
@@ -103,7 +103,7 @@ impl GltfLoader {
             );
         }
 
-        Ok(scene)
+        Ok(model)
     }
 
     fn load_primitive(gltf_primitive: gltf::Primitive, buffers: &Vec<Data>, materials: &Vec<MaterialId>) -> Result<Mesh, GltfError> {

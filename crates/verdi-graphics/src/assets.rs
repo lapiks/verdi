@@ -21,7 +21,7 @@ pub struct Assets {
     materials: SlotMap<MaterialId, Material>,
     shaders: SlotMap<ShaderId, Shader>,
     programs: SlotMap<ProgramId, Program>,
-    scenes: SlotMap<ModelId, Model>,
+    models: SlotMap<ModelId, Model>,
 }
 
 impl Assets {
@@ -32,7 +32,7 @@ impl Assets {
             materials: SlotMap::default(),
             shaders: SlotMap::default(),
             programs: SlotMap::default(),
-            scenes: SlotMap::default(),
+            models: SlotMap::default(),
         }
     }
 
@@ -42,7 +42,7 @@ impl Assets {
         self.materials.clear();
         self.shaders.clear();
         self.programs.clear();
-        self.scenes.clear();
+        self.models.clear();
     }
 
     pub fn add_texture(&mut self, image: Image) -> ImageId {
@@ -114,15 +114,15 @@ impl Assets {
 
     }
 
-    pub fn add_scene(&mut self, scene: Model) -> ModelId {
-        let id = self.scenes.insert(scene);
+    pub fn add_model(&mut self, model: Model) -> ModelId {
+        let id = self.models.insert(model);
         unsafe {
-            self.scenes.get_unchecked_mut(id).id = id;
+            self.models.get_unchecked_mut(id).id = id;
         }
         id
     }
 
-    pub fn get_scene(&self, id: ModelId) -> Option<&Model> {
-        self.scenes.get(id)
+    pub fn get_model(&self, id: ModelId) -> Option<&Model> {
+        self.models.get(id)
     }
 }

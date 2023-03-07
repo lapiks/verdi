@@ -28,15 +28,15 @@ impl Node {
 #[derive(Clone)]
 pub struct NodeHandle {
     pub gpu: Rc<RefCell<GraphicsChip>>,
-    pub scene: ModelHandle,
+    pub model: ModelHandle,
     pub node_index: NodeId,
 }
 
 impl NodeHandle {
-    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, scene: ModelHandle, node_index: NodeId) -> Self {
+    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, model: ModelHandle, node_index: NodeId) -> Self {
         Self {
             gpu,
-            scene,
+            model,
             node_index,
         }
     }
@@ -45,9 +45,9 @@ impl NodeHandle {
         // a revoir
         let gpu = self.gpu.borrow();
         let db = gpu.database.borrow();
-        let scene = db.assets.get_scene(self.scene.id);
-        if let Some(scene) = scene {
-            let node = scene.get_node(self.node_index);
+        let model = db.assets.get_model(self.model.id);
+        if let Some(model) = model {
+            let node = model.get_node(self.node_index);
             if let Some(node) = node {
                 node.draw(&mut self.gpu.borrow_mut());
             }

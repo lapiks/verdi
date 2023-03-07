@@ -1,7 +1,7 @@
 local position = world.newComponent({ x = 0, y = 0, z = 0 })
 
 function verdi.start()
-    scene = graphics.newModel("./game_example/assets/tank.gltf")
+    model = graphics.newModel("./game_example/assets/tank.gltf")
     mesh = graphics.newMesh()
     transform = math.newTransform()
 
@@ -20,7 +20,7 @@ function verdi.start()
     mesh:setVertices(vertices)
 	mesh:setPrimitiveType("triangles")
 
-    print(scene:getNumNodes())
+    print(model:getNumNodes())
 
     x = 5
     y = 10
@@ -60,11 +60,11 @@ function verdi.draw(deltaTime)
     transform:rotate(1.0, 0.0, 1.0, 0.0)
     transform:scale(2.0, 2.0, 2.0)
 
-    scene:draw()
+    model:draw()
     mesh:draw()
 
-    -- for i = 0, scene:getNumNodes() do
-    --     local node = scene:getNode(i) 
+    -- for i = 0, model:getNumNodes() do
+    --     local node = model:getNode(i) 
     --     node:draw()
     -- end
     

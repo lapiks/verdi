@@ -52,13 +52,13 @@ impl ModelHandle {
     }
 
     pub fn draw(&self) {
-        self.gpu.borrow_mut().draw_scene(self.id);
+        self.gpu.borrow_mut().draw_model(self.id);
     }
 
     pub fn get_node(&self, index: usize) -> NodeHandle {
         NodeHandle {
             gpu: self.gpu.clone(),
-            scene: self.clone(),
+            model: self.clone(),
             node_index: index as u64,
         }
     }
@@ -66,24 +66,24 @@ impl ModelHandle {
     pub fn get_len(&self) -> Option<u64> {
         let gpu = self.gpu.borrow();
         let db = gpu.database.borrow();
-        let scene = db.assets.get_scene(self.id).unwrap();
-        Some(scene.nodes.len() as u64)
+        let model = db.assets.get_model(self.id).unwrap();
+        Some(model.nodes.len() as u64)
     }
 
 }
 
 impl UserData for ModelHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method("getNumNodes", |_, scene, ()| {
-            Ok(scene.get_len())
+        methods.add_method("getNumNodes", |_, model, ()| {
+            Ok(model.get_len())
         });
 
-        methods.add_method("getNode", |_, scene, index: usize| {
-            Ok(scene.get_node(index))
+        methods.add_method("getNode", |_, model, index: usize| {
+            Ok(model.get_node(index))
         });
 
-        methods.add_method("draw", |_, scene, ()| {
-            Ok(scene.draw())
+        methods.add_method("draw", |_, model, ()| {
+            Ok(model.draw())
         });
     }
 }
