@@ -2,7 +2,7 @@ use mlua::{Lua, Result};
 
 use crate::{
     audio::AudioHandle, 
-    audio_clip::AudioClipHandle
+    source::SourceHandle
 };
 
 pub struct BindAudio;
@@ -17,12 +17,12 @@ impl<'lua> BindAudio {
         // add functions
         {
             let audio = audio.clone();
-            let func = lua.create_function(move |_, path: String| Ok(audio.new_clip(path)))?;
-            module_table.set("newClip", func)?;
+            let func = lua.create_function(move |_, path: String| Ok(audio.new_source(path)))?;
+            module_table.set("newSource", func)?;
         }
         {
             let audio = audio.clone();
-            let func = lua.create_function(move |_, clip: AudioClipHandle| Ok(audio.play_clip(clip)))?;
+            let func = lua.create_function(move |_, source: SourceHandle| Ok(audio.play_source(source)))?;
             module_table.set("play", func)?;
         }
 

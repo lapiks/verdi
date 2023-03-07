@@ -5,22 +5,22 @@ use rodio::Decoder;
 use slotmap::new_key_type;
 
 new_key_type! {
-    pub struct AudioClipId;
+    pub struct SourceId;
 }
 
-pub struct AudioClip {
+pub struct Source {
     //source: Decoder<BufReader<File>>,
     path: PathBuf,
 }
 
-impl AudioClip {
-    pub fn new<P: AsRef<Path>>(path: P) -> AudioClip {
+impl Source {
+    pub fn new<P: AsRef<Path>>(path: P) -> Source {
         // Load a sound from a file, using a path relative to Cargo.toml
         //let file = BufReader::new(File::open("examples/music.ogg").unwrap());
         // Decode that sound file into a source
         //let source = Decoder::new(file).unwrap();
 
-        AudioClip { 
+        Source { 
             path: path.as_ref().to_path_buf(),
         }
     }
@@ -35,16 +35,16 @@ impl AudioClip {
 }
 
 #[derive(Clone)]
-pub struct AudioClipHandle {
-    pub id: AudioClipId,
+pub struct SourceHandle {
+    pub id: SourceId,
 }
 
-impl AudioClipHandle {
-    pub fn new(id: AudioClipId) -> Self {
+impl SourceHandle {
+    pub fn new(id: SourceId) -> Self {
         Self {
             id,
         }
     }
 }
 
-impl UserData for AudioClipHandle {}
+impl UserData for SourceHandle {}
