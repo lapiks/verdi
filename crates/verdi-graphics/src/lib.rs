@@ -22,7 +22,7 @@ mod renderable;
 mod render_target;
 mod image;
 mod mesh;
-mod scene;
+mod model;
 mod assets;
 mod gpu_assets;
 mod gpu_mesh;

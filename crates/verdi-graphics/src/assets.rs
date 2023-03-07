@@ -6,7 +6,7 @@ use crate::{
     material::{Material, MaterialId}, 
     shader::{Shader, ShaderId}, 
     program::{Program, ProgramId}, 
-    scene::{Scene, SceneId},
+    model::{Model, ModelId},
 };
 
 #[derive(PartialEq)]
@@ -21,7 +21,7 @@ pub struct Assets {
     materials: SlotMap<MaterialId, Material>,
     shaders: SlotMap<ShaderId, Shader>,
     programs: SlotMap<ProgramId, Program>,
-    scenes: SlotMap<SceneId, Scene>,
+    scenes: SlotMap<ModelId, Model>,
 }
 
 impl Assets {
@@ -114,7 +114,7 @@ impl Assets {
 
     }
 
-    pub fn add_scene(&mut self, scene: Scene) -> SceneId {
+    pub fn add_scene(&mut self, scene: Model) -> ModelId {
         let id = self.scenes.insert(scene);
         unsafe {
             self.scenes.get_unchecked_mut(id).id = id;
@@ -122,7 +122,7 @@ impl Assets {
         id
     }
 
-    pub fn get_scene(&self, id: SceneId) -> Option<&Scene> {
+    pub fn get_scene(&self, id: ModelId) -> Option<&Model> {
         self.scenes.get(id)
     }
 }

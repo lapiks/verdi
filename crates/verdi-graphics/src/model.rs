@@ -9,20 +9,20 @@ use crate::{
 };
 
 new_key_type! {
-    pub struct SceneId;
+    pub struct ModelId;
 }
 
 #[derive(Clone)]
-pub struct Scene {
+pub struct Model {
     pub nodes: Vec<Node>,
-    pub id: SceneId,
+    pub id: ModelId,
 }
 
-impl Scene {
+impl Model {
     pub fn new() -> Self {
         Self {
             nodes: Vec::new(),
-            id: SceneId::null(),
+            id: ModelId::null(),
         }
     }
 
@@ -38,13 +38,13 @@ impl Scene {
 }
 
 #[derive(Clone)]
-pub struct SceneHandle {
+pub struct ModelHandle {
     pub gpu: Rc<RefCell<GraphicsChip>>,
-    pub id: SceneId,
+    pub id: ModelId,
 }
 
-impl SceneHandle {
-    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, id: SceneId) -> Self{
+impl ModelHandle {
+    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, id: ModelId) -> Self{
         Self {
             gpu,
             id
@@ -72,7 +72,7 @@ impl SceneHandle {
 
 }
 
-impl UserData for SceneHandle {
+impl UserData for ModelHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method("getNumNodes", |_, scene, ()| {
             Ok(scene.get_len())

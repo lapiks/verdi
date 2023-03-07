@@ -1,7 +1,7 @@
 local position = world.newComponent({ x = 0, y = 0, z = 0 })
 
 function verdi.start()
-    scene = graphics.newScene("./game_example/assets/tank.gltf")
+    scene = graphics.newModel("./game_example/assets/tank.gltf")
     mesh = graphics.newMesh()
     transform = math.newTransform()
 

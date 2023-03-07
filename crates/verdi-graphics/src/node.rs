@@ -5,7 +5,7 @@ use mlua::{UserData, UserDataMethods};
 use verdi_math::prelude::Transform;
 
 use crate::{
-    scene::SceneHandle, 
+    model::ModelHandle, 
     mesh::MeshId, 
     prelude::GraphicsChip
 };
@@ -28,12 +28,12 @@ impl Node {
 #[derive(Clone)]
 pub struct NodeHandle {
     pub gpu: Rc<RefCell<GraphicsChip>>,
-    pub scene: SceneHandle,
+    pub scene: ModelHandle,
     pub node_index: NodeId,
 }
 
 impl NodeHandle {
-    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, scene: SceneHandle, node_index: NodeId) -> Self {
+    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, scene: ModelHandle, node_index: NodeId) -> Self {
         Self {
             gpu,
             scene,

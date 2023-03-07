@@ -13,7 +13,7 @@ use crate::{
     material::{Material, MaterialId}, 
     node::Node,
     vertex::Vertex, 
-    scene::Scene, 
+    model::Model, 
     database::DataBase, 
     globals::Globals, 
 };
@@ -31,8 +31,8 @@ pub enum GltfError {
 pub struct GltfLoader;
 
 impl GltfLoader {
-    pub fn load<P: AsRef<Path>>(path: P, render_resources: &mut DataBase, globals: &Globals) -> Result<Scene, GltfError> {
-        let mut scene = Scene::new();
+    pub fn load<P: AsRef<Path>>(path: P, render_resources: &mut DataBase, globals: &Globals) -> Result<Model, GltfError> {
+        let mut scene = Model::new();
 
         let gltf = gltf::Gltf::open(path.as_ref())?;
 

@@ -4,7 +4,7 @@ use crate::{
     vertex::Vertex, 
     render_pass::RenderPass, 
     image::{Image, ImageHandle, ImageId}, 
-    scene::SceneId, 
+    model::ModelId, 
     uniforms::UniformId, 
     gltf_loader::{GltfError, GltfLoader}, 
     node::Node, 
@@ -183,7 +183,7 @@ impl GraphicsChip {
         // };
     }
 
-    pub fn draw_scene(&mut self, scene_id: SceneId) {
+    pub fn draw_scene(&mut self, scene_id: ModelId) {
         let db = self.database.borrow();
         let scene = db.assets.get_scene(scene_id).unwrap();
         for node in scene.nodes.iter() {
@@ -230,7 +230,7 @@ impl GraphicsChip {
         }
     }
 
-    pub fn new_scene(&mut self, path: &String) -> Result<SceneId, GltfError> {
+    pub fn new_model(&mut self, path: &String) -> Result<ModelId, GltfError> {
         let scene = GltfLoader::load(path, &mut self.database.borrow_mut(), &self.globals)?;
 
         Ok(self.database.borrow_mut().assets.add_scene(scene))
