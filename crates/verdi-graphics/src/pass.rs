@@ -2,8 +2,9 @@ use std::{cell::RefCell, rc::Rc};
 
 use mlua::{UserData, UserDataMethods};
 use slotmap::new_key_type;
+use verdi_math::prelude::Transform;
 
-use crate::{render_cmds::RenderCmd, mesh::MeshHandle, render_graph::RenderGraph};
+use crate::{render_cmds::{RenderCmd, DrawCmd}, mesh::MeshHandle, render_graph::RenderGraph};
 
 pub struct CmdQueue {
     cmds: Vec<Box<dyn RenderCmd>>
@@ -14,6 +15,10 @@ impl CmdQueue {
         Self {
             cmds: Vec::new(),
         }
+    }
+
+    pub fn push_cmd<Cmd: RenderCmd>(&mut self, cmd: Cmd) {
+
     }
 }
 
@@ -28,8 +33,13 @@ impl Pass {
         }
     }
 
-    pub fn add_draw_cmd(&mut self) {
+    pub fn add_draw_cmd(&mut self, mesh: MeshHandle, transform: Transform) {
+        let cmd = DrawCmd {
+            mesh: mesh.id,
+            transform,
+        };
 
+        self.cmd_queue.push_cmd(cmd);
     }
 }
 
@@ -44,10 +54,10 @@ pub struct PassHandle {
 
 impl UserData for PassHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method_mut("draw", |_, pass, mesh: MeshHandle| {
+        methods.add_method_mut("draw", |_, pass, (mesh, transform): (MeshHandle, Transform)| {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
-                    pass.add_draw_cmd();
+                    pass.add_draw_cmd(mesh, transform);
                 }
             })
         });

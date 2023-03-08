@@ -62,7 +62,7 @@ function verdi.draw(deltaTime)
     transform:rotate(1.0, 0.0, 1.0, 0.0)
     transform:scale(2.0, 2.0, 2.0)
 
-    model:draw()
+    --model:draw()
     mesh:draw()
 
     -- for i = 0, model:getNumNodes() do
