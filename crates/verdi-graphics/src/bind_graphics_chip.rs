@@ -196,6 +196,15 @@ impl<'lua> BindGraphicsChip {
         {
             let gpu = gpu.clone();
             let func = lua.create_function_mut(
+                move |_, ()| Ok( 
+                    gpu.borrow_mut().new_pass()
+                )
+            )?;
+            module_table.set("newPass", func)?;
+        }
+        {
+            let gpu = gpu.clone();
+            let func = lua.create_function_mut(
                 move |_, (r, g, b, a): (f32, f32, f32, f32)| Ok(
                     BindGraphicsChip::set_clear_color(
                         &mut gpu.borrow_mut(), 

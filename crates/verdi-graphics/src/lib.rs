@@ -39,3 +39,6 @@ mod screen_quad;
 mod gltf_loader;
 mod database;
 mod render_state;
+mod pass;
+mod render_cmds;
+mod render_graph;

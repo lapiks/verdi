@@ -11,7 +11,7 @@ use crate::{
     material::{Material, MaterialId}, 
     globals::Globals, 
     mesh::{MeshId, Mesh, PrimitiveType}, 
-    prelude::DataBase, render_state::RenderState,
+    prelude::DataBase, render_state::RenderState, pass::PassHandle, render_graph::RenderGraph,
 };
 
 use image::ImageError;
@@ -19,6 +19,7 @@ use verdi_math::prelude::*;
 
 /// High level access to rendering features.
 pub struct GraphicsChip {
+    pub render_graph: RenderGraph,
     pub render_passes: Vec<RenderPass>,
     pub stream_buffer: StreamBufferState,
     pub database: Rc<RefCell<DataBase>>,
@@ -51,6 +52,7 @@ impl GraphicsChip {
         };
 
         Ok(Self { 
+            render_graph: RenderGraph::new(),
             render_passes: Vec::new(),
             stream_buffer,
             database,
@@ -269,6 +271,10 @@ impl GraphicsChip {
 
     pub fn new_uniform_vec2(&mut self, value: Vec2) -> UniformId {
         self.database.borrow_mut().uniforms.add_vec2(value)
+    }
+
+    pub fn new_pass(&mut self) -> PassHandle {
+        self.render_graph.create_pass()
     }
 
     pub fn set_clear_color(&mut self, color: &Vec4) {
