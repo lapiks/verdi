@@ -1,15 +1,13 @@
-use slotmap::SlotMap;
-
-use crate::pass::{PassId, Pass, PassHandle};
+use crate::pass::{Pass, PassId};
 
 pub struct RenderGraph {
-    passes: SlotMap<PassId, Pass>,
+    passes: Vec<Pass>,
 }
 
 impl Default for RenderGraph {
     fn default() -> Self {
         Self { 
-            passes: SlotMap::default(),
+            passes: Vec::default(),
         }
     }
 }
@@ -20,10 +18,19 @@ impl RenderGraph {
     }
 
     pub fn create_pass(&mut self) -> PassId {
-        self.passes.insert(Pass::new())
+        self.passes.push(Pass::new());
+        (self.passes.len() - 1) as PassId
     }
 
     pub fn get_pass_mut(&mut self, id: PassId) -> Option<&mut Pass> {
-        self.passes.get_mut(id)
+        self.passes.get_mut(id as usize)
+    }
+    
+    pub fn get_passes(&self) -> &Vec<Pass> {
+        &self.passes
+    }
+
+    pub fn clear(&mut self) {
+        self.passes.clear();
     }
 }

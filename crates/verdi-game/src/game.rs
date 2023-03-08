@@ -138,10 +138,10 @@ impl Game {
         self.gpu.borrow_mut().new_frame();
     
         // prepare assets for rendering
-        self.renderer.prepare_assets(display, &self.gpu.borrow());
+        self.renderer.prepare_assets2(display, &self.gpu.borrow());
 
         // draw game in framebuffer
-        self.renderer.render(&self.render_target, display, target, &mut self.gpu.borrow_mut());
+        self.renderer.render2(&self.render_target, display, target, &mut self.gpu.borrow_mut());
 
         self.renderer.post_render(&mut self.gpu.borrow_mut());
     }

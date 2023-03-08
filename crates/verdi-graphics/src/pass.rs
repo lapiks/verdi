@@ -1,13 +1,12 @@
 use std::{cell::RefCell, rc::Rc};
 
 use mlua::{UserData, UserDataMethods};
-use slotmap::new_key_type;
 use verdi_math::prelude::Transform;
 
 use crate::{render_cmds::{RenderCmd, DrawCmd}, mesh::MeshHandle, render_graph::RenderGraph};
 
 pub struct CmdQueue {
-    cmds: Vec<Box<dyn RenderCmd>>
+    cmds: Vec<DrawCmd>
 }
 
 impl CmdQueue {
@@ -17,10 +16,12 @@ impl CmdQueue {
         }
     }
 
-    pub fn push_cmd<Cmd: RenderCmd + 'static>(&mut self, cmd: Cmd) {
-        self.cmds.push(Box::new(cmd));
+    pub fn push_cmd(&mut self, cmd: DrawCmd) {
+        self.cmds.push(cmd);
     }
 }
+
+pub type PassId = u32;
 
 pub struct Pass {
     cmd_queue: CmdQueue,
@@ -41,10 +42,10 @@ impl Pass {
 
         self.cmd_queue.push_cmd(cmd);
     }
-}
 
-new_key_type! {
-    pub struct PassId;
+    pub fn get_cmds(&self) -> &Vec<DrawCmd> {
+        &self.cmd_queue.cmds
+    }
 }
 
 pub struct PassHandle {

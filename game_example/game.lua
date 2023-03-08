@@ -58,12 +58,14 @@ function verdi.draw(deltaTime)
     graphics.rotate(camYaw, 0, 1, 0)
     graphics.translate(x, -2.5, y)
 
-    transform:translate(5.0, 0.0, 0.0)
-    transform:rotate(1.0, 0.0, 1.0, 0.0)
-    transform:scale(2.0, 2.0, 2.0)
+    --transform:translate(5.0, 0.0, 0.0)
+    --transform:rotate(1.0, 0.0, 1.0, 0.0)
+    --transform:scale(2.0, 2.0, 2.0)
 
     --model:draw()
-    mesh:draw()
+    --mesh:draw()
+    pass:draw(model)
+    pass:draw(mesh, transform)
 
     -- for i = 0, model:getNumNodes() do
     --     local node = model:getNode(i) 

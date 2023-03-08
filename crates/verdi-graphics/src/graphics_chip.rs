@@ -84,6 +84,7 @@ impl GraphicsChip {
 
     pub fn frame_ends(&mut self) {
         self.render_passes.clear();   
+        self.render_graph.borrow_mut().clear();
         //self.buffer_state.next_frame();
     }
 
