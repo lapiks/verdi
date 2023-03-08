@@ -19,9 +19,11 @@ impl RenderGraph {
         RenderGraph::default()
     }
 
-    pub fn create_pass(&mut self) -> PassHandle {
-        PassHandle {
-            id: self.passes.insert(Pass::new())
-        }
+    pub fn create_pass(&mut self) -> PassId {
+        self.passes.insert(Pass::new())
+    }
+
+    pub fn get_pass_mut(&mut self, id: PassId) -> Option<&mut Pass> {
+        self.passes.get_mut(id)
     }
 }

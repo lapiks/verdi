@@ -42,6 +42,8 @@ function verdi.update()
 end
 
 function verdi.draw(deltaTime)
+    local pass = graphics.newPass()
+
     graphics.setClearColor(0.0, 0.0, 0.0, 1.0)
 
 	graphics.enableLighting(true)

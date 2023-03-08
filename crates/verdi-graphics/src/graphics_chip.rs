@@ -19,7 +19,7 @@ use verdi_math::prelude::*;
 
 /// High level access to rendering features.
 pub struct GraphicsChip {
-    pub render_graph: RenderGraph,
+    pub render_graph: Rc<RefCell<RenderGraph>>,
     pub render_passes: Vec<RenderPass>,
     pub stream_buffer: StreamBufferState,
     pub database: Rc<RefCell<DataBase>>,
@@ -52,7 +52,7 @@ impl GraphicsChip {
         };
 
         Ok(Self { 
-            render_graph: RenderGraph::new(),
+            render_graph: Rc::new(RefCell::new(RenderGraph::new())),
             render_passes: Vec::new(),
             stream_buffer,
             database,
@@ -274,7 +274,10 @@ impl GraphicsChip {
     }
 
     pub fn new_pass(&mut self) -> PassHandle {
-        self.render_graph.create_pass()
+        PassHandle {
+            graph: self.render_graph.clone(),
+            id: self.render_graph.borrow_mut().create_pass(),
+        }
     }
 
     pub fn set_clear_color(&mut self, color: &Vec4) {
