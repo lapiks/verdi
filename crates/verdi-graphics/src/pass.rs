@@ -17,8 +17,8 @@ impl CmdQueue {
         }
     }
 
-    pub fn push_cmd<Cmd: RenderCmd>(&mut self, cmd: Cmd) {
-
+    pub fn push_cmd<Cmd: RenderCmd + 'static>(&mut self, cmd: Cmd) {
+        self.cmds.push(Box::new(cmd));
     }
 }
 
