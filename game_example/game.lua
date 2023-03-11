@@ -64,8 +64,8 @@ function verdi.draw(deltaTime)
 
     --model:draw()
     --mesh:draw()
-    pass:draw(model)
-    pass:draw(mesh, transform)
+    pass:drawModel(model)
+    pass:drawMesh(mesh, transform)
 
     -- for i = 0, model:getNumNodes() do
     --     local node = model:getNode(i) 

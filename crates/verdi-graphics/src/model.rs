@@ -30,6 +30,10 @@ impl Model {
         self.nodes.get(index as usize)
     }
 
+    pub fn get_nodes(&self) -> &Vec<Node> {
+        &self.nodes
+    }
+
     pub fn draw(&self, gpu: &mut GraphicsChip) {
         for node in self.nodes.iter() {
             node.draw(gpu);
@@ -69,7 +73,6 @@ impl ModelHandle {
         let model = db.assets.get_model(self.id).unwrap();
         Some(model.nodes.len() as u64)
     }
-
 }
 
 impl UserData for ModelHandle {

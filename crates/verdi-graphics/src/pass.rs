@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use mlua::{UserData, UserDataMethods};
 use verdi_math::prelude::Transform;
 
-use crate::{render_cmds::{RenderCmd, DrawCmd}, mesh::MeshHandle, render_graph::RenderGraph};
+use crate::{render_cmds::DrawCmd, mesh::{MeshHandle, MeshId}, render_graph::RenderGraph, model::ModelHandle};
 
 pub struct CmdQueue {
     cmds: Vec<DrawCmd>
@@ -34,9 +34,9 @@ impl Pass {
         }
     }
 
-    pub fn add_draw_cmd(&mut self, mesh: MeshHandle, transform: Transform) {
+    pub fn add_draw_cmd(&mut self, mesh: MeshId, transform: Transform) {
         let cmd = DrawCmd {
-            mesh: mesh.id,
+            mesh,
             transform,
         };
 
@@ -55,10 +55,23 @@ pub struct PassHandle {
 
 impl UserData for PassHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method_mut("draw", |_, pass, (mesh, transform): (MeshHandle, Transform)| {
+        methods.add_method_mut("drawModel", |_, pass, model: ModelHandle| {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
-                    pass.add_draw_cmd(mesh, transform);
+                    if let Some(model_ref) = model.gpu.borrow().database.borrow().assets.get_model(model.id) {
+                        for node in model_ref.get_nodes().iter() {
+                            if let Some(mesh) = node.mesh {
+                                pass.add_draw_cmd(mesh, node.transform);
+                            }
+                        }
+                    }
+                }
+            })
+        });
+        methods.add_method_mut("drawMesh", |_, pass, (mesh, transform): (MeshHandle, Transform)| {
+            Ok({
+                if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
+                    pass.add_draw_cmd(mesh.id, transform);
                 }
             })
         });
