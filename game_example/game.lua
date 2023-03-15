@@ -50,9 +50,9 @@ function verdi.draw(deltaTime)
 
     --graphics.line(0.0, 0.0, 1.0, 1.0)
 
-    graphics.enableFog(true)
-    graphics.setFogStart(10.0)
-    graphics.setFogEnd(25.0)
+    --graphics.enableFog(true)
+    --graphics.setFogStart(10.0)
+    --graphics.setFogEnd(25.0)
 
     graphics.rotate(camPitch, 1, 0, 0)
     graphics.rotate(camYaw, 0, 1, 0)
@@ -64,6 +64,9 @@ function verdi.draw(deltaTime)
 
     --model:draw()
     --mesh:draw()
+    pass:enableFog(true)
+    pass:setFogStart(10.0)
+    pass:setFogEnd(25.0)
     pass:drawModel(model)
     pass:drawMesh(mesh, transform)
 

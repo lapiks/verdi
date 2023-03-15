@@ -15,7 +15,7 @@ use crate::{
     assets::Assets,
     uniforms::{UniformId, Uniforms}, 
     gpu_assets::{GpuAssets}, 
-    program::ProgramId, prelude::GraphicsChip, globals::GlobalUniforms,
+    program::ProgramId, prelude::GraphicsChip, globals::GlobalUniforms, pass::Pass,
 };
 
 const MAX_UNIFORMS: usize = 64;
@@ -58,7 +58,7 @@ impl Material {
         self
     }
 
-    pub fn get_uniform_values<'a>(&'a self, uniforms: &'a Uniforms, gpu_assets: &'a GpuAssets) -> Option<UniformValues<'a>> {
+    pub fn get_uniform_values<'a>(&'a self, uniforms: &'a Uniforms, gpu_assets: &'a GpuAssets, pass: &Pass) -> Option<UniformValues<'a>> {
         // construct uniform values from the material uniforms description 
         let mut uniform_values = [None; MAX_UNIFORMS];
         for (uniform_value, uniform_id) in uniform_values.iter_mut().zip(&self.uniforms) {

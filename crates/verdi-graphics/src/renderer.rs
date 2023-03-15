@@ -41,65 +41,6 @@ impl Renderer {
         let db_lock = gpu.database.borrow();
 
         // à rendre générique
-        for render_pass in gpu.render_passes.iter() {
-            let mesh = db_lock.assets
-                .get_mesh(render_pass.mesh_id)
-                .expect("Missing primitive asset");
-
-            // construct gpu primitive
-            mesh.prepare_rendering(
-                display, 
-                &mut self.gpu_assets
-            );
-
-            // construct gpu objects needed by the material
-            if let Some(material) = gpu.database.borrow().assets.get_material(mesh.material) {
-                material.prepare_rendering(
-                    display,
-                    &gpu.database.borrow().uniforms, 
-                    &gpu.database.borrow().assets,
-                    &mut self.gpu_assets
-                );
-            }             
-        }
-        
-        // construct gpu programs
-        // Pas fou !
-        if self.gpu_assets.get_program(gpu.globals.global_shaders.gouraud).is_none() {
-            if let Some(program) = gpu.database.borrow().assets.get_program(gpu.globals.global_shaders.gouraud) {
-                program.prepare_rendering(
-                    display, 
-                    &gpu.database.borrow().assets, 
-                    &mut self.gpu_assets
-                )
-            }   
-        }
-
-        if self.gpu_assets.get_program(gpu.globals.global_shaders.gouraud_textured).is_none() {
-            if let Some(program) = gpu.database.borrow().assets.get_program(gpu.globals.global_shaders.gouraud_textured) {
-                program.prepare_rendering(
-                    display, 
-                    &gpu.database.borrow().assets, 
-                    &mut self.gpu_assets
-                )
-            }   
-        }
-
-        if self.gpu_assets.get_program(gpu.globals.global_shaders.std_2d).is_none() {
-            if let Some(program) = gpu.database.borrow().assets.get_program(gpu.globals.global_shaders.std_2d) {
-                program.prepare_rendering(
-                    display, 
-                    &gpu.database.borrow().assets, 
-                    &mut self.gpu_assets
-                )
-            }   
-        }
-    }
-
-    pub fn prepare_assets2(&mut self, display: &Display, gpu: &GraphicsChip) {
-        let db_lock = gpu.database.borrow();
-
-        // à rendre générique
         for pass in gpu.render_graph.borrow().get_passes().iter() {
             for cmd in pass.get_cmds() {
                 let mesh = db_lock.assets
@@ -218,7 +159,7 @@ impl Renderer {
     //     renderables
     // }
 
-    pub fn render2(&mut self, render_target: &RenderTarget, display: &Display, frame: &mut Frame, gpu: &mut GraphicsChip) {
+    pub fn render(&mut self, render_target: &RenderTarget, display: &Display, frame: &mut Frame, gpu: &mut GraphicsChip) {
         let mut framebuffer = SimpleFrameBuffer::with_depth_buffer(
             display, 
             render_target.get_color_target(), 
@@ -261,6 +202,22 @@ impl Renderer {
                     .get_mat4_mut(gpu.globals.global_uniforms.model_matrix)
                     .expect("Model matrix uniform missing") = model_matrix;
 
+                *gpu.database.borrow_mut().uniforms
+                    .get_boolean_mut(gpu.globals.global_uniforms.enable_lighting)
+                    .expect("Enable lighting uniform missing") = pass.render_state.enable_lighting;
+
+                *gpu.database.borrow_mut().uniforms
+                    .get_boolean_mut(gpu.globals.global_uniforms.enable_fog)
+                    .expect("Enable fog uniform missing") = pass.render_state.enable_fog;
+
+                *gpu.database.borrow_mut().uniforms
+                    .get_float_mut(gpu.globals.global_uniforms.fog_start)
+                    .expect("Fog start uniform missing") = pass.render_state.fog_start;
+
+                *gpu.database.borrow_mut().uniforms
+                    .get_float_mut(gpu.globals.global_uniforms.fog_end)
+                    .expect("Fog end uniform missing") = pass.render_state.fog_end;
+
                 let db = gpu.database.borrow();
                 let mesh = db.assets
                     .get_mesh(cmd.mesh)
@@ -275,7 +232,7 @@ impl Renderer {
                     .expect("Material not found");
 
                 let uniform_values = material
-                    .get_uniform_values(&db.uniforms, &self.gpu_assets)
+                    .get_uniform_values(&db.uniforms, &self.gpu_assets, pass)
                     .expect("Unable to generate uniform values");
 
                 let program = self.gpu_assets
@@ -338,128 +295,6 @@ impl Renderer {
                 BlitMask::color_and_depth()
             );
         }
-    }
-
-    pub fn render(&mut self, render_target: &RenderTarget, display: &Display, frame: &mut Frame, gpu: &mut GraphicsChip) {        
-        // the direction of the light
-        //let light = [-1.0, 0.4, 0.9f32];
-        
-        let mut framebuffer = SimpleFrameBuffer::with_depth_buffer(
-            display, 
-            render_target.get_color_target(), 
-            render_target.get_depth_target()
-        ).unwrap();
-
-        let clear_color = gpu.render_state.clear_color;
-        framebuffer.clear_color_and_depth(
-            (
-                clear_color.x,
-                clear_color.y,
-                clear_color.z,
-                clear_color.w
-            ),
-            1.0);
-
-        // perspective matrix
-        let perspective_matrix = Camera::perspective_matrix(
-            render_target.get_dimensions().0, 
-            render_target.get_dimensions().1
-        );
-
-        *gpu.database.borrow_mut().uniforms
-            .get_mat4_mut(gpu.globals.global_uniforms.perspective_matrix)
-            .expect("Perspective matrix uniform missing") = perspective_matrix;
-
-        *gpu.database.borrow_mut().uniforms
-            .get_vec2_mut(gpu.globals.global_uniforms.resolution)
-            .expect("Resolution uniform missing") = Vec2::new(
-                render_target.get_dimensions().0 as f32, 
-                render_target.get_dimensions().1 as f32
-            );
-
-        for render_pass in gpu.render_passes.iter() {
-            // model matrix
-            let model_matrix = render_pass.transform.to_matrix();
-            *gpu.database.borrow_mut().uniforms
-                .get_mat4_mut(gpu.globals.global_uniforms.model_matrix)
-                .expect("Model matrix uniform missing") = model_matrix;
-
-            let db = gpu.database.borrow();
-            let mesh = db.assets
-                .get_mesh(render_pass.mesh_id)
-                .expect("Mesh asset not found");
-
-            let gpu_mesh = self.gpu_assets
-                .get_mesh(render_pass.mesh_id)
-                .expect("Gpu mesh not found");
-
-            let material = db.assets
-                .get_material(mesh.material)
-                .expect("Material not found");
-
-            let uniform_values = material
-                .get_uniform_values(&db.uniforms, &self.gpu_assets)
-                .expect("Unable to generate uniform values");
-
-            let program = self.gpu_assets
-                .get_program(material.program)
-                .expect("Program not found");
-
-            let draw_params = glium::DrawParameters {
-                depth: glium::Depth {
-                    test: glium::draw_parameters::DepthTest::IfLess,
-                    write: true,
-                    .. Default::default()
-                },
-                blend: glium::draw_parameters::Blend::alpha_blending(),
-                .. Default::default()
-            };
-
-            if let Some(gl_index_buffer) = &gpu_mesh.index_buffer {
-                framebuffer.draw(
-                    &gpu_mesh.vertex_buffer,
-                    gl_index_buffer,
-                    &program.gl, 
-                    &uniform_values,
-                    &draw_params
-                ).unwrap();
-            }
-            else {
-                framebuffer.draw(
-                    &gpu_mesh.vertex_buffer,
-                    glium::index::NoIndices(
-                        glium::index::PrimitiveType::from(
-                            mesh.primitive_type
-                        )
-                    ),
-                    &program.gl, 
-                    &uniform_values,
-                    &draw_params
-                ).unwrap();
-            }
-        }
-
-        let scale = frame.get_dimensions().1 as f32 / render_target.get_dimensions().1 as f32;
-        let new_width = render_target.get_dimensions().0 as f32 * scale;
-        let new_x_pos = (frame.get_dimensions().0 as f32 - new_width) as f32 / 2.0;
-
-        frame.blit_buffers_from_simple_framebuffer(
-            &framebuffer,
-            &Rect {
-                left: 0, 
-                bottom: 0, 
-                width: render_target.get_dimensions().0, 
-                height: render_target.get_dimensions().1
-            }, 
-            &BlitTarget {
-                left: new_x_pos as u32, 
-                bottom: 0, 
-                width: new_width as i32, 
-                height: frame.get_dimensions().1 as i32
-            }, 
-            uniforms::MagnifySamplerFilter::Nearest, 
-            BlitMask::color_and_depth()
-        );
     }
 
     pub fn post_render(&self, gpu: &mut GraphicsChip) {

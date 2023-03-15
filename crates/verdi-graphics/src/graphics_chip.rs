@@ -301,38 +301,6 @@ impl GraphicsChip {
                 *= Mat4::from_axis_angle(*axis, angle);
     }
 
-    pub fn enable_lighting(&mut self, value: bool) {
-        *self.database.borrow_mut().uniforms
-            .get_boolean_mut(
-                self.globals.global_uniforms.enable_lighting
-            ).unwrap() 
-                = value;
-    }
-
-    pub fn enable_fog(&mut self, value: bool) {
-        *self.database.borrow_mut().uniforms
-            .get_boolean_mut(
-                self.globals.global_uniforms.enable_fog
-            ).unwrap() 
-                = value;
-    }
-
-    pub fn set_fog_start(&mut self, distance: f32) {
-        *self.database.borrow_mut().uniforms
-            .get_float_mut(
-                self.globals.global_uniforms.fog_start
-            ).unwrap() 
-                = distance;
-    }
-
-    pub fn set_fog_end(&mut self, distance: f32) {
-        *self.database.borrow_mut().uniforms
-            .get_float_mut(
-                self.globals.global_uniforms.fog_end
-            ).unwrap() 
-                = distance;
-    }
-
     pub fn draw_line(&mut self, p1: &Vec2, p2: &Vec2) {
         let v1 = Vertex {
             position: [p1.x, p1.y, 0.0],

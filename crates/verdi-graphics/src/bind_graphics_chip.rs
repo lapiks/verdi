@@ -78,22 +78,6 @@ impl<'lua> BindGraphicsChip {
         gpu.rotate(angle, axis);
     }
 
-    fn enable_lighting(gpu: &mut GraphicsChip, value: bool) {
-        gpu.enable_lighting(value);
-    }
-
-    fn enable_fog(gpu: &mut GraphicsChip, value: bool) {
-        gpu.enable_fog(value);
-    }
-
-    fn set_fog_start(gpu: &mut GraphicsChip, distance: f32) {
-        gpu.set_fog_start(distance);
-    }
-
-    fn set_fog_end(gpu: &mut GraphicsChip, distance: f32) {
-        gpu.set_fog_end(distance);
-    }
-
     fn draw_line(gpu: &mut GraphicsChip, p1: &Vec2, p2: &Vec2) {
         gpu.draw_line(p1, p2);
     }
@@ -213,26 +197,6 @@ impl<'lua> BindGraphicsChip {
                 )
             )?;
             module_table.set("setClearColor", func)?;
-        }
-        {
-            let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, value: bool| Ok(BindGraphicsChip::enable_lighting(&mut gpu.borrow_mut(), value)))?;
-            module_table.set("enableLighting", func)?;
-        }
-        {
-            let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, value: bool| Ok(BindGraphicsChip::enable_fog(&mut gpu.borrow_mut(), value)))?;
-            module_table.set("enableFog", func)?;
-        }
-        {
-            let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, distance: f32| Ok(BindGraphicsChip::set_fog_start(&mut gpu.borrow_mut(), distance)))?;
-            module_table.set("setFogStart", func)?;
-        }
-        {
-            let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, distance: f32| Ok(BindGraphicsChip::set_fog_end(&mut gpu.borrow_mut(), distance)))?;
-            module_table.set("setFogEnd", func)?;
         }
         {
             let gpu = gpu.clone();
