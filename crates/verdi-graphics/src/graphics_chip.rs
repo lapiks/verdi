@@ -11,7 +11,11 @@ use crate::{
     material::{Material, MaterialId}, 
     globals::Globals, 
     mesh::{MeshId, Mesh, PrimitiveType}, 
-    prelude::Database, render_state::RenderState, pass::PassHandle, render_graph::RenderGraph,
+    prelude::Database, 
+    render_state::RenderState, 
+    pass::PassHandle, 
+    render_graph::RenderGraph, 
+    camera::{CameraId, Camera},
 };
 
 use image::ImageError;
@@ -25,6 +29,7 @@ pub struct GraphicsChip {
     pub database: Rc<RefCell<Database>>,
     pub globals: Rc<Globals>,
     pub render_state: RenderState,
+    pub camera: CameraId,
 }
 
 // Public API
@@ -51,6 +56,10 @@ impl GraphicsChip {
             current_offset: 0,
         };
 
+        // default camera
+        let camera = Camera::new();
+        let camera_id = database.borrow_mut().assets.add_camera(camera);
+
         Ok(Self { 
             render_graph: Rc::new(RefCell::new(RenderGraph::new())),
             render_passes: Vec::new(),
@@ -58,6 +67,7 @@ impl GraphicsChip {
             database,
             globals,
             render_state: RenderState::new(),
+            camera: camera_id,
         })
     }
 

@@ -1,10 +1,28 @@
-use verdi_math::Mat4;
+use std::{cell::RefCell, rc::Rc};
+
+use mlua::{UserData, UserDataMethods};
+use slotmap::{new_key_type, Key};
+use verdi_math::{Mat4, prelude::Transform, Vec3};
+
+use crate::database::Database;
+
+new_key_type! {
+    pub struct CameraId;
+}
 
 pub struct Camera {
-
+    pub transform: Transform,
+    pub id: CameraId,
 }
 
 impl Camera {
+    pub fn new() -> Self {
+        Self {
+            transform: Transform::new(),
+            id: CameraId::null(),
+        }
+    }
+
     pub fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> Mat4 {
         let f = {
             let f = direction;
@@ -60,5 +78,38 @@ impl Camera {
                 [         0.0         ,    0.0, -(2.0*zfar*znear)/(zfar-znear),   0.0],
             ]
         )
+    }
+}
+
+pub struct CameraHandle {
+    pub database: Rc<RefCell<Database>>,
+    pub id: CameraId,
+}
+
+impl UserData for CameraHandle {
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method_mut("translate", |_, camera, (x, y, z): (f32, f32, f32)| {
+            Ok({
+                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                    camera.transform.translate(Vec3::new(x, y, z));
+                }
+            })
+        });
+
+        methods.add_method_mut("rotate", |_, camera, (angle, x, y, z): (f32, f32, f32, f32)| {
+            Ok({
+                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                    camera.transform.rotate(angle, Vec3::new(x, y, z));
+                }
+            })
+        });
+
+        methods.add_method_mut("scale", |_, camera, (x, y, z): (f32, f32, f32)| {
+            Ok({
+                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                    camera.transform.scale(Vec3::new(x, y, z));
+                }
+            })
+        });
     }
 }

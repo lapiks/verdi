@@ -6,7 +6,7 @@ use verdi_math::prelude::*;
 use crate::{
     prelude::GraphicsChip, 
     image::ImageHandle, 
-    model::ModelHandle, mesh::{MeshHandle, PrimitiveType}, material::MaterialHandle, uniforms::UniformId
+    model::ModelHandle, mesh::{MeshHandle, PrimitiveType}, material::MaterialHandle, uniforms::UniformId, camera::CameraHandle
 };
 
 pub struct BindGraphicsChip;
@@ -236,6 +236,13 @@ impl<'lua> BindGraphicsChip {
             )?;
             module_table.set("rotate", func)?;
         }
+
+        // default camera
+        let camera = CameraHandle {
+            database: gpu.borrow().database.clone(),
+            id: gpu.borrow().camera,
+        };
+        module_table.set("camera", camera)?;
 
         // add table to globals
         globals.set("graphics", module_table)?;

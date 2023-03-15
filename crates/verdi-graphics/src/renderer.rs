@@ -187,6 +187,8 @@ impl Renderer {
             .get_mat4_mut(gpu.globals.global_uniforms.perspective_matrix)
             .expect("Perspective matrix uniform missing") = perspective_matrix;
 
+        // todo : view matrix
+
         *gpu.database.borrow_mut().uniforms
             .get_vec2_mut(gpu.globals.global_uniforms.resolution)
             .expect("Resolution uniform missing") = Vec2::new(
