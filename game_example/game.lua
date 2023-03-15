@@ -37,35 +37,11 @@ function verdi.start()
     --audio.play(source)
 end
 
-function verdi.update() 
-
-end
-
-function verdi.draw(deltaTime)
-    local pass = graphics.newPass()
-
-    graphics.setClearColor(0.0, 0.0, 0.0, 1.0)
-
+function verdi.update(deltaTime) 
     graphics.rotate(camPitch, 1, 0, 0)
     graphics.rotate(camYaw, 0, 1, 0)
     graphics.translate(x, -2.5, y)
 
-    --transform:translate(5.0, 0.0, 0.0)
-    --transform:rotate(1.0, 0.0, 1.0, 0.0)
-    --transform:scale(2.0, 2.0, 2.0)
-
-    pass:enableLighting(true)
-    pass:enableFog(true)
-    pass:setFogStart(10.0)
-    pass:setFogEnd(25.0)
-    pass:drawModel(model)
-    pass:drawMesh(mesh, transform)
-
-    -- for i = 0, model:getNumNodes() do
-    --     local node = model:getNode(i) 
-    --     node:draw()
-    -- end
-    
     if input.getKeyDown("z") then
         y = y - speed * deltaTime
     end
@@ -101,6 +77,28 @@ function verdi.draw(deltaTime)
     if input.getKeyDown(" ") then
         print("space is down")
     end
+end
+
+function verdi.draw()
+    local pass = graphics.newPass()
+
+    graphics.setClearColor(0.0, 0.0, 0.0, 1.0)
+
+    --transform:translate(5.0, 0.0, 0.0)
+    --transform:rotate(1.0, 0.0, 1.0, 0.0)
+    --transform:scale(2.0, 2.0, 2.0)
+
+    pass:enableLighting(true)
+    pass:enableFog(true)
+    pass:setFogStart(10.0)
+    pass:setFogEnd(25.0)
+    pass:drawModel(model)
+    pass:drawMesh(mesh, transform)
+
+    -- for i = 0, model:getNumNodes() do
+    --     local node = model:getNode(i) 
+    --     node:draw()
+    -- end
 
     --graphics.beginObject("triangles")
         --graphics.bindTexture(image)
