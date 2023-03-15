@@ -11,7 +11,7 @@ use crate::{
     material::{Material, MaterialId}, 
     globals::Globals, 
     mesh::{MeshId, Mesh, PrimitiveType}, 
-    prelude::DataBase, render_state::RenderState, pass::PassHandle, render_graph::RenderGraph,
+    prelude::Database, render_state::RenderState, pass::PassHandle, render_graph::RenderGraph,
 };
 
 use image::ImageError;
@@ -22,14 +22,14 @@ pub struct GraphicsChip {
     pub render_graph: Rc<RefCell<RenderGraph>>,
     pub render_passes: Vec<RenderPass>,
     pub stream_buffer: StreamBufferState,
-    pub database: Rc<RefCell<DataBase>>,
+    pub database: Rc<RefCell<Database>>,
     pub globals: Rc<Globals>,
     pub render_state: RenderState,
 }
 
 // Public API
 impl GraphicsChip {
-    pub fn new(database: Rc<RefCell<DataBase>>, globals: Rc<Globals>) -> Result<Self, std::io::Error> {
+    pub fn new(database: Rc<RefCell<Database>>, globals: Rc<Globals>) -> Result<Self, std::io::Error> {
         let mat_2d = database.borrow_mut().assets.add_material(
             Material::new(globals.global_shaders.gouraud, &globals.global_uniforms)
                 .clone()

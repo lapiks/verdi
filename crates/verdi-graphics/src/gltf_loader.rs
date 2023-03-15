@@ -14,7 +14,7 @@ use crate::{
     node::Node,
     vertex::Vertex, 
     model::Model, 
-    database::DataBase, 
+    database::Database, 
     globals::Globals, 
 };
 
@@ -31,7 +31,7 @@ pub enum GltfError {
 pub struct GltfLoader;
 
 impl GltfLoader {
-    pub fn load<P: AsRef<Path>>(path: P, render_resources: &mut DataBase, globals: &Globals) -> Result<Model, GltfError> {
+    pub fn load<P: AsRef<Path>>(path: P, render_resources: &mut Database, globals: &Globals) -> Result<Model, GltfError> {
         let mut model = Model::new();
 
         let gltf = gltf::Gltf::open(path.as_ref())?;

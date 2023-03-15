@@ -7,7 +7,7 @@ use mlua::Lua;
 
 use std::{path::Path, cell::RefCell, rc::Rc};
 
-use verdi_graphics::prelude::{DataBase, Globals};
+use verdi_graphics::prelude::{Database, Globals};
 use verdi_window::prelude::*;
 use verdi_game::prelude::{
     Game, 
@@ -35,7 +35,7 @@ pub enum GameState {
 /// Handle events and disptach them to the different systems.
 pub struct App {
     window: Window,
-    database: Rc<RefCell<DataBase>>,
+    database: Rc<RefCell<Database>>,
     globals: Rc<Globals>,
     game: Option<Game>,
     pub game_state: GameState,
@@ -47,7 +47,7 @@ impl App {
     pub fn new() -> Self {
         let database = Rc::new(
             RefCell::new(
-                DataBase::new()
+                Database::new()
             )
         );
         let globals = Rc::new(

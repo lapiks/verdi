@@ -33,8 +33,8 @@ function verdi.start()
 
     test.func()
 
-    local source = audio.newSource("./game_example/assets/Mgła - Age of Excuse - 01 Age of Excuse I.mp3")
-    audio.play(source)
+    --local source = audio.newSource("./game_example/assets/Mgła - Age of Excuse - 01 Age of Excuse I.mp3")
+    --audio.play(source)
 end
 
 function verdi.update() 

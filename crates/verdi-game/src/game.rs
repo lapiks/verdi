@@ -9,7 +9,7 @@ use verdi_graphics::prelude::{
     Renderer, 
     BindGraphicsChip, 
     RenderTarget,
-    DataBase, 
+    Database, 
     Globals,
 };
 use verdi_input::prelude::{Inputs, BindInputs};
@@ -51,7 +51,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new<P: AsRef<Path>>(path: P, display: &Display, database: Rc<RefCell<DataBase>>, globals: Rc<Globals>) -> Result<Self, GameError> {
+    pub fn new<P: AsRef<Path>>(path: P, display: &Display, database: Rc<RefCell<Database>>, globals: Rc<Globals>) -> Result<Self, GameError> {
             let gpu = Rc::new(
                 RefCell::new(
                     GraphicsChip::new(database, globals)

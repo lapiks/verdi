@@ -3,7 +3,7 @@ use std::{rc::Rc, cell::RefCell};
 use verdi_graphics::prelude::{
     GraphicsChip, 
     Renderer, 
-    DataBase, 
+    Database, 
     Globals,
 };
 
@@ -13,7 +13,7 @@ pub struct WorldEditor {
 }
 
 impl WorldEditor {
-    pub fn new(db: Rc<RefCell<DataBase>>, globals: Rc<Globals>) -> Self {
+    pub fn new(db: Rc<RefCell<Database>>, globals: Rc<Globals>) -> Self {
         let gpu = GraphicsChip::new(db, globals)
             .expect("World Editor GraphicsChip initialisation failed");
 

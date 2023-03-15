@@ -4,7 +4,7 @@ use crate::{
     uniforms::{UniformId, Uniforms}, 
     program::{ProgramId, Program}, 
     assets::Assets, 
-    shader::Shader, database::DataBase
+    shader::Shader, database::Database
 };
 
 /// Indicates where to find some globals (shader and uniforms) in the database
@@ -15,7 +15,7 @@ pub struct Globals {
 }
 
 impl Globals {
-    pub fn new(database: &mut DataBase) -> Result<Self, std::io::Error> {
+    pub fn new(database: &mut Database) -> Result<Self, std::io::Error> {
         Ok(Self {
             global_shaders: GlobalShaders::new(&mut database.assets)?,
             global_uniforms: GlobalUniforms::new(&mut database.uniforms),

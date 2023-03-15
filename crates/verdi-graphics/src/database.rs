@@ -4,12 +4,12 @@ use crate::{
 };
 
 /// Render resources database.
-pub struct DataBase {
+pub struct Database {
     pub assets: Assets,
     pub uniforms: Uniforms,
 }
 
-impl DataBase {
+impl Database {
     pub fn new() -> Self {
         Self {
             assets: Assets::new(),

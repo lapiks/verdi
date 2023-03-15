@@ -6,7 +6,7 @@ pub mod prelude {
         bind_graphics_chip::BindGraphicsChip,
         renderer::Renderer,
         render_target::RenderTarget,
-        database::DataBase,
+        database::Database,
         globals::Globals,
     };
 }
