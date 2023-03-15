@@ -10,7 +10,8 @@ use verdi_graphics::prelude::{
     BindGraphicsChip, 
     RenderTarget,
     Database, 
-    Globals,
+    Globals, 
+    PassHandle,
 };
 use verdi_input::prelude::{Inputs, BindInputs};
 use verdi_math::prelude::BindMath;
@@ -123,8 +124,13 @@ impl Game {
         
         self.scripts.as_ref().borrow_mut().hot_reload(lua);
 
+        let pass = PassHandle {
+            graph: self.gpu.borrow().render_graph.clone(),
+            id: self.gpu.borrow().render_graph.borrow_mut().create_pass(),
+        };
+
         // callbacks
-        if let Err(err) = LuaContext::call_run(lua, delta_time) {
+        if let Err(err) = LuaContext::call_run(lua, delta_time, pass) {
             let current_error = err.to_string();
             if self.last_error != current_error {
                 println!("{}", err);

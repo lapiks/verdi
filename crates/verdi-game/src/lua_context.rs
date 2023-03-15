@@ -1,4 +1,5 @@
 use mlua::{Lua, Result, Function, Table};
+use verdi_graphics::prelude::PassHandle;
 
 use crate::prelude::{Scripts, Script};
 
@@ -48,13 +49,13 @@ impl LuaContext {
         Ok(())
     }
 
-    pub fn call_run(lua: &Lua, delta_time: f32) -> Result<()> {
+    pub fn call_run(lua: &Lua, delta_time: f32, pass: PassHandle) -> Result<()> {
         let globals = lua.globals();
         let verdi_table: Table = globals.get("verdi")?;
 
         // run callbacks
         let run_func: Function = verdi_table.get("run")?;
-        run_func.call::<_,()>(delta_time)?;
+        run_func.call::<_,()>((delta_time, pass))?;
 
         Ok(())
     }

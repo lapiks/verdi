@@ -8,6 +8,7 @@ pub mod prelude {
         render_target::RenderTarget,
         database::Database,
         globals::Globals,
+        pass::PassHandle,
     };
 }
 

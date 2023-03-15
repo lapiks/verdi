@@ -79,9 +79,7 @@ function verdi.update(deltaTime)
     end
 end
 
-function verdi.draw()
-    local pass = graphics.newPass()
-
+function verdi.draw(pass)
     graphics.setClearColor(0.0, 0.0, 0.0, 1.0)
 
     --transform:translate(5.0, 0.0, 0.0)
