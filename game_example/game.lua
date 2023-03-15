@@ -46,14 +46,6 @@ function verdi.draw(deltaTime)
 
     graphics.setClearColor(0.0, 0.0, 0.0, 1.0)
 
-	graphics.enableLighting(true)
-
-    --graphics.line(0.0, 0.0, 1.0, 1.0)
-
-    --graphics.enableFog(true)
-    --graphics.setFogStart(10.0)
-    --graphics.setFogEnd(25.0)
-
     graphics.rotate(camPitch, 1, 0, 0)
     graphics.rotate(camYaw, 0, 1, 0)
     graphics.translate(x, -2.5, y)
@@ -62,8 +54,7 @@ function verdi.draw(deltaTime)
     --transform:rotate(1.0, 0.0, 1.0, 0.0)
     --transform:scale(2.0, 2.0, 2.0)
 
-    --model:draw()
-    --mesh:draw()
+    pass:enableLighting(true)
     pass:enableFog(true)
     pass:setFogStart(10.0)
     pass:setFogEnd(25.0)
