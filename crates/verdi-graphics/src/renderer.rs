@@ -187,8 +187,6 @@ impl Renderer {
             .get_mat4_mut(gpu.globals.global_uniforms.perspective_matrix)
             .expect("Perspective matrix uniform missing") = perspective_matrix;
 
-        // todo : view matrix
-
         *gpu.database.borrow_mut().uniforms
             .get_vec2_mut(gpu.globals.global_uniforms.resolution)
             .expect("Resolution uniform missing") = Vec2::new(
@@ -199,10 +197,14 @@ impl Renderer {
         for pass in gpu.render_graph.borrow().get_passes().iter() {
             for cmd in pass.get_cmds() {
                 // model matrix
-                let model_matrix = cmd.transform.to_matrix();
                 *gpu.database.borrow_mut().uniforms
                     .get_mat4_mut(gpu.globals.global_uniforms.model_matrix)
-                    .expect("Model matrix uniform missing") = model_matrix;
+                    .expect("Model matrix uniform missing") = cmd.transform.to_matrix();
+                
+                // view matrix
+                *gpu.database.borrow_mut().uniforms
+                    .get_mat4_mut(gpu.globals.global_uniforms.view_matrix)
+                    .expect("View matrix uniform missing") = pass.render_state.view;
 
                 *gpu.database.borrow_mut().uniforms
                     .get_boolean_mut(gpu.globals.global_uniforms.enable_lighting)

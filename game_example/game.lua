@@ -38,9 +38,10 @@ function verdi.start()
 end
 
 function verdi.update(deltaTime) 
-    graphics.rotate(camPitch, 1, 0, 0)
-    graphics.rotate(camYaw, 0, 1, 0)
-    graphics.translate(x, -2.5, y)
+    graphics.camera:reset()
+    graphics.camera:rotate(camPitch, 1, 0, 0)
+    graphics.camera:rotate(camYaw, 0, 1, 0)
+    graphics.camera:setPosition(x, -2.5, y)
 
     if input.getKeyDown("z") then
         y = y - speed * deltaTime
@@ -92,6 +93,8 @@ function verdi.draw(pass)
     pass:setFogEnd(25.0)
     pass:drawModel(model)
     pass:drawMesh(mesh, transform)
+
+    pass:submit(graphics.camera)
 
     -- for i = 0, model:getNumNodes() do
     --     local node = model:getNode(i) 

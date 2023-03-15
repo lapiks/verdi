@@ -34,6 +34,10 @@ impl Transform {
         Mat4::from_scale_rotation_translation(self.scale, self.rotation, self.translation)
     }
 
+    pub fn reset(&mut self) {
+        *self = Transform::IDENTITY
+    }
+    
     pub fn translate(&mut self, vec: Vec3) {
         self.translation += vec;
     }
@@ -44,6 +48,18 @@ impl Transform {
 
     pub fn scale(&mut self, factor: Vec3) {
         self.scale *= factor;
+    }
+
+    pub fn set_position(&mut self, vec: Vec3) {
+        self.translation = vec;
+    }
+
+    pub fn set_rotation(&mut self, angle: f32, axis: Vec3) {
+        self.rotation = Quat::from_axis_angle(axis, angle);
+    }
+
+    pub fn set_scale(&mut self, factor: Vec3) {
+        self.scale = factor;
     }
 
     pub fn apply(&mut self, other: &Transform) {
@@ -69,6 +85,10 @@ impl Default for Transform {
 
 impl UserData for Transform {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method_mut("reset", |_, transform, ()| {
+            Ok(transform.reset())
+        });
+
         methods.add_method_mut("translate", |_, transform, (x, y, z): (f32, f32, f32)| {
             Ok(transform.translate(Vec3::new(x, y, z)))
         });
@@ -79,6 +99,18 @@ impl UserData for Transform {
 
         methods.add_method_mut("scale", |_, transform, (x, y, z): (f32, f32, f32)| {
             Ok(transform.scale(Vec3::new(x, y, z)))
+        });
+
+        methods.add_method_mut("setPosition", |_, transform, (x, y, z): (f32, f32, f32)| {
+            Ok(transform.set_position(Vec3::new(x, y, z)))
+        });
+
+        methods.add_method_mut("setRotation", |_, transform, (angle, x, y, z): (f32, f32, f32, f32)| {
+            Ok(transform.set_rotation(angle, Vec3::new(x, y, z)))
+        });
+
+        methods.add_method_mut("setScale", |_, transform, (x, y, z): (f32, f32, f32)| {
+            Ok(transform.set_scale(Vec3::new(x, y, z)))
         });
 
         methods.add_method_mut("apply", |_, transform, other: Transform| {

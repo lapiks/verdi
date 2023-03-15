@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use mlua::{UserData, UserDataMethods};
 use verdi_math::prelude::Transform;
 
-use crate::{render_cmds::DrawCmd, mesh::{MeshHandle, MeshId}, render_graph::RenderGraph, model::ModelHandle, render_state::RenderState};
+use crate::{render_cmds::DrawCmd, mesh::{MeshHandle, MeshId}, render_graph::RenderGraph, model::ModelHandle, render_state::RenderState, camera::{Camera, CameraHandle}};
 
 pub struct CmdQueue {
     cmds: Vec<DrawCmd>
@@ -57,6 +57,15 @@ pub struct PassHandle {
 
 impl UserData for PassHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method_mut("submit", |_, pass, camera: CameraHandle| {
+            Ok({
+                if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
+                    if let Some(cam_ref) = camera.database.borrow().assets.get_camera(camera.id) {
+                        pass.render_state.view = cam_ref.transform.to_matrix();
+                    }
+                }
+            })
+        });
         methods.add_method_mut("drawModel", |_, pass, model: ModelHandle| {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {

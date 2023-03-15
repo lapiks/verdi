@@ -81,6 +81,7 @@ impl Camera {
     }
 }
 
+#[derive(Clone)]
 pub struct CameraHandle {
     pub database: Rc<RefCell<Database>>,
     pub id: CameraId,
@@ -88,6 +89,14 @@ pub struct CameraHandle {
 
 impl UserData for CameraHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method_mut("reset", |_, camera, ()| {
+            Ok({
+                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                    camera.transform.reset();
+                }
+            })
+        });
+
         methods.add_method_mut("translate", |_, camera, (x, y, z): (f32, f32, f32)| {
             Ok({
                 if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
@@ -108,6 +117,30 @@ impl UserData for CameraHandle {
             Ok({
                 if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
                     camera.transform.scale(Vec3::new(x, y, z));
+                }
+            })
+        });
+
+        methods.add_method_mut("setPosition", |_, camera, (x, y, z): (f32, f32, f32)| {
+            Ok({
+                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                    camera.transform.set_position(Vec3::new(x, y, z));
+                }
+            })
+        });
+
+        methods.add_method_mut("setRotation", |_, camera, (angle, x, y, z): (f32, f32, f32, f32)| {
+            Ok({
+                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                    camera.transform.set_rotation(angle, Vec3::new(x, y, z));
+                }
+            })
+        });
+
+        methods.add_method_mut("setScale", |_, camera, (x, y, z): (f32, f32, f32)| {
+            Ok({
+                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                    camera.transform.set_scale(Vec3::new(x, y, z));
                 }
             })
         });
