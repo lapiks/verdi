@@ -57,8 +57,8 @@ impl<'lua> BindGraphicsChip {
         MeshHandle::new(gpu.clone(), mesh_id)
     }
 
-    fn new_sprite(gpu: Rc<RefCell<GraphicsChip>>) -> SpriteHandle {
-        let sprite_id = gpu.borrow_mut().new_sprite().unwrap();
+    fn new_sprite(gpu: Rc<RefCell<GraphicsChip>>, image: ImageHandle) -> SpriteHandle {
+        let sprite_id = gpu.borrow_mut().new_sprite(image);
         SpriteHandle { 
             db: gpu.borrow().database.clone(), 
             id: sprite_id,
@@ -177,7 +177,7 @@ impl<'lua> BindGraphicsChip {
         }
         {
             let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, ()| Ok(BindGraphicsChip::new_sprite(gpu.clone())))?;
+            let func = lua.create_function_mut(move |_, image: ImageHandle| Ok(BindGraphicsChip::new_sprite(gpu.clone(), image)))?;
             module_table.set("newSprite", func)?;
         }
         {

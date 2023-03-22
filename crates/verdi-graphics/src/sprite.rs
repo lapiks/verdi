@@ -3,21 +3,27 @@ use std::{rc::Rc, cell::RefCell};
 use mlua::UserData;
 use slotmap::{new_key_type, Key};
 
-use crate::{database::Database, mesh::MeshId};
+use crate::{
+    database::Database, 
+    mesh::MeshId, 
+    image::ImageId
+};
 
 new_key_type! {
     pub struct SpriteId;
 }
 
 pub struct Sprite {
+    pub image_id: ImageId,
     pub quad_id: MeshId,
     pub id: SpriteId,
 }
 
 impl Sprite {
-    pub fn new() -> Self {
+    pub fn new(image_id: ImageId, quad_id: MeshId) -> Self {
         Self {
-            quad_id: MeshId::null(),
+            image_id,
+            quad_id,
             id: SpriteId::null(),
         }
     }

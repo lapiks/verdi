@@ -97,8 +97,9 @@ impl UserData for PassHandle {
         methods.add_method_mut("drawSprite", |_, pass, sprite: SpriteHandle| {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
-                    // récupérer un quad à dessiner
-                    //pass.add_draw_cmd(mesh.id, transform);
+                    if let Some(sprite_ref) = sprite.db.borrow().assets.get_sprite(sprite.id) {
+                        pass.add_draw_cmd(sprite_ref.quad_id, Transform::default());
+                    }
                 }
             })
         });

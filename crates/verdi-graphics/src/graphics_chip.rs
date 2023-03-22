@@ -265,10 +265,46 @@ impl GraphicsChip {
         ))
     }
 
-    pub fn new_sprite(&mut self) -> Result<SpriteId, ImageError> {
-        let sprite = Sprite::new();
+    pub fn new_sprite(&mut self, image: ImageHandle) -> SpriteId {
+        let vertex_buffer:Vec<Vertex> = vec![
+            Vertex {
+                position: [0.0, 0.0, 0.0],
+                normal: [0.0, 0.0, 0.0],
+                uv: [0.0, 0.0],
+                color: [0.0, 0.0, 0.0, 0.0],
+            },
+            Vertex {
+                position: [0.0, 1.0, 0.0],
+                normal: [0.0, 0.0, 0.0],
+                uv: [0.0, 0.0],
+                color: [0.0, 0.0, 0.0, 0.0],
+            },
+            Vertex {
+                position: [1.0, 0.0, 0.0],
+                normal: [0.0, 0.0, 0.0],
+                uv: [0.0, 0.0],
+                color: [0.0, 0.0, 0.0, 0.0],
+            },
+            Vertex {
+                position: [1.0, 1.0, 0.0],
+                normal: [0.0, 0.0, 0.0],
+                uv: [0.0, 0.0],
+                color: [0.0, 0.0, 0.0, 0.0],
+            },
+        ];
+        let index_buffer = vec![0, 1, 2, 2, 1, 3];
+        let material_id = self.new_material();
+        let quad = self.database.borrow_mut().assets.add_mesh(
+            Mesh::new(
+                vertex_buffer,
+                Some(index_buffer),
+                PrimitiveType::Triangles,
+                material_id
+            )
+        );
+        let sprite = Sprite::new(image.id, quad);
 
-        Ok(self.database.borrow_mut().assets.add_sprite(sprite))
+        self.database.borrow_mut().assets.add_sprite(sprite)
     }
 
     pub fn new_material(&mut self) -> MaterialId {
