@@ -4,6 +4,7 @@ function verdi.start()
     model = graphics.newModel("./game_example/assets/tank.gltf")
     mesh = graphics.newMesh()
     transform = math.newTransform()
+    image = graphics.newImage("./game_example/assets/container.png")
 
     entity = world.spawn()
     print(entity:id())
@@ -93,6 +94,7 @@ function verdi.draw(pass)
     pass:setFogEnd(25.0)
     pass:drawModel(model)
     pass:drawMesh(mesh, transform)
+    --pass:drawImage(image)
 
     pass:submit(graphics.camera)
 

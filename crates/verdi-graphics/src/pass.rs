@@ -3,7 +3,15 @@ use std::{cell::RefCell, rc::Rc};
 use mlua::{UserData, UserDataMethods};
 use verdi_math::prelude::Transform;
 
-use crate::{render_cmds::DrawCmd, mesh::{MeshHandle, MeshId}, render_graph::RenderGraph, model::ModelHandle, render_state::RenderState, camera::{Camera, CameraHandle}};
+use crate::{
+    render_cmds::DrawCmd, 
+    mesh::{MeshHandle, MeshId}, 
+    render_graph::RenderGraph, 
+    model::ModelHandle, 
+    render_state::RenderState, 
+    camera::CameraHandle, 
+    sprite::SpriteHandle
+};
 
 pub struct CmdQueue {
     cmds: Vec<DrawCmd>
@@ -83,6 +91,14 @@ impl UserData for PassHandle {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
                     pass.add_draw_cmd(mesh.id, transform);
+                }
+            })
+        });
+        methods.add_method_mut("drawSprite", |_, pass, sprite: SpriteHandle| {
+            Ok({
+                if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
+                    // récupérer un quad à dessiner
+                    //pass.add_draw_cmd(mesh.id, transform);
                 }
             })
         });

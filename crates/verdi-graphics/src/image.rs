@@ -1,4 +1,4 @@
-
+  
 use std::path::Path;
 use glium::Display;
 use image::{io::Reader as ImageReader, RgbaImage, ImageError};

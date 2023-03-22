@@ -43,3 +43,4 @@ mod render_state;
 mod pass;
 mod render_cmds;
 mod render_graph;
+mod sprite;

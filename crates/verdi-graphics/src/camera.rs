@@ -61,6 +61,24 @@ impl Camera {
         )
     }
 
+    pub fn orthographic_matrix(
+        left: f32,
+        right: f32,
+        bottom: f32,
+        top: f32,
+        near: f32,
+        far: f32
+    ) -> Mat4 {
+        Mat4::from_cols_array_2d(
+            &[
+                [2.0 / (right - left)            , 0.0                             , 0.0                         , 0.0],
+                [0.0                             , 2.0 / (top - bottom)            , 0.0                         , 0.0],
+                [0.0                             , 0.0                             , -2.0 / (far - near)        , 1.0],
+                [-(right + left) / (right - left), -(top + bottom) / (top - bottom), -(far + near) / (far - near),   0.0],
+            ]
+        )
+    }
+
     pub fn perspective_matrix(width: u32, height: u32) -> Mat4 {
         let aspect_ratio = height as f32 / width as f32;
     

@@ -7,6 +7,8 @@ pub trait RenderCmd {
 }
 
 pub struct DrawCmd {
+    // pourrait être plus bas niveau : buffers, primitive type, etc..
+    // ici ça ne marche que pour un mesh
     pub mesh: MeshId,
     pub transform: Transform,
 }
