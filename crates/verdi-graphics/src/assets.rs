@@ -7,7 +7,7 @@ use crate::{
     shader::{Shader, ShaderId}, 
     program::{Program, ProgramId}, 
     model::{Model, ModelId}, 
-    camera::{Camera, CameraId},
+    camera::{Camera, CameraId}, sprite::{SpriteId, Sprite},
 };
 
 #[derive(PartialEq)]
@@ -24,6 +24,7 @@ pub struct Assets {
     programs: SlotMap<ProgramId, Program>,
     models: SlotMap<ModelId, Model>,
     cameras: SlotMap<CameraId, Camera>,
+    sprites: SlotMap<SpriteId, Sprite>,
 }
 
 impl Assets {
@@ -36,6 +37,7 @@ impl Assets {
             programs: SlotMap::default(),
             models: SlotMap::default(),
             cameras: SlotMap::default(),
+            sprites: SlotMap::default(),
         }
     }
 
@@ -47,6 +49,7 @@ impl Assets {
         self.programs.clear();
         self.models.clear();
         self.cameras.clear();
+        self.sprites.clear();
     }
 
     pub fn add_texture(&mut self, image: Image) -> ImageId {
@@ -144,5 +147,21 @@ impl Assets {
 
     pub fn get_camera_mut(&mut self, id: CameraId) -> Option<&mut Camera> {
         self.cameras.get_mut(id)
+    }
+
+    pub fn add_sprite(&mut self, sprite: Sprite) -> SpriteId {
+        let id = self.sprites.insert(sprite);
+        unsafe {
+            self.sprites.get_unchecked_mut(id).id = id;
+        }
+        id
+    }
+
+    pub fn get_sprite(&self, id: SpriteId) -> Option<&Sprite> {
+        self.sprites.get(id)
+    }
+
+    pub fn get_sprite_mut(&mut self, id: SpriteId) -> Option<&mut Sprite> {
+        self.sprites.get_mut(id)
     }
 }
