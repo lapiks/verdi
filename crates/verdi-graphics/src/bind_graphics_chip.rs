@@ -6,7 +6,7 @@ use verdi_math::prelude::*;
 use crate::{
     prelude::GraphicsChip, 
     image::ImageHandle, 
-    model::ModelHandle, mesh::{MeshHandle, PrimitiveType}, material::MaterialHandle, uniforms::UniformId, camera::CameraHandle
+    model::ModelHandle, mesh::{MeshHandle, PrimitiveType}, material::MaterialHandle, uniforms::UniformId, camera::CameraHandle, sprite::SpriteHandle
 };
 
 pub struct BindGraphicsChip;
@@ -55,6 +55,14 @@ impl<'lua> BindGraphicsChip {
     fn new_mesh(gpu: Rc<RefCell<GraphicsChip>>) -> MeshHandle {
         let mesh_id = gpu.borrow_mut().new_mesh().unwrap();
         MeshHandle::new(gpu.clone(), mesh_id)
+    }
+
+    fn new_sprite(gpu: Rc<RefCell<GraphicsChip>>) -> SpriteHandle {
+        let sprite_id = gpu.borrow_mut().new_sprite().unwrap();
+        SpriteHandle { 
+            db: gpu.borrow().database.clone(), 
+            id: sprite_id,
+        }
     }
 
     fn new_material(gpu: Rc<RefCell<GraphicsChip>>) -> MaterialHandle {
@@ -166,6 +174,11 @@ impl<'lua> BindGraphicsChip {
             let gpu = gpu.clone();
             let func = lua.create_function_mut(move |_, ()| Ok(BindGraphicsChip::new_mesh(gpu.clone())))?;
             module_table.set("newMesh", func)?;
+        }
+        {
+            let gpu = gpu.clone();
+            let func = lua.create_function_mut(move |_, ()| Ok(BindGraphicsChip::new_sprite(gpu.clone())))?;
+            module_table.set("newSprite", func)?;
         }
         {
             let gpu = gpu.clone();

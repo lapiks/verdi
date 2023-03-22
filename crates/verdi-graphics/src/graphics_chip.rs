@@ -15,7 +15,7 @@ use crate::{
     render_state::RenderState, 
     pass::PassHandle, 
     render_graph::RenderGraph, 
-    camera::{CameraId, Camera},
+    camera::{CameraId, Camera}, sprite::{SpriteId, Sprite},
 };
 
 use image::ImageError;
@@ -263,6 +263,12 @@ impl GraphicsChip {
                 material_id
             )
         ))
+    }
+
+    pub fn new_sprite(&mut self) -> Result<SpriteId, ImageError> {
+        let sprite = Sprite::new();
+
+        Ok(self.database.borrow_mut().assets.add_sprite(sprite))
     }
 
     pub fn new_material(&mut self) -> MaterialId {
