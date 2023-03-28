@@ -5,7 +5,7 @@ use crate::{
     render_pass::RenderPass, 
     image::{Image, ImageHandle, ImageId}, 
     model::ModelId, 
-    uniforms::UniformId, 
+    uniforms::{UniformId, TextureUniform}, 
     gltf_loader::{GltfError, GltfLoader}, 
     node::Node, 
     material::{Material, MaterialId}, 
@@ -253,7 +253,7 @@ impl GraphicsChip {
         let vertex_buffer:Vec<Vertex> = Vec::new();
         let index_buffer = None;
 
-        let material_id = self.new_material();
+        let material_id = self.new_gouraud_material();
 
         Ok(self.database.borrow_mut().assets.add_mesh(
             Mesh::new(
@@ -276,24 +276,38 @@ impl GraphicsChip {
             Vertex {
                 position: [0.0, 1.0, 0.0],
                 normal: [0.0, 0.0, 0.0],
-                uv: [0.0, 0.0],
+                uv: [0.0, 1.0],
                 color: [0.0, 0.0, 0.0, 0.0],
             },
             Vertex {
                 position: [1.0, 0.0, 0.0],
                 normal: [0.0, 0.0, 0.0],
-                uv: [0.0, 0.0],
+                uv: [1.0, 0.0],
                 color: [0.0, 0.0, 0.0, 0.0],
             },
             Vertex {
                 position: [1.0, 1.0, 0.0],
                 normal: [0.0, 0.0, 0.0],
-                uv: [0.0, 0.0],
+                uv: [1.0, 1.0],
                 color: [0.0, 0.0, 0.0, 0.0],
             },
         ];
         let index_buffer = vec![0, 1, 2, 2, 1, 3];
-        let material_id = self.new_material();
+
+        let tex_uniform_id = self.database.borrow_mut().uniforms.add_texture(
+            TextureUniform::new(image.id)
+        );
+
+        let mut material = Material::new(
+            self.globals.global_shaders.std_2d, 
+            &self.globals.global_uniforms
+        );
+        material.add_uniform("u_texture", tex_uniform_id);
+
+        let material_id = self.database.borrow_mut().assets.add_material(
+            material
+        );
+
         let quad = self.database.borrow_mut().assets.add_mesh(
             Mesh::new(
                 vertex_buffer,
@@ -307,12 +321,25 @@ impl GraphicsChip {
         self.database.borrow_mut().assets.add_sprite(sprite)
     }
 
-    pub fn new_material(&mut self) -> MaterialId {
-        let mut material = Material::new(self.globals.global_shaders.gouraud, &self.globals.global_uniforms);
+    pub fn new_gouraud_material(&mut self) -> MaterialId {
+        let mut material = Material::new(
+            self.globals.global_shaders.gouraud, 
+            &self.globals.global_uniforms
+        );
         material.add_uniform("u_fog_start", self.globals.global_uniforms.fog_start);
         material.add_uniform("u_fog_end", self.globals.global_uniforms.fog_end);
         material.add_uniform("u_enable_lighting", self.globals.global_uniforms.enable_lighting);
 
+        self.database.borrow_mut().assets.add_material(
+            material
+        )
+    }
+
+    pub fn new_2d_material(&mut self) -> MaterialId {
+        let mut material = Material::new(
+            self.globals.global_shaders.std_2d, 
+            &self.globals.global_uniforms
+        );
         self.database.borrow_mut().assets.add_material(
             material
         )

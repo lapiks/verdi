@@ -31,7 +31,7 @@ vec4 snap(vec4 vertex) {
 }
 
 void main() {
-    vec4 proj_vertex = u_projection * u_model * vec4(position.xy, 0.0, 1.0);
+    vec4 proj_vertex = u_model * vec4(position.xy, 0.0, 1.0);
 
     // Polygon jittering
     //vec4 snapped_pos = snap(proj_vertex);

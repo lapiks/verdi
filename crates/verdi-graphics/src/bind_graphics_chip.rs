@@ -66,7 +66,7 @@ impl<'lua> BindGraphicsChip {
     }
 
     fn new_material(gpu: Rc<RefCell<GraphicsChip>>) -> MaterialHandle {
-        let mat_id = gpu.borrow_mut().new_material();
+        let mat_id = gpu.borrow_mut().new_gouraud_material();
         MaterialHandle::new(gpu.clone(), mat_id)
     }
 
