@@ -44,10 +44,11 @@ impl Pass {
         }
     }
 
-    pub fn add_draw_cmd(&mut self, mesh: MeshId, transform: Transform) {
+    pub fn add_draw_cmd(&mut self, mesh: MeshId, transform: Transform, perspective: bool) {
         let cmd = DrawCmd {
             mesh,
             transform,
+            perspective,
         };
 
         self.cmd_queue.push_cmd(cmd);
@@ -80,7 +81,7 @@ impl UserData for PassHandle {
                     if let Some(model_ref) = model.gpu.borrow().database.borrow().assets.get_model(model.id) {
                         for node in model_ref.get_nodes().iter() {
                             if let Some(mesh) = node.mesh {
-                                pass.add_draw_cmd(mesh, node.transform);
+                                pass.add_draw_cmd(mesh, node.transform, true);
                             }
                         }
                     }
@@ -90,7 +91,7 @@ impl UserData for PassHandle {
         methods.add_method_mut("drawMesh", |_, pass, (mesh, transform): (MeshHandle, Transform)| {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
-                    pass.add_draw_cmd(mesh.id, transform);
+                    pass.add_draw_cmd(mesh.id, transform, true);
                 }
             })
         });
@@ -98,7 +99,7 @@ impl UserData for PassHandle {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
                     if let Some(sprite_ref) = sprite.db.borrow().assets.get_sprite(sprite.id) {
-                        pass.add_draw_cmd(sprite_ref.quad_id, Transform::default());
+                        pass.add_draw_cmd(sprite_ref.quad_id, Transform::default(), false);
                     }
                 }
             })

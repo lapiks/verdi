@@ -28,7 +28,7 @@ impl Globals {
 pub struct GlobalUniforms {
     pub model_matrix: UniformId,
     pub view_matrix: UniformId,
-    pub perspective_matrix: UniformId,
+    pub projection_matrix: UniformId,
     pub resolution: UniformId,
     pub enable_lighting: UniformId,
     pub enable_fog: UniformId,
@@ -41,7 +41,7 @@ impl GlobalUniforms {
         Self {
             model_matrix: uniforms.add_mat4(Mat4::IDENTITY),
             view_matrix: uniforms.add_mat4(Mat4::IDENTITY),
-            perspective_matrix: uniforms.add_mat4(Mat4::IDENTITY),
+            projection_matrix: uniforms.add_mat4(Mat4::IDENTITY),
             resolution: uniforms.add_vec2(Vec2::ZERO),
             enable_lighting: uniforms.add_boolean(true),
             enable_fog: uniforms.add_boolean(false),

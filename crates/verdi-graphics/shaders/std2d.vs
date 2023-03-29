@@ -12,7 +12,6 @@ out vec2 v_uv;
 
 // matrices
 uniform mat4 u_model;
-uniform mat4 u_view;
 uniform mat4 u_projection;
 
 uniform vec2 u_resolution;
@@ -31,7 +30,7 @@ vec4 snap(vec4 vertex) {
 }
 
 void main() {
-    vec4 proj_vertex = u_model * vec4(position.xy, 0.0, 1.0);
+    vec4 proj_vertex = u_projection * u_model * vec4(position.xy, 0.0, 1.0);
 
     // Polygon jittering
     //vec4 snapped_pos = snap(proj_vertex);

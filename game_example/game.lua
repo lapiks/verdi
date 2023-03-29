@@ -4,7 +4,7 @@ function verdi.start()
     model = graphics.newModel("./game_example/assets/tank.gltf")
     mesh = graphics.newMesh()
     transform = math.newTransform()
-    image = graphics.newImage("./game_example/assets/container.png")
+    image = graphics.newImage("./game_example/assets/Palette.png")
     sprite = graphics.newSprite(image)
 
     entity = world.spawn()

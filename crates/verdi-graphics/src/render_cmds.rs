@@ -11,6 +11,7 @@ pub struct DrawCmd {
     // ici ça ne marche que pour un mesh
     pub mesh: MeshId,
     pub transform: Transform,
+    pub perspective: bool,
 }
 
 impl RenderCmd for DrawCmd {

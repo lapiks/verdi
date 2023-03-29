@@ -38,7 +38,7 @@ impl Material {
         // add global uniforms to the material
         uniforms[0] = Some(("u_model".to_string(), global_uniforms.model_matrix));
         uniforms[1] = Some(("u_view".to_string(), global_uniforms.view_matrix));
-        uniforms[2] = Some(("u_projection".to_string(), global_uniforms.perspective_matrix));
+        uniforms[2] = Some(("u_projection".to_string(), global_uniforms.projection_matrix));
         uniforms[3] = Some(("u_resolution".to_string(), global_uniforms.resolution));
 
         Self {

@@ -266,6 +266,11 @@ impl GraphicsChip {
     }
 
     pub fn new_sprite(&mut self, image: ImageHandle) -> SpriteId {
+        let mut dimensions = (100, 100);
+        if let Some(image_ref) = self.database.borrow().assets.get_texture(image.id) {
+            dimensions = image_ref.get_dimensions();
+        }
+        
         let vertex_buffer:Vec<Vertex> = vec![
             Vertex {
                 position: [0.0, 0.0, 0.0],
@@ -274,19 +279,19 @@ impl GraphicsChip {
                 color: [0.0, 0.0, 0.0, 0.0],
             },
             Vertex {
-                position: [0.0, 1.0, 0.0],
+                position: [0.0, dimensions.1 as f32, 0.0],
                 normal: [0.0, 0.0, 0.0],
                 uv: [0.0, 1.0],
                 color: [0.0, 0.0, 0.0, 0.0],
             },
             Vertex {
-                position: [1.0, 0.0, 0.0],
+                position: [dimensions.0 as f32, 0.0, 0.0],
                 normal: [0.0, 0.0, 0.0],
                 uv: [1.0, 0.0],
                 color: [0.0, 0.0, 0.0, 0.0],
             },
             Vertex {
-                position: [1.0, 1.0, 0.0],
+                position: [dimensions.0 as f32, dimensions.1 as f32, 0.0],
                 normal: [0.0, 0.0, 0.0],
                 uv: [1.0, 1.0],
                 color: [0.0, 0.0, 0.0, 0.0],

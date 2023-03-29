@@ -183,9 +183,15 @@ impl Renderer {
             render_target.get_dimensions().1
         );
 
-        *gpu.database.borrow_mut().uniforms
-            .get_mat4_mut(gpu.globals.global_uniforms.perspective_matrix)
-            .expect("Perspective matrix uniform missing") = perspective_matrix;
+        // ortho matrix
+        let ortho_matrix = Camera::orthographic_matrix(
+            0.0,
+            render_target.get_dimensions().0 as f32, 
+            render_target.get_dimensions().1 as f32,
+            0.0,
+            -10.0,
+            10.0,
+        );
 
         *gpu.database.borrow_mut().uniforms
             .get_vec2_mut(gpu.globals.global_uniforms.resolution)
@@ -205,6 +211,11 @@ impl Renderer {
                 *gpu.database.borrow_mut().uniforms
                     .get_mat4_mut(gpu.globals.global_uniforms.view_matrix)
                     .expect("View matrix uniform missing") = pass.render_state.view;
+
+                // projection matrix
+                *gpu.database.borrow_mut().uniforms
+                    .get_mat4_mut(gpu.globals.global_uniforms.projection_matrix)
+                    .expect("Perspective matrix uniform missing") = if cmd.perspective { perspective_matrix } else { ortho_matrix };
 
                 *gpu.database.borrow_mut().uniforms
                     .get_boolean_mut(gpu.globals.global_uniforms.enable_lighting)
