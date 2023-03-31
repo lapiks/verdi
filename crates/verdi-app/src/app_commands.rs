@@ -1,7 +1,7 @@
 use verdi_system::prelude::SystemState;
 
 use crate::{
-    app::App,
+    app::{App, AppMode},
     commands::Command, 
 };
 
@@ -169,7 +169,12 @@ impl Command for ShowModeler {
     }
 
     fn execute(&self, app: &mut App) {
-
+        app.current_mode = AppMode::Modeler;
+        if let Some(modeler) = app.get_modeler_mut() {
+            if modeler.state == SystemState::Loaded {
+                modeler.state = SystemState::Starting;
+            }
+        }
     }
 }
 
@@ -192,7 +197,7 @@ impl Command for ShowEditor {
     }
 
     fn execute(&self, app: &mut App) {
-        app.show_editor = true;
+        app.current_mode = AppMode::WorldEditor;
         if let Some(editor) = app.get_editor_mut() {
             if editor.state == SystemState::Loaded {
                 editor.state = SystemState::Starting;

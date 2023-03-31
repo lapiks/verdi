@@ -23,6 +23,12 @@ use crate::{
     commands::Command, 
 };
 
+pub enum AppMode {
+    Game,
+    WorldEditor,
+    Modeler,
+}
+
 /// The global application. Render the Game, the WorldEditor and the UI.
 /// Handle events and disptach them to the different systems.
 pub struct App {
@@ -31,7 +37,8 @@ pub struct App {
     globals: Rc<Globals>,
     game: Option<System>,
     editor: Option<System>,
-    pub show_editor: bool,
+    modeler: Option<System>,
+    pub current_mode: AppMode, 
     pub shutdown: bool,
 }
 
@@ -53,7 +60,8 @@ impl App {
             globals,
             game: None,
             editor: None,
-            show_editor: false,
+            modeler: None,
+            current_mode: AppMode::Game,
             shutdown: false,
         }
     }
@@ -76,6 +84,7 @@ impl App {
         load_cmd.execute(&mut app);
 
         app.load_editor("editor");
+        app.load_modeler("modeler");
     
         event_loop.run(move |ev, _, control_flow| {
             // request a new frame
@@ -92,10 +101,10 @@ impl App {
             );
 
             {
-                let mut current_system = if app.show_editor {
-                    app.editor.as_mut() 
-                } else { 
-                    app.game.as_mut()
+                let mut current_system = match app.current_mode {
+                    AppMode::Game => app.game.as_mut(),
+                    AppMode::WorldEditor => app.editor.as_mut(),
+                    AppMode::Modeler => app.modeler.as_mut(),
                 };
     
                 if let Some(current_system) = current_system.as_mut() {
@@ -142,10 +151,10 @@ impl App {
             }
 
             // bof
-            let mut current_system = if app.show_editor {
-                app.editor.as_mut()
-            } else { 
-                app.game.as_mut()
+            let mut current_system = match app.current_mode {
+                AppMode::Game => app.game.as_mut(),
+                AppMode::WorldEditor => app.editor.as_mut(),
+                AppMode::Modeler => app.modeler.as_mut(),
             };
 
             // events handling
@@ -195,6 +204,14 @@ impl App {
         self.editor.as_mut()
     }
 
+    pub fn get_modeler(&self) -> Option<&System> {
+        self.modeler.as_ref()
+    }
+
+    pub fn get_modeler_mut(&mut self) -> Option<&mut System> {
+        self.modeler.as_mut()
+    }
+
     pub fn get_window(&self) -> &Window {
         &self.window
     }
@@ -219,6 +236,15 @@ impl App {
         Ok(())
     }
 
+    pub fn load_modeler<P: AsRef<Path>>(&mut self, path: P) -> Result<(), SystemError> {
+        if let Some(modeler) = self.modeler.as_mut() {
+           modeler.shutdown();
+        }
+
+        self.modeler = self.load_system(path)?;
+
+        Ok(())
+    }
     
     pub fn load_system<P: AsRef<Path>>(&mut self, path: P) -> Result<Option<System>, SystemError> {
         if !path.as_ref().exists() {
