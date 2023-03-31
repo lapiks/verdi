@@ -40,9 +40,10 @@ function verdi.start()
 end
 
 function verdi.update(deltaTime) 
+    graphics.camera:reset()
     graphics.camera:setPosition(x, -2.5, y)
-    graphics.camera:setRotation(camYaw, 0, 1, 0)
-    graphics.camera:setRotation(camPitch, 1, 0, 0)
+    graphics.camera:rotate(camYaw, 0, 1, 0)
+    graphics.camera:rotate(camPitch, 1, 0, 0)
 
     if input.getKeyDown("z") then
         y = y - speed * deltaTime

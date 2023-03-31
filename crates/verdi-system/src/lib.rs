@@ -3,13 +3,13 @@ pub mod prelude {
     #[doc(hidden)]
     pub use crate::{
         scripts::{Scripts, Script},
-        game::{Game, GameError},
+        system::{System, SystemState, SystemError},
         time_step::TimeStep, // ??
         lua_context::LuaContext, // ??
     };
 }
 
-mod game;
+mod system;
 mod time_step;
 mod scripts;
 mod lua_context;

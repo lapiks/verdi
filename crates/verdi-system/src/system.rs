@@ -26,7 +26,7 @@ use crate::{
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum GameError {
+pub enum SystemError {
     #[error("Reading lua script failed")]
     ReadLuaScriptFailed(#[from] std::io::Error),
     #[error("Cannot evaluate lua code")]
@@ -34,11 +34,22 @@ pub enum GameError {
     #[error("File watcher error")]
     FileWatcherError(#[from] FileWatcherError),
     #[error("Game folder doesn't exists")]
-    GameFolderError,
+    FolderError,
+}
+
+#[derive(PartialEq)]
+pub enum SystemState {
+    Unloaded,
+    Loaded,
+    Starting,
+    Running,
+    Paused,
+    Stopped,
 }
 
 /// The Game system.
-pub struct Game {
+pub struct System {
+    pub state: SystemState,
     lua: Lua,
     world: WorldHandle,
     gpu: Rc<RefCell<GraphicsChip>>,
@@ -52,8 +63,8 @@ pub struct Game {
     last_error: String,
 }
 
-impl Game {
-    pub fn new<P: AsRef<Path>>(path: P, display: &Display, database: Rc<RefCell<Database>>, globals: Rc<Globals>) -> Result<Self, GameError> {
+impl System {
+    pub fn new<P: AsRef<Path>>(path: P, display: &Display, database: Rc<RefCell<Database>>, globals: Rc<Globals>) -> Result<Self, SystemError> {
             let gpu = Rc::new(
                 RefCell::new(
                     GraphicsChip::new(database, globals)
@@ -82,6 +93,7 @@ impl Game {
             );
 
         Ok(Self { 
+            state: SystemState::Unloaded,
             lua: Lua::new(),
             world: WorldHandle::new(world),
             gpu,
@@ -96,12 +108,15 @@ impl Game {
         })
     }
 
-    pub fn load(&mut self) -> Result<(), GameError> {
-        Ok(self.scripts.as_ref().borrow_mut().load_dir(&self.path)?)
+    pub fn load(&mut self) -> Result<(), SystemError> {
+        self.scripts.as_ref().borrow_mut().load_dir(&self.path)?;
+        self.state = SystemState::Loaded;
+
+        Ok(())
     }
 
     /// called at the start of the game execution
-    pub fn boot(&mut self) -> Result<(), GameError>{
+    pub fn boot(&mut self) -> Result<(), SystemError>{
         LuaContext::create_verdi_table(&self.lua)?;
 
         BindWorld::bind(&self.lua, self.world.clone())?;

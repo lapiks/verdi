@@ -10,8 +10,7 @@ verdi-utils = { path = "../verdi-utils" }
 verdi-window = { path = "../verdi-window" }
 verdi-graphics = { path = "../verdi-graphics" }
 verdi-math = { path = "../verdi-math" }
-verdi-game = { path = "../verdi-game" }
-verdi-editor = { path = "../verdi-editor" }
+verdi-system = { path = "../verdi-system" }
 verdi-input = { path = "../verdi-input" }
 glium = "*"
 egui = { version = "0.20.1", default-features = true }

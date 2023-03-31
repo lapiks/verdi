@@ -18,8 +18,8 @@ impl LuaContext {
     }
 
     pub fn load_internal_scripts(lua: &Lua) -> Result<()> {
-        let boot_script = Scripts::load_file("crates/verdi-game/src/boot.lua").expect("Unable to load boot.lua file");
-        let run_script = Scripts::load_file("crates/verdi-game/src/run.lua").expect("Unable to load run.lua file");
+        let boot_script = Scripts::load_file("crates/verdi-system/src/boot.lua").expect("Unable to load boot.lua file");
+        let run_script = Scripts::load_file("crates/verdi-system/src/run.lua").expect("Unable to load run.lua file");
 
         LuaContext::load_script(&lua, &boot_script)?;
         LuaContext::load_script(&lua, &run_script)?;

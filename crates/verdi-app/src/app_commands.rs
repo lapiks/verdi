@@ -1,5 +1,7 @@
+use verdi_system::prelude::SystemState;
+
 use crate::{
-    app::{App, GameState},
+    app::App,
     commands::Command, 
 };
 
@@ -87,11 +89,13 @@ impl Command for Run {
     }
 
     fn execute(&self, app: &mut App) {
-        if app.game_state == GameState::Paused {
-            app.game_state = GameState::Running;
-        }
-        else if app.game_state == GameState::Loaded {
-            app.game_state = GameState::Start;
+        if let Some(game) = app.get_game_mut() {
+            if game.state == SystemState::Paused {
+                game.state = SystemState::Running;
+            }
+            else if game.state == SystemState::Loaded {
+                game.state = SystemState::Starting;
+            }
         }
     }
 }
@@ -115,7 +119,9 @@ impl Command for Stop {
     }
 
     fn execute(&self, app: &mut App) {
-        app.game_state = GameState::Stopped;
+        if let Some(game) = app.get_game_mut() {
+            game.state = SystemState::Stopped;
+        }
     }
 }
 
@@ -138,7 +144,9 @@ impl Command for Paused {
     }
 
     fn execute(&self, app: &mut App) {
-        app.game_state = GameState::Paused;
+        if let Some(game) = app.get_game_mut() {
+            game.state = SystemState::Paused;
+        }
     }
 }
 
@@ -185,6 +193,11 @@ impl Command for ShowEditor {
 
     fn execute(&self, app: &mut App) {
         app.show_editor = true;
+        if let Some(editor) = app.get_editor_mut() {
+            if editor.state == SystemState::Loaded {
+                editor.state = SystemState::Starting;
+            }
+        }
     }
 }
 

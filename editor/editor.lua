@@ -55,7 +55,7 @@ end
 function verdi.draw(pass)
     graphics.setClearColor(0.0, 0.0, 0.0, 1.0)
 
-    pass:drawModel(model)
+    --pass:drawModel(model)
     pass:drawSprite(sprite)
 
     pass:submit(graphics.camera)
