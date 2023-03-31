@@ -39,6 +39,7 @@ pub enum GameError {
 
 /// The Game system.
 pub struct Game {
+    lua: Lua,
     world: WorldHandle,
     gpu: Rc<RefCell<GraphicsChip>>,
     renderer: Renderer,
@@ -81,6 +82,7 @@ impl Game {
             );
 
         Ok(Self { 
+            lua: Lua::new(),
             world: WorldHandle::new(world),
             gpu,
             renderer,
@@ -99,30 +101,30 @@ impl Game {
     }
 
     /// called at the start of the game execution
-    pub fn boot(&mut self, lua: &Lua) -> Result<(), GameError>{
-        LuaContext::create_verdi_table(lua)?;
+    pub fn boot(&mut self) -> Result<(), GameError>{
+        LuaContext::create_verdi_table(&self.lua)?;
 
-        BindWorld::bind(lua, self.world.clone())?;
-        BindGraphicsChip::bind(&lua, self.gpu.clone())?;
-        BindInputs::bind(&lua, self.inputs.clone())?;
-        BindMath::bind(&lua)?;
-        BindAudio::bind(&lua, self.audio.clone())?;
+        BindWorld::bind(&self.lua, self.world.clone())?;
+        BindGraphicsChip::bind(&self.lua, self.gpu.clone())?;
+        BindInputs::bind(&self.lua, self.inputs.clone())?;
+        BindMath::bind(&self.lua)?;
+        BindAudio::bind(&self.lua, self.audio.clone())?;
         
-        LuaContext::load_internal_scripts(lua)?;
-        LuaContext::load_scripts(lua, &self.scripts.borrow())?;
+        LuaContext::load_internal_scripts(&self.lua)?;
+        LuaContext::load_scripts(&self.lua, &self.scripts.borrow())?;
 
         self.gpu.borrow_mut().on_game_start();
 
-        LuaContext::call_boot(lua)?;
+        LuaContext::call_boot(&self.lua)?;
 
         Ok(())
     }
 
     /// Called every frame 
-    pub fn run(&mut self, lua: &Lua) {
+    pub fn run(&mut self) {
         let delta_time = self.time_step.tick();
         
-        self.scripts.as_ref().borrow_mut().hot_reload(lua);
+        self.scripts.as_ref().borrow_mut().hot_reload(&self.lua);
 
         let pass = PassHandle {
             graph: self.gpu.borrow().render_graph.clone(),
@@ -130,7 +132,7 @@ impl Game {
         };
 
         // callbacks
-        if let Err(err) = LuaContext::call_run(lua, delta_time, pass) {
+        if let Err(err) = LuaContext::call_run(&self.lua, delta_time, pass) {
             let current_error = err.to_string();
             if self.last_error != current_error {
                 println!("{}", err);

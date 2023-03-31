@@ -1,5 +1,6 @@
 use std::time::{Instant, Duration};
 
+// A sortir de la crate game ?
 pub struct TimeStep {
     delta_time: f32,
     last_time: Instant,

@@ -3,6 +3,7 @@ use verdi_graphics::prelude::PassHandle;
 
 use crate::prelude::{Scripts, Script};
 
+// a sortir de la crate game ?
 pub struct LuaContext {}
 
 impl LuaContext {

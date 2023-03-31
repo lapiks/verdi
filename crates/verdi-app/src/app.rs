@@ -3,11 +3,14 @@ use glium::{
     Surface,
 };
 
-use mlua::Lua;
+use verdi_editor::prelude::WorldEditor;
 
 use std::{path::Path, cell::RefCell, rc::Rc};
 
-use verdi_graphics::prelude::{Database, Globals};
+use verdi_graphics::prelude::{
+    Database, 
+    Globals
+};
 use verdi_window::prelude::*;
 use verdi_game::prelude::{
     Game, 
@@ -19,7 +22,6 @@ use crate::{
     gui::Gui, 
     app_commands::Load, 
     commands::Command, 
-    world_editor::WorldEditor, 
 };
 
 #[derive(PartialEq)]
@@ -31,6 +33,13 @@ pub enum GameState {
     Stopped,
 }
 
+#[derive(PartialEq)]
+pub enum EditorState {
+    Boot,
+    Running,
+    Stopped,
+}
+
 /// The global application. Render the Game, the WorldEditor and the UI.
 /// Handle events and disptach them to the different systems.
 pub struct App {
@@ -39,7 +48,9 @@ pub struct App {
     globals: Rc<Globals>,
     game: Option<Game>,
     pub game_state: GameState,
-    world_editor: WorldEditor,
+    editor: Option<WorldEditor>,
+    editor_state: EditorState,
+    pub show_editor: bool,
     pub shutdown: bool,
 }
 
@@ -55,14 +66,15 @@ impl App {
                 &mut database.borrow_mut()
             ).expect("Globals creation failed")
         );
-        let world_editor = WorldEditor::new(database.clone(), globals.clone());
         Self {
             window: Window::new(1920, 1080),
             database,
             globals,
             game: None,
             game_state: GameState::Loaded,
-            world_editor,
+            editor: None,
+            editor_state: EditorState::Boot,
+            show_editor: false,
             shutdown: false,
         }
     }
@@ -80,11 +92,11 @@ impl App {
         let mut gui = Gui::new(egui_glium);
         gui.init();
 
-        let lua = Lua::new();
-
         // for accelerating debug
         let load_cmd = Load {folder: "game_example".to_string()}; 
         load_cmd.execute(&mut app);
+
+        app.load_editor();
     
         event_loop.run(move |ev, _, control_flow| {
             // request a new frame
@@ -100,31 +112,48 @@ impl App {
                 1.0
             );
 
-            if app.game_state == GameState::Start {
-                if let Some(game) = app.game.as_mut() {
-                    // start game
-                    game.boot(&lua).expect("Game boot failed");
-                    app.game_state = GameState::Running;
+            if app.show_editor {
+                if app.editor_state == EditorState::Boot {
+                    if let Some(editor) = app.editor.as_mut() {
+                        editor.boot();
+                        app.editor_state = EditorState::Running;
+                    }
+                }
+                else {
+                    if let Some(editor) = app.editor.as_mut() {
+                        editor.run();
+                        editor.render(app.window.get_display(), &mut target);
+                        editor.frame_ends();
+                    }
                 }
             }
-            else if app.game_state == GameState::Stopped {
-                if let Some(game) = app.game.as_mut() {
-                    // stop game
-                    game.shutdown();
-                    app.game_state = GameState::Loaded;
+            else {
+                if app.game_state == GameState::Start {
+                    if let Some(game) = app.game.as_mut() {
+                        // start game
+                        game.boot().expect("Game boot failed");
+                        app.game_state = GameState::Running;
+                    }
+                }
+                else if app.game_state == GameState::Stopped {
+                    if let Some(game) = app.game.as_mut() {
+                        // stop game
+                        game.shutdown();
+                        app.game_state = GameState::Loaded;
+                    }
+                }
+    
+                if app.game_state == GameState::Running {
+                    if let Some(game) = app.game.as_mut() {
+                        game.run();
+    
+                        game.frame_starts();
+                        game.render(app.window.get_display(), &mut target);
+                        game.frame_ends();
+                    }
                 }
             }
-
-            if app.game_state == GameState::Running {
-                if let Some(game) = app.game.as_mut() {
-                    game.run(&lua);
-
-                    game.frame_starts();
-                    game.render(app.window.get_display(), &mut target);
-                    game.frame_ends();
-                }
-            }
-
+            
             // draw GUI
             if let Some(cmd) = gui.ui(&app) {
                 // eventually execute a command
@@ -204,6 +233,12 @@ impl App {
         self.game_state = GameState::Loaded;
 
         Ok(())
+    }
+
+    pub fn load_editor(&mut self) {
+        self.editor = Some(
+            WorldEditor::new(self.window.get_display(), self.database.clone(), self.globals.clone())
+        );
     }
 
     pub fn shutdown(&mut self) {

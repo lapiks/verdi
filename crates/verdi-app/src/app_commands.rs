@@ -79,7 +79,7 @@ pub struct Run;
 
 impl Command for Run {
     fn name(&self) -> &'static str {
-        Shutdown::name()
+        Run::name()
     }
 
     fn desc(&self) -> &'static str {
@@ -107,7 +107,7 @@ pub struct Stop;
 
 impl Command for Stop {
     fn name(&self) -> &'static str {
-        Shutdown::name()
+        Stop::name()
     }
 
     fn desc(&self) -> &'static str {
@@ -130,7 +130,7 @@ pub struct Paused;
 
 impl Command for Paused {
     fn name(&self) -> &'static str {
-        Shutdown::name()
+        Paused::name()
     }
 
     fn desc(&self) -> &'static str {
@@ -153,11 +153,11 @@ pub struct ShowModeler;
 
 impl Command for ShowModeler {
     fn name(&self) -> &'static str {
-        Shutdown::name()
+        ShowModeler::name()
     }
 
     fn desc(&self) -> &'static str {
-        "open 3D modeler"
+        "open the 3D modeler"
     }
 
     fn execute(&self, app: &mut App) {
@@ -168,5 +168,28 @@ impl Command for ShowModeler {
 impl ShowModeler {
     pub fn name() -> &'static str {
         "show_modeler"
+    }
+}
+
+#[derive(Clone)]
+pub struct ShowEditor;
+
+impl Command for ShowEditor {
+    fn name(&self) -> &'static str {
+        ShowEditor::name()
+    }
+
+    fn desc(&self) -> &'static str {
+        "open the world editor"
+    }
+
+    fn execute(&self, app: &mut App) {
+        app.show_editor = true;
+    }
+}
+
+impl ShowEditor {
+    pub fn name() -> &'static str {
+        "show_editor"
     }
 }

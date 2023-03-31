@@ -2,7 +2,13 @@ use crate::{
     gui::GUIPanel, 
     app::App, 
     commands::Command, 
-    app_commands::{Run, Paused, Stop, ShowModeler}
+    app_commands::{
+        Run, 
+        Paused, 
+        Stop, 
+        ShowModeler, 
+        ShowEditor
+    }
 };
 
 pub struct Toolbar {
@@ -55,6 +61,13 @@ impl Toolbar {
                 command = Some(
                     Box::new(
                         Stop {}
+                    )
+                );
+            }
+            if ui.button("Editor").clicked() && game_loaded {
+                command = Some(
+                    Box::new(
+                        ShowEditor {}
                     )
                 );
             }
