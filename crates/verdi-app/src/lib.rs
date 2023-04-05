@@ -16,3 +16,4 @@ mod console;
 mod commands;
 mod app_commands;
 mod modeler;
+mod viewport;

@@ -35,6 +35,7 @@ pub struct App {
     window: Window,
     database: Rc<RefCell<Database>>,
     globals: Rc<Globals>,
+    gui: Gui,
     game: Option<System>,
     editor: Option<System>,
     modeler: Option<System>,
@@ -54,10 +55,22 @@ impl App {
                 &mut database.borrow_mut()
             ).expect("Globals creation failed")
         );
+
+        let window = Window::new(1920, 1080);
+
+        // gui initialisation
+        let egui_glium = egui_glium::EguiGlium::new(
+            window.get_display(), 
+            &window.get_event_loop().unwrap()
+        );
+        let mut gui = Gui::new(egui_glium);
+        gui.init();
+
         Self {
-            window: Window::new(1920, 1080),
+            window,
             database,
             globals,
+            gui,
             game: None,
             editor: None,
             modeler: None,
@@ -70,14 +83,6 @@ impl App {
         let mut app = App::new();
 
         let event_loop = app.window.take_event_loop().expect("No event loop in the window");
-
-        // gui initialisation
-        let egui_glium = egui_glium::EguiGlium::new(
-            app.window.get_display(), 
-            &event_loop
-        );
-        let mut gui = Gui::new(egui_glium);
-        gui.init();
 
         // for accelerating debug
         let load_cmd = Load {folder: "game_example".to_string()}; 
@@ -131,11 +136,11 @@ impl App {
             }
             
             // draw GUI
-            if let Some(cmd) = gui.ui(&app) {
+            if let Some(cmd) = app.gui.ui(app.window.get_display()) {
                 // eventually execute a command
                 cmd.execute(&mut app);
             }
-            gui.paint(app.window.get_display(), &mut target);
+            app.gui.paint(app.window.get_display(), &mut target);
 
             // ends frame
             target.finish().unwrap();
@@ -166,7 +171,7 @@ impl App {
                     }
 
                     // relays event to the gui
-                    if gui.on_event(&event) == false {
+                    if app.gui.on_event(&event) == false {
                         // relays event to the system inputs
                         if let Some(current_system) = current_system.as_mut() {
                             if current_system.state == SystemState::Running {
@@ -219,9 +224,23 @@ impl App {
     pub fn load_game<P: AsRef<Path>>(&mut self, path: P) -> Result<(), SystemError> {
         if let Some(game) = self.game.as_mut() {
             game.shutdown();
-         }
+        }
  
-         self.game = self.load_system(path)?;
+        self.game = self.load_system(path)?;
+
+        if let Some(game) = &self.game {
+            // Allocate egui's texture id for GL texture
+            let texture_id = self.gui
+                .get_egui_glium_mut()
+                .painter
+                .register_native_texture(
+                    game.get_render_target().get_color_target(), 
+                    Default::default()
+                );
+
+            self.gui.get_viewport_mut().set_texture(texture_id);
+            self.gui.get_code_editor_mut().set_scripts(game.get_scripts());
+        }
  
          Ok(())
     }

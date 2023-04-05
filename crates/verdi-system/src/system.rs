@@ -1,6 +1,11 @@
 use std::{rc::Rc, cell::RefCell, path::{Path, PathBuf}};
 
-use glium::{Display, Frame, glutin::event::{WindowEvent, DeviceEvent}};
+use glium::{
+    Display, 
+    Frame, 
+    glutin::event::{WindowEvent, DeviceEvent}, 
+    framebuffer::SimpleFrameBuffer
+};
 use mlua::Lua;
 use verdi_audio::prelude::{AudioHandle, Audio, BindAudio};
 use verdi_ecs::prelude::{WorldHandle, World, BindWorld};
@@ -157,14 +162,25 @@ impl System {
     }
 
     /// Called every frame. Draw as requested during the run call.
-    pub fn render(&mut self, display: &Display, target: &mut Frame) {
+    pub fn render(&mut self, display: &Display, frame: &mut Frame) {
         self.gpu.borrow_mut().new_frame();
     
         // prepare assets for rendering
         self.renderer.prepare_assets(display, &self.gpu.borrow());
 
-        // draw game in framebuffer
-        self.renderer.render(&self.render_target, display, target, &mut self.gpu.borrow_mut());
+        // create a framebuffer to draw into 
+        let color_target = self.render_target.get_color_target();
+        let mut framebuffer = SimpleFrameBuffer::with_depth_buffer(
+            display, 
+            color_target.as_ref(), 
+            self.render_target.get_depth_target()
+        ).unwrap();
+
+        // draw system in framebuffer
+        self.renderer.render(&mut framebuffer, &mut self.gpu.borrow_mut());
+
+        // blit in frame
+        self.renderer.blit_buffers_to_frame(&mut framebuffer, frame);
 
         self.renderer.post_render(&mut self.gpu.borrow_mut());
     }
@@ -193,5 +209,9 @@ impl System {
 
     pub fn get_scripts(&self) -> Rc<RefCell<Scripts>> {
         self.scripts.clone()
+    }
+
+    pub fn get_render_target(&self) -> &RenderTarget {
+        &self.render_target
     }
 }

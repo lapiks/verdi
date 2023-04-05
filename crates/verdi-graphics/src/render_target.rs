@@ -1,8 +1,9 @@
+use std::rc::Rc;
+
 use glium::{
     framebuffer::DepthRenderBuffer, 
     Display, 
-    Texture2d, 
-    texture::{TextureCreationError, buffer_texture::CreationError}
+    texture::{TextureCreationError, buffer_texture::CreationError, SrgbTexture2d}
 };
 
 use thiserror::Error;
@@ -16,7 +17,7 @@ pub enum RenderTargetError {
 }
 
 pub struct RenderTarget {
-    color_target: Texture2d,
+    color_target: Rc<SrgbTexture2d>,
     depth_target: DepthRenderBuffer,
     width: u32,
     height: u32
@@ -24,7 +25,7 @@ pub struct RenderTarget {
 
 impl RenderTarget {
     pub fn new(display: &Display, width: u32, height: u32) -> Result<Self, RenderTargetError> {
-        let color_target = Texture2d::empty(
+        let color_target = SrgbTexture2d::empty(
             display, 
             width, 
             height
@@ -39,7 +40,7 @@ impl RenderTarget {
 
         Ok(
             Self {
-                color_target,
+                color_target: Rc::new(color_target),
                 depth_target,
                 width,
                 height,
@@ -47,8 +48,8 @@ impl RenderTarget {
         )
     }
 
-    pub fn get_color_target(&self) -> &Texture2d {
-        &self.color_target
+    pub fn get_color_target(&self) -> Rc<SrgbTexture2d> {
+        self.color_target.clone()
     }
 
     pub fn get_depth_target(&self) -> &DepthRenderBuffer {

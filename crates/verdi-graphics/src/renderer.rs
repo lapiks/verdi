@@ -1,7 +1,7 @@
 use glium::{
     Surface, 
     Display, 
-    framebuffer::SimpleFrameBuffer, 
+    framebuffer::{SimpleFrameBuffer, self}, 
     Frame, 
     Rect, 
     BlitTarget, 
@@ -14,7 +14,6 @@ use crate::{
     camera::Camera,
     prelude::GraphicsChip, 
     gpu_assets::GpuAssets, 
-    render_target::RenderTarget, 
 };
 
 // Le renderer pourrait être plus bas niveau. 
@@ -159,13 +158,7 @@ impl Renderer {
     //     renderables
     // }
 
-    pub fn render(&mut self, render_target: &RenderTarget, display: &Display, frame: &mut Frame, gpu: &mut GraphicsChip) {
-        let mut framebuffer = SimpleFrameBuffer::with_depth_buffer(
-            display, 
-            render_target.get_color_target(), 
-            render_target.get_depth_target()
-        ).unwrap();
-
+    pub fn render(&mut self, framebuffer: &mut SimpleFrameBuffer, gpu: &mut GraphicsChip) {
         let clear_color = gpu.render_state.clear_color;
         framebuffer.clear_color_and_depth(
             (
@@ -177,17 +170,19 @@ impl Renderer {
             1.0
         );
 
+        let target_dimensions = framebuffer.get_dimensions();
+
         // perspective matrix
         let perspective_matrix = Camera::perspective_matrix(
-            render_target.get_dimensions().0, 
-            render_target.get_dimensions().1
+            target_dimensions.0, 
+            target_dimensions.1
         );
 
         // ortho matrix
         let ortho_matrix = Camera::orthographic_matrix(
             0.0,
-            render_target.get_dimensions().0 as f32, 
-            render_target.get_dimensions().1 as f32,
+            target_dimensions.0 as f32, 
+            target_dimensions.1 as f32,
             0.0,
             -10.0,
             10.0,
@@ -196,8 +191,8 @@ impl Renderer {
         *gpu.database.borrow_mut().uniforms
             .get_vec2_mut(gpu.globals.global_uniforms.resolution)
             .expect("Resolution uniform missing") = Vec2::new(
-                render_target.get_dimensions().0 as f32, 
-                render_target.get_dimensions().1 as f32
+                target_dimensions.0 as f32, 
+                target_dimensions.1 as f32
             );
 
         for pass in gpu.render_graph.borrow().get_passes().iter() {
@@ -287,29 +282,32 @@ impl Renderer {
                     ).unwrap();
                 }
             }
-
-            let scale = frame.get_dimensions().1 as f32 / render_target.get_dimensions().1 as f32;
-            let new_width = render_target.get_dimensions().0 as f32 * scale;
-            let new_x_pos = (frame.get_dimensions().0 as f32 - new_width) as f32 / 2.0;
-
-            frame.blit_buffers_from_simple_framebuffer(
-                &framebuffer,
-                &Rect {
-                    left: 0, 
-                    bottom: 0, 
-                    width: render_target.get_dimensions().0, 
-                    height: render_target.get_dimensions().1
-                }, 
-                &BlitTarget {
-                    left: new_x_pos as u32, 
-                    bottom: 0, 
-                    width: new_width as i32, 
-                    height: frame.get_dimensions().1 as i32
-                }, 
-                uniforms::MagnifySamplerFilter::Nearest, 
-                BlitMask::color_and_depth()
-            );
         }
+    }
+
+    pub fn blit_buffers_to_frame(&self, framebuffer: &SimpleFrameBuffer, frame: &mut Frame) {
+        let framebuffer_dimensions = framebuffer.get_dimensions();
+        let scale = frame.get_dimensions().1 as f32 / framebuffer_dimensions.1 as f32;
+        let new_width = framebuffer_dimensions.0 as f32 * scale;
+        let new_x_pos = (frame.get_dimensions().0 as f32 - new_width) as f32 / 2.0;
+
+        frame.blit_buffers_from_simple_framebuffer(
+            &framebuffer,
+            &Rect {
+                left: 0, 
+                bottom: 0, 
+                width: framebuffer_dimensions.0, 
+                height: framebuffer_dimensions.1
+            }, 
+            &BlitTarget {
+                left: new_x_pos as u32, 
+                bottom: 0, 
+                width: new_width as i32, 
+                height: frame.get_dimensions().1 as i32
+            }, 
+            uniforms::MagnifySamplerFilter::Nearest, 
+            BlitMask::color_and_depth()
+        );
     }
 
     pub fn post_render(&self, gpu: &mut GraphicsChip) {

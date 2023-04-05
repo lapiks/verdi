@@ -1,18 +1,22 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, rc::Rc, cell::RefCell};
+
+use verdi_system::prelude::Scripts;
 
 use crate::{
     gui::GUIPanel, 
-    prelude::App, commands::Command
+    commands::Command
 };
 
 pub struct CodeEditor {
     current_script: PathBuf,
+    scripts: Option<Rc<RefCell<Scripts>>>,
 }
 
 impl CodeEditor {
     pub fn new() -> Self {
         Self { 
             current_script: PathBuf::new(),
+            scripts: None
          }
     }
 }
@@ -22,7 +26,7 @@ impl GUIPanel for CodeEditor {
         "Code Editor"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &App) -> Option<Box<dyn Command>> {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool) -> Option<Box<dyn Command>> {
         egui::Window::new(self.name())
             //.open(open)
             .default_height(800.0)
@@ -30,7 +34,7 @@ impl GUIPanel for CodeEditor {
                 if ui.input().key_pressed(egui::Key::Escape) {
                     *open = true;
                 }
-                return self.ui(ui, app); 
+                return self.ui(ui); 
             }
         );
         // egui::CentralPanel::default().show(ctx, |ui| { 
@@ -42,11 +46,15 @@ impl GUIPanel for CodeEditor {
 }
 
 impl CodeEditor {
-    fn ui(&mut self, ui: &mut egui::Ui, app: &App) -> Option<Box<dyn Command>> {
+    pub fn set_scripts(&mut self, scripts: Rc<RefCell<Scripts>>) {
+        self.scripts = Some(scripts);
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui) -> Option<Box<dyn Command>> {
         // script tabs
         ui.horizontal(|ui| {
-            if let Some(game) = app.get_game() {
-                for script in game.get_scripts().borrow().get_scripts() {
+            if let Some(scripts) = self.scripts.as_ref() {
+                for script in scripts.borrow().get_scripts() {
                     ui.selectable_value(
                         &mut self.current_script, 
                         script.0.to_path_buf(), 
@@ -68,8 +76,8 @@ impl CodeEditor {
 
         egui::ScrollArea::both()
             .show(ui, |ui| {
-                if let Some(game) = app.get_game() {
-                    if let Some(script) = game.get_scripts().borrow_mut().get_script_mut(&self.current_script) {
+                if let Some(scripts) = &self.scripts {
+                    if let Some(script) = scripts.borrow_mut().get_script_mut(&self.current_script) {
                         ui.add(
                             egui::TextEdit::multiline(&mut script.code)
                                 .font(egui::TextStyle::Monospace) // for cursor height

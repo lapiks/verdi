@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use crate::{
     gui::GUIPanel, 
-    app::App, 
     commands::Command, 
     app_commands::{Help, Load, Shutdown},
 };
@@ -28,8 +27,8 @@ impl GUIPanel for Console {
         "Console"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, _: &App) -> Option<Box<dyn Command>> {
-        let mut cmd: Option<Box<dyn Command>> = None;
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool) -> Option<Box<dyn Command>> {
+        let mut cmd = None;
         egui::CentralPanel::default().show(ctx, |ui| { 
             if ui.input().key_pressed(egui::Key::Escape) {
                 *open = false;
@@ -49,7 +48,7 @@ impl Console {
     }
 
     fn ui(&mut self, ui: &mut egui::Ui) -> Option<Box<dyn Command>> {
-        let mut cmd_res: Option<Box<dyn Command>> = None;
+        let mut cmd_res = None;
 
         ui.label("Verdi-0.1.0");
         ui.label("(C) 2022 JD Games");

@@ -9,7 +9,7 @@ impl Modeler {
         }
     }
 
-    fn ui(&mut self, ui: &mut egui::Ui, app: &App) -> Option<Box<dyn Command>> {
+    fn ui(&mut self, ui: &mut egui::Ui) -> Option<Box<dyn Command>> {
         None
     }
 }
@@ -18,10 +18,10 @@ impl GUIPanel for Modeler {
         "3D Modeler"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &crate::prelude::App) -> Option<Box<dyn Command>> {
-        let mut cmd: Option<Box<dyn Command>> = None;
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool) -> Option<Box<dyn Command>> {
+        let mut cmd = None;
         egui::CentralPanel::default().show(ctx, |ui| { 
-            cmd = self.ui(ui, app);
+            cmd = self.ui(ui);
         });
 
         cmd

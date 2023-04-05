@@ -5,13 +5,13 @@ use crate::{
     code_editor::CodeEditor, 
     console::Console, 
     toolbar::Toolbar, 
-    app::App, 
     commands::Command, 
-    modeler::Modeler
+    modeler::Modeler, viewport::Viewport
 };
 
 pub struct Gui {
     egui_glium: EguiGlium,
+    viewport: Viewport,
     code_editor: CodeEditor,
     console: Console,
     show_console: bool,
@@ -24,6 +24,7 @@ impl Gui {
     pub fn new(egui_glium: EguiGlium) -> Self {
         Self {
             egui_glium,
+            viewport: Viewport::new(),
             code_editor: CodeEditor::new(),
             console: Console::default(),
             show_console: true,
@@ -37,23 +38,26 @@ impl Gui {
         self.console.init();
     }
 
-    pub fn ui(&mut self, app: &App) -> Option<Box<dyn Command>> {
+    pub fn ui(&mut self, display: &Display) -> Option<Box<dyn Command>> {
         let mut cmd: Option<Box<dyn Command>> = None;
-        self.egui_glium.run(app.get_window().get_display(), |ctx| {
+        self.egui_glium.run(display, |ctx| {
             if self.show_console {
-                cmd = self.console.show(ctx, &mut self.show_console, app);
+                cmd = self.console.show(ctx, &mut self.show_console);
             }
             else if self.show_modeler {
-                cmd = self.modeler.show(ctx, &mut self.show_modeler, app);
+                cmd = self.modeler.show(ctx, &mut self.show_modeler);
             }
             else {
+                //let mut open_viewport = true;
+                //self.viewport.show(ctx, &mut open_viewport);
+
                 //let mut open_editor = true;
-                if let Some(editor_cmd) = self.code_editor.show(ctx, &mut self.show_console, app) {
+                if let Some(editor_cmd) = self.code_editor.show(ctx, &mut self.show_console) {
                     cmd = Some(editor_cmd);
                 }
 
                 let mut show_toolbar = true;
-                if let Some(toolbar_cmd) = self.toolbar.show(ctx, &mut show_toolbar, app) {
+                if let Some(toolbar_cmd) = self.toolbar.show(ctx, &mut show_toolbar) {
                     cmd = Some(toolbar_cmd);
                 }
             }
@@ -69,6 +73,30 @@ impl Gui {
     pub fn on_event(&mut self, event: &WindowEvent) -> bool {
         self.egui_glium.on_event(event).consumed
     }
+
+    pub fn get_egui_glium(&self) -> &EguiGlium {
+        &self.egui_glium
+    } 
+
+    pub fn get_egui_glium_mut(&mut self) -> &mut EguiGlium {
+        &mut self.egui_glium
+    } 
+
+    pub fn get_viewport(&self) -> &Viewport {
+        &self.viewport
+    }
+
+    pub fn get_viewport_mut(&mut self) -> &mut Viewport {
+        &mut self.viewport
+    }
+
+    pub fn get_code_editor(&self) -> &CodeEditor {
+        &self.code_editor
+    }
+
+    pub fn get_code_editor_mut(&mut self) -> &mut CodeEditor {
+        &mut self.code_editor
+    }
 }
 
 /// A panel of the GUI
@@ -77,5 +105,9 @@ pub trait GUIPanel {
     fn name(&self) -> &'static str;
 
     /// Show the panel
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, app: &App) -> Option<Box<dyn Command>>;
+    /// Eventually returns a command of what happened 
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool) -> Option<Box<dyn Command>>;
+
+    /// Executes a command
+    fn execute(&mut self, cmd: Box<dyn Command>) {}
 }
