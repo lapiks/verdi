@@ -19,6 +19,10 @@ pub enum ScriptError {
     NotLuaError(),
     #[error("Parsing error")]
     ParsingError(#[from] std::io::Error),
+    #[error("Cannot evaluate lua code")]
+    LuaError(#[from] mlua::Error),
+    #[error("File watcher initialisation failed")]
+    FileWatcherError(#[from] FileWatcherError),
 }
 
 pub struct Scripts {
@@ -27,7 +31,7 @@ pub struct Scripts {
 }
 
 impl Scripts {
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, FileWatcherError> {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, ScriptError> {
         Ok(Self {
             scripts: HashMap::default(),
             file_watcher: FileWatcher::new(path, Duration::from_secs(5))?,
@@ -41,7 +45,7 @@ impl Scripts {
         );
     }
 
-    pub fn load_dir<P: AsRef<Path>>(&mut self, dir_path: P) -> std::io::Result<()>  {
+    pub fn load_dir<P: AsRef<Path>>(&mut self, dir_path: P) -> Result<(), ScriptError>  {
         let paths = std::fs::read_dir(dir_path).unwrap();
 
         for path in paths {
@@ -66,7 +70,7 @@ impl Scripts {
         Err(ScriptError::NotLuaError())
     }
 
-    pub fn save_script(&mut self, file_path: &PathBuf) -> std::io::Result<()> {
+    pub fn save_script(&mut self, file_path: &PathBuf) -> Result<(), ScriptError> {
         if let Some(script) = self.get_script_mut(file_path) {
             script.save_at(file_path)?;
         }
@@ -74,27 +78,27 @@ impl Scripts {
         Ok(())
     }
 
-    pub fn hot_reload(&mut self, lua: &Lua) {
+    pub fn hot_reload(&mut self, lua: &Lua) -> Result<(), ScriptError> {
         if let Some(watcher_event) = self.file_watcher.get_event() {
             if let notify::EventKind::Modify(_) = watcher_event.kind {
                 for path in watcher_event.paths.iter() {
                     if let Ok(relative_path) = make_relative_path(path) {
                         if let Some(script) = self.scripts.get_mut(&relative_path) {
                             // reload script
-                            script
-                                .reload_from(relative_path)
-                                .expect("Reload script file failed");
+                            script.reload_from(relative_path)?;
 
                             // update lua context
                             LuaContext::load_script(
                                 lua, 
                                 script
-                            ).expect("Reload script failed");
+                            )?;
                         }
                     }
                 }
             }
         }
+
+        Ok(())
     }
 
     pub fn get_scripts(&self) -> &HashMap<PathBuf, Script> {

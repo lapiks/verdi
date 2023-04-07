@@ -115,8 +115,13 @@ impl App {
                 if let Some(current_system) = current_system.as_mut() {
                     if current_system.state == SystemState::Starting {
                         // start system
-                        current_system.boot().expect("Game boot failed");
-                        current_system.state = SystemState::Running;
+                        match current_system.boot() {
+                            Ok(_) => current_system.state = SystemState::Running,
+                            Err(error) => {
+                                current_system.state = SystemState::Loaded;
+                                println!("{}", error);
+                            }
+                        }
                     }
                     else if current_system.state == SystemState::Stopped {
                         // stop system
@@ -126,11 +131,18 @@ impl App {
         
                     if current_system.state == SystemState::Running {
                         // run system
-                        current_system.run();
-    
-                        current_system.frame_starts();
-                        current_system.render(app.window.get_display(), &mut target);
-                        current_system.frame_ends();
+                        match current_system.run() {
+                            Ok(_) => {
+                                current_system.frame_starts();
+                                current_system.render(app.window.get_display(), &mut target);
+                                current_system.frame_ends();
+                            },
+                            Err(error) => {
+                                current_system.state = SystemState::Loaded;
+                                println!("{}", error);
+                            }
+                            
+                        }
                     }
                 }
             }

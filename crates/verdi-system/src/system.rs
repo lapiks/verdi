@@ -25,21 +25,19 @@ use crate::{
     lua_context::LuaContext, 
     prelude::Scripts, 
     time_step::TimeStep, 
-    file_watcher::FileWatcherError,
+    scripts::ScriptError, 
 };
 
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum SystemError {
-    #[error("Reading lua script failed")]
-    ReadLuaScriptFailed(#[from] std::io::Error),
-    #[error("Cannot evaluate lua code")]
-    LuaError(#[from] mlua::Error),
-    #[error("File watcher error")]
-    FileWatcherError(#[from] FileWatcherError),
+    #[error("Script error")]
+    ScriptError(#[from] ScriptError),
     #[error("Game folder doesn't exists")]
     FolderError,
+    #[error("Cannot evaluate lua code")]
+    LuaError(#[from] mlua::Error),
 }
 
 #[derive(PartialEq)]
@@ -121,7 +119,7 @@ impl System {
     }
 
     /// called at the start of the game execution
-    pub fn boot(&mut self) -> Result<(), SystemError>{
+    pub fn boot(&mut self) -> Result<(), SystemError> {
         LuaContext::create_verdi_table(&self.lua)?;
 
         BindWorld::bind(&self.lua, self.world.clone())?;
@@ -141,10 +139,10 @@ impl System {
     }
 
     /// Called every frame 
-    pub fn run(&mut self) {
+    pub fn run(&mut self) -> Result<(), SystemError> {
         let delta_time = self.time_step.tick();
         
-        self.scripts.as_ref().borrow_mut().hot_reload(&self.lua);
+        self.scripts.as_ref().borrow_mut().hot_reload(&self.lua)?;
 
         let pass = PassHandle {
             graph: self.gpu.borrow().render_graph.clone(),
@@ -159,6 +157,8 @@ impl System {
                 self.last_error = current_error;
             }
         }
+
+        Ok(())
     }
 
     /// Called every frame. Draw as requested during the run call.

@@ -38,14 +38,29 @@ impl LuaContext {
 
     pub fn load_script(lua: &Lua, script: &Script) -> Result<()> {
         // load lua script
-        lua.load(&script.code).eval::<()>()?;
+        if let Some(err) = lua
+            .load(&script.code)
+            .eval::<()>()
+            .err() {
+                println!("{path}: {error}",
+                    path = script.path.display(),
+                    error = err
+                );
+                return Err(err);
+        }
 
         Ok(())
     }
 
     pub fn call_boot(lua: &Lua) -> Result<()> {
         // run callbacks
-        lua.load("verdi.boot()").exec()?;
+        if let Some(err) = lua
+            .load("verdi.boot()")
+            .exec()
+            .err() {
+                println!("{}", err);
+                return Err(err);
+        }
 
         Ok(())
     }
@@ -56,7 +71,10 @@ impl LuaContext {
 
         // run callbacks
         let run_func: Function = verdi_table.get("run")?;
-        run_func.call::<_,()>((delta_time, pass))?;
+        if let Some(err) = run_func.call::<_,()>((delta_time, pass)).err() {
+            println!("{}", err);
+            return Err(err);
+        }
 
         Ok(())
     }
