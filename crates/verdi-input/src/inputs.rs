@@ -386,6 +386,10 @@ impl Inputs {
         }
     } 
 
+    pub fn reset(&mut self) {
+        self.mouse_delta = Vec2::ZERO;
+    }
+
     pub fn process_win_events(&mut self, event: &glutin::event::WindowEvent) {
         match *event {
             glutin::event::WindowEvent::KeyboardInput { input, .. } => {
@@ -414,8 +418,13 @@ impl Inputs {
     pub fn process_device_events(&mut self, event: &glutin::event::DeviceEvent) {
         match *event {
             glutin::event::DeviceEvent::MouseMotion { delta, .. } => {
-                self.mouse_delta = Vec2::new(delta.0 as f32, delta.1 as f32);
+                self.mouse_delta += Vec2::new(delta.0 as f32, delta.1 as f32);
             },
+            // glutin::event::DeviceEvent::Motion { axis, value } => {
+            //     if axis < 2 {
+            //         self.mouse_delta[axis as usize] += value as f32;
+            //     }
+            // },
             _ => return,
         };
     }
