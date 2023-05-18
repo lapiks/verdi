@@ -187,6 +187,7 @@ impl System {
 
     pub fn frame_starts(&mut self) {
         self.gpu.borrow_mut().flush_stream_buffer();
+        self.inputs.borrow_mut().reset();
     }
 
     pub fn frame_ends(&mut self) {
