@@ -70,7 +70,7 @@ impl UserData for PassHandle {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
                     if let Some(cam_ref) = camera.database.borrow().assets.get_camera(camera.id) {
-                        pass.render_state.view = cam_ref.transform.to_matrix();
+                        pass.render_state.view = cam_ref.transform.to_matrix().inverse();
                     }
                 }
             })
