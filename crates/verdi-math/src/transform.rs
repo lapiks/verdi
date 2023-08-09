@@ -75,6 +75,42 @@ impl Transform {
         
         (point.x, point.y, point.z)
     }
+
+    pub fn right(&self) -> (f32, f32, f32) {
+        let right = self.rotation * Vec3::X;
+        
+        (right.x, right.y, right.z)
+    }
+
+    pub fn left(&self) -> (f32, f32, f32) {
+        let left = self.rotation * Vec3::NEG_X;
+        
+        (left.x, left.y, left.z)
+    }
+
+    pub fn up(&self) -> (f32, f32, f32) {
+        let up = self.rotation * Vec3::Y;
+        
+        (up.x, up.y, up.z)
+    }
+
+    pub fn down(&self) -> (f32, f32, f32) {
+        let down: Vec3 = self.rotation * Vec3::NEG_Y;
+        
+        (down.x, down.y, down.z)
+    }
+    
+    pub fn forward(&self) -> (f32, f32, f32) {
+        let forward = self.rotation * Vec3::Z;
+
+        (forward.x, forward.y, forward.z)
+    }
+
+    pub fn backward(&self) -> (f32, f32, f32) {
+        let backward = self.rotation * Vec3::NEG_Z;
+
+        (backward.x, backward.y, backward.z)
+    }
 }
 
 impl Default for Transform {
@@ -119,6 +155,30 @@ impl UserData for Transform {
 
         methods.add_method("transformPoint", |_, transform, (x, y, z): (f32, f32, f32)| {
             Ok(transform.transform_point(Vec3::new(x, y, z)))
+        });
+
+        methods.add_method("right", |_, transform, ()| {
+            Ok(transform.right())
+        });
+
+        methods.add_method("left", |_, transform, ()| {
+            Ok(transform.left())
+        });
+
+        methods.add_method("up", |_, transform, ()| {
+            Ok(transform.up())
+        });
+
+        methods.add_method("down", |_, transform, ()| {
+            Ok(transform.down())
+        });
+
+        methods.add_method("forward", |_, transform, ()| {
+            Ok(transform.forward())
+        });
+
+        methods.add_method("backward", |_, transform, ()| {
+            Ok(transform.backward())
         });
     }
 }

@@ -40,18 +40,22 @@ function verdi.start()
 end
 
 function verdi.update(deltaTime) 
+
+    local tf = graphics.camera:transform()
+
+
     graphics.camera:reset()
     --graphics.camera:setRotation(camYaw, 0, 1, 0)
-    graphics.camera:setPosition(x, 2.5, y)
+    graphics.camera:translate(x, 2.5, y)
     graphics.camera:rotate(camYaw, 0, 1, 0)
     graphics.camera:rotate(camPitch, 1, 0, 0)
 
     if input.getKeyDown("z") then
-        y = y + speed * deltaTime
+        y = y + tf:forward() * speed * deltaTime
     end
 
     if input.getKeyDown("s") then
-        y = y - speed * deltaTime
+        y = y - tf:forward() * speed * deltaTime
     end
 
     if input.getKeyDown("d") then
@@ -70,9 +74,9 @@ function verdi.update(deltaTime)
         camYaw = camYaw - rotSpeed * deltaTime
     end
 
-    -- local mouseDelta = {input.getMouseDelta()}
-    -- camYaw = camYaw + mouseDelta[1] * deltaTime
-    -- camPitch = camPitch + mouseDelta[2] * deltaTime
+    local mouseDelta = {input.getMouseDelta()}
+    camYaw = camYaw + mouseDelta[1] * deltaTime * 10
+    camPitch = camPitch + mouseDelta[2] * deltaTime * 10
 
     if input.getButtonDown("l") then
 

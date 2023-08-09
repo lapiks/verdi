@@ -107,6 +107,17 @@ pub struct CameraHandle {
 
 impl UserData for CameraHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method_mut("transform", |_, camera, ()| {
+            Ok({
+                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                    camera.transform
+                }
+                else {
+                    Transform::new()
+                }
+            })
+        });
+
         methods.add_method_mut("reset", |_, camera, ()| {
             Ok({
                 if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
