@@ -24,6 +24,7 @@ function verdi.start()
 
     print(model:getNumNodes())
 
+    
     x = 0
     y = 0
 

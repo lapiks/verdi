@@ -7,7 +7,7 @@ use glam::{
     Quat
 };
 
-use mlua::{UserData, UserDataFields};
+use mlua::{UserData, UserDataFields, UserDataMethods, MetaMethod};
 
 // wrapping glam types in our own types to be able to implement external mlua UserData trait on them
 
@@ -69,6 +69,16 @@ impl UserData for LuaVec3 {
         fields.add_field_method_get("x", |_, this| Ok(this.x));
         fields.add_field_method_get("y", |_, this| Ok(this.y));
         fields.add_field_method_get("z", |_, this| Ok(this.z));
+    }
+
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_meta_function(MetaMethod::Add, |_, (v1, v2): (LuaVec3, LuaVec3)| {
+            Ok(LuaVec3(v1.0 + v2.0))
+        });
+
+        methods.add_meta_function(MetaMethod::Mul, |_, (v1, scalar): (LuaVec3, f32)| {
+            Ok(LuaVec3(v1.0 * scalar))
+        });
     }
 }
 
