@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use mlua::{UserData, UserDataMethods};
+use mlua::{UserData, UserDataMethods, UserDataFields};
 use slotmap::{new_key_type, Key};
 use verdi_math::{Mat4, prelude::Transform, Vec3};
 
@@ -106,10 +106,23 @@ pub struct CameraHandle {
 }
 
 impl UserData for CameraHandle {
-    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method_mut("transform", |_, camera, ()| {
+    fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
+        fields.add_field_method_get("transform", |_, this| {
             Ok({
-                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
+                    camera.transform
+                }
+                else {
+                    Transform::new()
+                }
+            })
+        });
+    }
+    
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method_mut("transform", |_, this, ()| {
+            Ok({
+                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
                     camera.transform
                 }
                 else {
@@ -118,57 +131,57 @@ impl UserData for CameraHandle {
             })
         });
 
-        methods.add_method_mut("reset", |_, camera, ()| {
+        methods.add_method_mut("reset", |_, this, ()| {
             Ok({
-                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
                     camera.transform.reset();
                 }
             })
         });
 
-        methods.add_method_mut("translate", |_, camera, (x, y, z): (f32, f32, f32)| {
+        methods.add_method_mut("translate", |_, this, (x, y, z): (f32, f32, f32)| {
             Ok({
-                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
                     camera.transform.translate(Vec3::new(x, y, z));
                 }
             })
         });
 
-        methods.add_method_mut("rotate", |_, camera, (angle, x, y, z): (f32, f32, f32, f32)| {
+        methods.add_method_mut("rotate", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
             Ok({
-                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
                     camera.transform.rotate(angle, Vec3::new(x, y, z));
                 }
             })
         });
 
-        methods.add_method_mut("scale", |_, camera, (x, y, z): (f32, f32, f32)| {
+        methods.add_method_mut("scale", |_, this, (x, y, z): (f32, f32, f32)| {
             Ok({
-                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
                     camera.transform.scale(Vec3::new(x, y, z));
                 }
             })
         });
 
-        methods.add_method_mut("setPosition", |_, camera, (x, y, z): (f32, f32, f32)| {
+        methods.add_method_mut("setPosition", |_, this, (x, y, z): (f32, f32, f32)| {
             Ok({
-                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
                     camera.transform.set_position(Vec3::new(x, y, z));
                 }
             })
         });
 
-        methods.add_method_mut("setRotation", |_, camera, (angle, x, y, z): (f32, f32, f32, f32)| {
+        methods.add_method_mut("setRotation", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
             Ok({
-                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
                     camera.transform.set_rotation(angle, Vec3::new(x, y, z));
                 }
             })
         });
 
-        methods.add_method_mut("setScale", |_, camera, (x, y, z): (f32, f32, f32)| {
+        methods.add_method_mut("setScale", |_, this, (x, y, z): (f32, f32, f32)| {
             Ok({
-                if let Some(camera) = camera.database.borrow_mut().assets.get_camera_mut(camera.id) {
+                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
                     camera.transform.set_scale(Vec3::new(x, y, z));
                 }
             })

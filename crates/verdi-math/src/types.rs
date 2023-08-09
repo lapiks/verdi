@@ -7,7 +7,7 @@ use glam::{
     Quat
 };
 
-use mlua::UserData;
+use mlua::{UserData, UserDataFields};
 
 // wrapping glam types in our own types to be able to implement external mlua UserData trait on them
 
@@ -34,7 +34,12 @@ impl From<Vec2> for LuaVec2 {
     }
 }
 
-impl UserData for LuaVec2 {}
+impl UserData for LuaVec2 {
+    fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
+        fields.add_field_method_get("x", |_, this| Ok(this.x));
+        fields.add_field_method_get("y", |_, this| Ok(this.y));
+    }
+}
 
 // Vec3
 #[derive(Clone, Copy, PartialEq)]
@@ -59,7 +64,13 @@ impl From<Vec3> for LuaVec3 {
     }
 }
 
-impl UserData for LuaVec3 {}
+impl UserData for LuaVec3 {
+    fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
+        fields.add_field_method_get("x", |_, this| Ok(this.x));
+        fields.add_field_method_get("y", |_, this| Ok(this.y));
+        fields.add_field_method_get("z", |_, this| Ok(this.z));
+    }
+}
 
 // Vec4
 #[derive(Clone, Copy, PartialEq)]
@@ -84,7 +95,14 @@ impl From<Vec4> for LuaVec4 {
     }
 }
 
-impl UserData for LuaVec4 {}
+impl UserData for LuaVec4 {
+    fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
+        fields.add_field_method_get("x", |_, this| Ok(this.x));
+        fields.add_field_method_get("y", |_, this| Ok(this.y));
+        fields.add_field_method_get("z", |_, this| Ok(this.z));
+        fields.add_field_method_get("w", |_, this| Ok(this.w));
+    }
+}
 
 // IVec2
 #[derive(Clone, Copy, PartialEq)]
@@ -109,7 +127,12 @@ impl From<IVec2> for LuaIVec2 {
     }
 }
 
-impl UserData for LuaIVec2 {}
+impl UserData for LuaIVec2 {
+    fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
+        fields.add_field_method_get("x", |_, this| Ok(this.x));
+        fields.add_field_method_get("y", |_, this| Ok(this.y));
+    }
+}
 
 // IVec3
 #[derive(Clone, Copy, PartialEq)]
@@ -134,7 +157,13 @@ impl From<IVec3> for LuaIVec3 {
     }
 }
 
-impl UserData for LuaIVec3 {}
+impl UserData for LuaIVec3 {
+    fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
+        fields.add_field_method_get("x", |_, this| Ok(this.x));
+        fields.add_field_method_get("y", |_, this| Ok(this.y));
+        fields.add_field_method_get("z", |_, this| Ok(this.z));
+    }
+}
 
 // IVec4
 #[derive(Clone, Copy, PartialEq)]
@@ -159,7 +188,14 @@ impl From<IVec4> for LuaIVec4 {
     }
 }
 
-impl UserData for LuaIVec4 {}
+impl UserData for LuaIVec4 {
+    fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
+        fields.add_field_method_get("x", |_, this| Ok(this.x));
+        fields.add_field_method_get("y", |_, this| Ok(this.y));
+        fields.add_field_method_get("z", |_, this| Ok(this.z));
+        fields.add_field_method_get("w", |_, this| Ok(this.w));
+    }
+}
 
 // Mat2
 #[derive(Clone, Copy, PartialEq)]

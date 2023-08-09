@@ -41,14 +41,15 @@ end
 
 function verdi.update(deltaTime) 
 
-    local tf = graphics.camera:transform()
-
+    local tf = graphics.camera.transform
 
     graphics.camera:reset()
     --graphics.camera:setRotation(camYaw, 0, 1, 0)
     graphics.camera:translate(x, 2.5, y)
     graphics.camera:rotate(camYaw, 0, 1, 0)
     graphics.camera:rotate(camPitch, 1, 0, 0)
+
+    local camPos = tf:getPosition()
 
     if input.getKeyDown("z") then
         y = y + tf:forward() * speed * deltaTime

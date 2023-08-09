@@ -1,6 +1,6 @@
 use mlua::{UserData, UserDataMethods};
 
-use crate::{Vec3, Quat, Mat4};
+use crate::{Vec3, Quat, Mat4, types::LuaVec3};
 
 #[derive(PartialEq, Clone, Copy)]
 pub struct Transform {
@@ -52,6 +52,10 @@ impl Transform {
 
     pub fn set_position(&mut self, vec: Vec3) {
         self.translation = vec;
+    }
+
+    pub fn get_position(&self) -> Vec3 {
+        self.translation
     }
 
     pub fn set_rotation(&mut self, angle: f32, axis: Vec3) {
@@ -139,6 +143,10 @@ impl UserData for Transform {
 
         methods.add_method_mut("setPosition", |_, transform, (x, y, z): (f32, f32, f32)| {
             Ok(transform.set_position(Vec3::new(x, y, z)))
+        });
+
+        methods.add_method("getPosition", |_, transform, ()| {
+            Ok(LuaVec3(transform.get_position()))
         });
 
         methods.add_method_mut("setRotation", |_, transform, (angle, x, y, z): (f32, f32, f32, f32)| {
