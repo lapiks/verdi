@@ -24,8 +24,8 @@ function verdi.start()
 
     print(model:getNumNodes())
 
-    x = 5
-    y = 10
+    x = 0
+    y = 0
 
     camPitch = 0
     camYaw = 0
@@ -41,31 +41,32 @@ end
 
 function verdi.update(deltaTime) 
     graphics.camera:reset()
-    graphics.camera:setPosition(x, -2.5, y)
+    --graphics.camera:setRotation(camYaw, 0, 1, 0)
+    graphics.camera:setPosition(x, 2.5, y)
     graphics.camera:rotate(camYaw, 0, 1, 0)
     graphics.camera:rotate(camPitch, 1, 0, 0)
 
     if input.getKeyDown("z") then
-        y = y - speed * deltaTime
-    end
-
-    if input.getKeyDown("s") then
         y = y + speed * deltaTime
     end
 
-    if input.getKeyDown("q") then
-        x = x + speed * deltaTime
+    if input.getKeyDown("s") then
+        y = y - speed * deltaTime
     end
 
     if input.getKeyDown("d") then
+        x = x + speed * deltaTime
+    end
+
+    if input.getKeyDown("q") then
         x = x - speed * deltaTime
     end
 
-    if input.getKeyDown("a") then
+    if input.getKeyDown("e") then
         camYaw = camYaw + rotSpeed * deltaTime
     end
 
-    if input.getKeyDown("e") then
+    if input.getKeyDown("a") then
         camYaw = camYaw - rotSpeed * deltaTime
     end
 
