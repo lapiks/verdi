@@ -78,13 +78,13 @@ impl<'lua> BindGraphicsChip {
         gpu.set_clear_color(color);
     }
 
-    fn translate(gpu: &mut GraphicsChip, v: &Vec3) {
-        gpu.translate(v);
-    }
+    // fn translate(gpu: &mut GraphicsChip, v: &Vec3) {
+    //     gpu.translate(v);
+    // }
 
-    fn rotate(gpu: &mut GraphicsChip, angle: f32, axis: &Vec3) {
-        gpu.rotate(angle, axis);
-    }
+    // fn rotate(gpu: &mut GraphicsChip, angle: f32, axis: &Vec3) {
+    //     gpu.rotate(angle, axis);
+    // }
 
     fn draw_line(gpu: &mut GraphicsChip, p1: &Vec2, p2: &Vec2) {
         gpu.draw_line(p1, p2);
@@ -224,31 +224,31 @@ impl<'lua> BindGraphicsChip {
             )?;
             module_table.set("line", func)?;
         }
-        {
-            let gpu = gpu.clone();
-            let func = lua.create_function_mut(
-                move |_, (x, y, z): (f32, f32, f32)| Ok(
-                    BindGraphicsChip::translate(
-                        &mut gpu.borrow_mut(),
-                        &Vec3::new(x, y, z)
-                    )
-                )
-            )?;
-            module_table.set("translate", func)?;
-        }
-        {
-            let gpu = gpu.clone();
-            let func = lua.create_function_mut(
-                move |_, (angle, x, y, z): (f32, f32, f32, f32)| Ok(
-                    BindGraphicsChip::rotate(
-                        &mut gpu.borrow_mut(),
-                        angle,
-                        &Vec3::new(x, y, z)
-                    )
-                )
-            )?;
-            module_table.set("rotate", func)?;
-        }
+        // {
+        //     let gpu = gpu.clone();
+        //     let func = lua.create_function_mut(
+        //         move |_, (x, y, z): (f32, f32, f32)| Ok(
+        //             BindGraphicsChip::translate(
+        //                 &mut gpu.borrow_mut(),
+        //                 &Vec3::new(x, y, z)
+        //             )
+        //         )
+        //     )?;
+        //     module_table.set("translate", func)?;
+        // }
+        // {
+        //     let gpu = gpu.clone();
+        //     let func = lua.create_function_mut(
+        //         move |_, (angle, x, y, z): (f32, f32, f32, f32)| Ok(
+        //             BindGraphicsChip::rotate(
+        //                 &mut gpu.borrow_mut(),
+        //                 angle,
+        //                 &Vec3::new(x, y, z)
+        //             )
+        //         )
+        //     )?;
+        //     module_table.set("rotate", func)?;
+        // }
 
         // default camera
         let camera = CameraHandle {

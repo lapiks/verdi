@@ -23,43 +23,43 @@ impl Camera {
         }
     }
 
-    pub fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> Mat4 {
-        let f = {
-            let f = direction;
-            let len = f[0] * f[0] + f[1] * f[1] + f[2] * f[2];
-            let len = len.sqrt();
-            [f[0] / len, f[1] / len, f[2] / len]
-        };
+    // pub fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> Mat4 {
+    //     let f = {
+    //         let f = direction;
+    //         let len = f[0] * f[0] + f[1] * f[1] + f[2] * f[2];
+    //         let len = len.sqrt();
+    //         [f[0] / len, f[1] / len, f[2] / len]
+    //     };
     
-        let s = [up[1] * f[2] - up[2] * f[1],
-                 up[2] * f[0] - up[0] * f[2],
-                 up[0] * f[1] - up[1] * f[0]];
+    //     let s = [up[1] * f[2] - up[2] * f[1],
+    //              up[2] * f[0] - up[0] * f[2],
+    //              up[0] * f[1] - up[1] * f[0]];
     
-        let s_norm = {
-            let len = s[0] * s[0] + s[1] * s[1] + s[2] * s[2];
-            let len = len.sqrt();
-            [s[0] / len, s[1] / len, s[2] / len]
-        };
+    //     let s_norm = {
+    //         let len = s[0] * s[0] + s[1] * s[1] + s[2] * s[2];
+    //         let len = len.sqrt();
+    //         [s[0] / len, s[1] / len, s[2] / len]
+    //     };
     
-        let u = [f[1] * s_norm[2] - f[2] * s_norm[1],
-                 f[2] * s_norm[0] - f[0] * s_norm[2],
-                 f[0] * s_norm[1] - f[1] * s_norm[0]];
+    //     let u = [f[1] * s_norm[2] - f[2] * s_norm[1],
+    //              f[2] * s_norm[0] - f[0] * s_norm[2],
+    //              f[0] * s_norm[1] - f[1] * s_norm[0]];
     
-        let p = [-position[0] * s_norm[0] - position[1] * s_norm[1] - position[2] * s_norm[2],
-                 -position[0] * u[0] - position[1] * u[1] - position[2] * u[2],
-                 -position[0] * f[0] - position[1] * f[1] - position[2] * f[2]];
+    //     let p = [-position[0] * s_norm[0] - position[1] * s_norm[1] - position[2] * s_norm[2],
+    //              -position[0] * u[0] - position[1] * u[1] - position[2] * u[2],
+    //              -position[0] * f[0] - position[1] * f[1] - position[2] * f[2]];
     
         
 
-        Mat4::from_cols_array_2d(
-            &[
-                [s_norm[0], u[0], f[0], 0.0],
-                [s_norm[1], u[1], f[1], 0.0],
-                [s_norm[2], u[2], f[2], 0.0],
-                [p[0], p[1], p[2], 1.0],
-            ]
-        )
-    }
+    //     Mat4::from_cols_array_2d(
+    //         &[
+    //             [s_norm[0], u[0], f[0], 0.0],
+    //             [s_norm[1], u[1], f[1], 0.0],
+    //             [s_norm[2], u[2], f[2], 0.0],
+    //             [p[0], p[1], p[2], 1.0],
+    //         ]
+    //     )
+    // }
 
     pub fn orthographic_matrix(
         left: f32,
@@ -120,71 +120,61 @@ impl UserData for CameraHandle {
     }
     
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method_mut("transform", |_, this, ()| {
-            Ok({
-                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-                    camera.transform
-                }
-                else {
-                    Transform::new()
-                }
-            })
-        });
+        // TODO : to keep?
+        // methods.add_method_mut("reset", |_, this, ()| {
+        //     Ok({
+        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
+        //             camera.transform.reset();
+        //         }
+        //     })
+        // });
 
-        methods.add_method_mut("reset", |_, this, ()| {
-            Ok({
-                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-                    camera.transform.reset();
-                }
-            })
-        });
+        // methods.add_method_mut("translate", |_, this, (x, y, z): (f32, f32, f32)| {
+        //     Ok({
+        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
+        //             camera.transform.translate(Vec3::new(x, y, z));
+        //         }
+        //     })
+        // });
 
-        methods.add_method_mut("translate", |_, this, (x, y, z): (f32, f32, f32)| {
-            Ok({
-                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-                    camera.transform.translate(Vec3::new(x, y, z));
-                }
-            })
-        });
+        // methods.add_method_mut("rotate", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
+        //     Ok({
+        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
+        //             camera.transform.rotate(angle, Vec3::new(x, y, z));
+        //         }
+        //     })
+        // });
 
-        methods.add_method_mut("rotate", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
-            Ok({
-                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-                    camera.transform.rotate(angle, Vec3::new(x, y, z));
-                }
-            })
-        });
+        // methods.add_method_mut("scale", |_, this, (x, y, z): (f32, f32, f32)| {
+        //     Ok({
+        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
+        //             camera.transform.scale(Vec3::new(x, y, z));
+        //         }
+        //     })
+        // });
 
-        methods.add_method_mut("scale", |_, this, (x, y, z): (f32, f32, f32)| {
-            Ok({
-                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-                    camera.transform.scale(Vec3::new(x, y, z));
-                }
-            })
-        });
+        // methods.add_method_mut("setPosition", |_, this, (x, y, z): (f32, f32, f32)| {
+        //     Ok({
+        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
+        //             camera.transform.set_position(Vec3::new(x, y, z));
+        //         }
+        //     })
+        // });
 
-        methods.add_method_mut("setPosition", |_, this, (x, y, z): (f32, f32, f32)| {
-            Ok({
-                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-                    camera.transform.set_position(Vec3::new(x, y, z));
-                }
-            })
-        });
+        // methods.add_method_mut("setRotation", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
+        //     Ok({
+        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
+        //             camera.transform.set_rotation(angle, Vec3::new(x, y, z));
+        //         }
+        //     })
+        // });
 
-        methods.add_method_mut("setRotation", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
-            Ok({
-                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-                    camera.transform.set_rotation(angle, Vec3::new(x, y, z));
-                }
-            })
-        });
-
-        methods.add_method_mut("setScale", |_, this, (x, y, z): (f32, f32, f32)| {
-            Ok({
-                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-                    camera.transform.set_scale(Vec3::new(x, y, z));
-                }
-            })
-        });
+        // methods.add_method_mut("setScale", |_, this, (x, y, z): (f32, f32, f32)| {
+        //     Ok({
+        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
+        //             camera.transform.set_scale(Vec3::new(x, y, z));
+        //         }
+        //     })
+        // });
     }
 }

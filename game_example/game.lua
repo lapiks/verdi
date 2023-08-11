@@ -7,6 +7,8 @@ function verdi.start()
     image = graphics.newImage("./game_example/assets/Palette.png")
     sprite = graphics.newSprite(image)
 
+    graphics.camera.transform:setPosition(math.vec3(0, 2.5, 0))
+
     entity = world.spawn()
     print(entity:id())
 
@@ -24,10 +26,6 @@ function verdi.start()
 
     print(model:getNumNodes())
 
-    
-    x = 0
-    y = 0
-
     camPitch = 0
     camYaw = 0
 
@@ -41,31 +39,22 @@ function verdi.start()
 end
 
 function verdi.update(deltaTime) 
-
-    local tf = graphics.camera.transform
-
-    graphics.camera:reset()
-    --graphics.camera:setRotation(camYaw, 0, 1, 0)
-    graphics.camera:translate(x, 2.5, y)
-    graphics.camera:rotate(camYaw, 0, 1, 0)
-    graphics.camera:rotate(camPitch, 1, 0, 0)
-
-    local camPos = tf:getPosition()
+    local camTF = graphics.camera.transform
 
     if input.getKeyDown("z") then
-        y = y + tf:forward() * speed * deltaTime
+        camTF:translate(camTF:forward() * speed * deltaTime)
     end
 
     if input.getKeyDown("s") then
-        y = y - tf:forward() * speed * deltaTime
+        camTF:translate(camTF:backward() * speed * deltaTime)
     end
 
     if input.getKeyDown("d") then
-        x = x + speed * deltaTime
+        camTF:translate(camTF:right() * speed * deltaTime)
     end
 
     if input.getKeyDown("q") then
-        x = x - speed * deltaTime
+        camTF:translate(camTF:left() * speed * deltaTime)
     end
 
     if input.getKeyDown("e") then
@@ -75,6 +64,12 @@ function verdi.update(deltaTime)
     if input.getKeyDown("a") then
         camYaw = camYaw - rotSpeed * deltaTime
     end
+
+   -- camTF:reset()
+    --camTF:setRotation(camYaw, 0, 1, 0)
+    --camTF:translate(camPos)
+    camTF:rotate(camYaw, 0, 1, 0)
+    camTF:rotate(camPitch, 1, 0, 0)
 
     local mouseDelta = {input.getMouseDelta()}
     camYaw = camYaw + mouseDelta[1] * deltaTime * 10

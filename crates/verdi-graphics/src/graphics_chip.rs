@@ -369,21 +369,21 @@ impl GraphicsChip {
         self.render_state.clear_color = *color;
     }
 
-    pub fn translate(&mut self, v: &Vec3) {
-        *self.database.borrow_mut().uniforms
-            .get_mat4_mut(
-                self.globals.global_uniforms.view_matrix
-            ).unwrap() 
-                *= Mat4::from_translation(*v);
-    }
+    // pub fn translate(&mut self, v: &Vec3) {
+    //     *self.database.borrow_mut().uniforms
+    //         .get_mat4_mut(
+    //             self.globals.global_uniforms.view_matrix
+    //         ).unwrap() 
+    //             *= Mat4::from_translation(*v);
+    // }
 
-    pub fn rotate(&mut self, angle: f32, axis: &Vec3) {
-        *self.database.borrow_mut().uniforms
-            .get_mat4_mut(
-                self.globals.global_uniforms.view_matrix
-            ).unwrap() 
-                *= Mat4::from_axis_angle(*axis, angle);
-    }
+    // pub fn rotate(&mut self, angle: f32, axis: &Vec3) {
+    //     *self.database.borrow_mut().uniforms
+    //         .get_mat4_mut(
+    //             self.globals.global_uniforms.view_matrix
+    //         ).unwrap() 
+    //             *= Mat4::from_axis_angle(*axis, angle);
+    // }
 
     pub fn draw_line(&mut self, p1: &Vec2, p2: &Vec2) {
         let v1 = Vertex {
