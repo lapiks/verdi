@@ -39,6 +39,16 @@ impl UserData for LuaVec2 {
         fields.add_field_method_get("x", |_, this| Ok(this.x));
         fields.add_field_method_get("y", |_, this| Ok(this.y));
     }
+
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_meta_function(MetaMethod::Add, |_, (v1, v2): (LuaVec2, LuaVec2)| {
+            Ok(LuaVec2(v1.0 + v2.0))
+        });
+
+        methods.add_meta_function(MetaMethod::Mul, |_, (v1, scalar): (LuaVec2, f32)| {
+            Ok(LuaVec2(v1.0 * scalar))
+        });
+    }
 }
 
 // Vec3
@@ -112,6 +122,16 @@ impl UserData for LuaVec4 {
         fields.add_field_method_get("z", |_, this| Ok(this.z));
         fields.add_field_method_get("w", |_, this| Ok(this.w));
     }
+
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_meta_function(MetaMethod::Add, |_, (v1, v2): (LuaVec4, LuaVec4)| {
+            Ok(LuaVec4(v1.0 + v2.0))
+        });
+
+        methods.add_meta_function(MetaMethod::Mul, |_, (v1, scalar): (LuaVec4, f32)| {
+            Ok(LuaVec4(v1.0 * scalar))
+        });
+    }
 }
 
 // IVec2
@@ -141,6 +161,12 @@ impl UserData for LuaIVec2 {
     fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
         fields.add_field_method_get("x", |_, this| Ok(this.x));
         fields.add_field_method_get("y", |_, this| Ok(this.y));
+    }
+
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_meta_function(MetaMethod::Add, |_, (v1, v2): (LuaIVec2, LuaIVec2)| {
+            Ok(LuaIVec2(v1.0 + v2.0))
+        });
     }
 }
 
@@ -173,6 +199,12 @@ impl UserData for LuaIVec3 {
         fields.add_field_method_get("y", |_, this| Ok(this.y));
         fields.add_field_method_get("z", |_, this| Ok(this.z));
     }
+
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_meta_function(MetaMethod::Add, |_, (v1, v2): (LuaIVec3, LuaIVec3)| {
+            Ok(LuaIVec3(v1.0 + v2.0))
+        });
+    }
 }
 
 // IVec4
@@ -204,6 +236,12 @@ impl UserData for LuaIVec4 {
         fields.add_field_method_get("y", |_, this| Ok(this.y));
         fields.add_field_method_get("z", |_, this| Ok(this.z));
         fields.add_field_method_get("w", |_, this| Ok(this.w));
+    }
+
+    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_meta_function(MetaMethod::Add, |_, (v1, v2): (LuaIVec4, LuaIVec4)| {
+            Ok(LuaIVec4(v1.0 + v2.0))
+        });
     }
 }
 
@@ -305,7 +343,14 @@ impl From<Quat> for LuaQuat {
     }
 }
 
-impl UserData for LuaQuat {}
+impl UserData for LuaQuat {
+    fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
+        fields.add_field_method_get("x", |_, this| Ok(this.x));
+        fields.add_field_method_get("y", |_, this| Ok(this.y));
+        fields.add_field_method_get("z", |_, this| Ok(this.z));
+        fields.add_field_method_get("w", |_, this| Ok(this.w));
+    }
+}
 
 
 impl From<LuaVec2> for Vec2 {
