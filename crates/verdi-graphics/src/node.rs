@@ -1,64 +1,51 @@
-use std::{cell::RefCell, rc::Rc};
-
-use mlua::{UserData, UserDataMethods};
-
-use verdi_math::prelude::Transform;
+use mlua::UserData;
+use verdi_math::prelude::TransformHandle;
 
 use crate::{
-    model::ModelHandle, 
-    mesh::MeshId, 
+    mesh::MeshHandle, 
     prelude::GraphicsChip
 };
 
-type NodeId = u64;
 
 #[derive(Clone)]
 pub struct Node {
-    pub mesh: Option<MeshId>,
-    pub transform: Transform,
+    pub mesh: Option<MeshHandle>,
+    pub transform: TransformHandle,
     pub children: Vec<Node>,
 }
 
 impl Node {
-    pub fn draw(&self, gpu: &mut GraphicsChip) {
-        gpu.draw_node(&self);
-    }
+    // pub fn draw(&self, gpu: &mut GraphicsChip) {
+    //     gpu.draw_node(&self);
+    // }
 }
 
-#[derive(Clone)]
-pub struct NodeHandle {
-    pub gpu: Rc<RefCell<GraphicsChip>>,
-    pub model: ModelHandle,
-    pub node_index: NodeId,
-}
+impl UserData for Node {}
 
-impl NodeHandle {
-    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, model: ModelHandle, node_index: NodeId) -> Self {
-        Self {
-            gpu,
-            model,
-            node_index,
-        }
-    }
+// impl Resource for Node {
+//     fn as_any(&self) -> &dyn std::any::Any {
+//         self
+//     }
 
-    pub fn draw(&self) {
-        // a revoir
-        let gpu = self.gpu.borrow();
-        let db = gpu.database.borrow();
-        let model = db.assets.get_model(self.model.id);
-        if let Some(model) = model {
-            let node = model.get_node(self.node_index);
-            if let Some(node) = node {
-                node.draw(&mut self.gpu.borrow_mut());
-            }
-        }
-    }
-}
+//     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+//         self
+//     }
+// }
 
-impl UserData for NodeHandle {
-    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method("draw", |_, node, ()| {
-            Ok(node.draw())
-        });
-    }
-}
+// pub struct NodeHandle(Handle<Node>);
+
+// impl Deref for NodeHandle {
+//     type Target = Handle<Node>;
+
+//     fn deref(&self) -> &Self::Target {
+//         &self.0
+//     }
+// }
+
+// impl NodeHandle {
+//     pub fn new(assets: Rc<RefCell<Assets>>, id: NodeId) -> Self{
+//         Self(Handle::new(assets, id))
+//     }
+// }
+
+// impl UserData for NodeHandle {}

@@ -6,7 +6,6 @@ pub mod prelude {
         bind_graphics_chip::BindGraphicsChip,
         renderer::Renderer,
         render_target::RenderTarget,
-        database::Database,
         globals::Globals,
         pass::PassHandle,
     };
@@ -32,13 +31,11 @@ mod gpu_program;
 mod node;
 mod camera;
 mod material;
-mod uniforms;
+mod uniform;
 mod globals;
 mod program;
 mod shader;
-mod screen_quad;
 mod gltf_loader;
-mod database;
 mod render_state;
 mod pass;
 mod render_cmds;

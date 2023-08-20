@@ -1,15 +1,15 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, ops::{Deref, DerefMut}};
 
 use glium::Display;
 use mlua::{UserData, UserDataMethods, Table};
-use slotmap::{new_key_type, Key};
+use slotmap::Key;
+use verdi_database::{ResourceId, Resource, Assets, Handle};
 
 use crate::{
-    graphics_chip::GraphicsChip,
     vertex::Vertex, 
     material::MaterialId, 
-    gpu_assets::GpuAssets, 
     gpu_mesh::GpuMesh, 
+    gpu_assets::{GpuAsset, GpuAssetError, PrepareAsset}, 
 };
 
 use thiserror::Error;
@@ -46,19 +46,28 @@ pub enum MeshError {
     GltfError(#[from] gltf::Error),
 }
 
-new_key_type! {
-    pub struct MeshId;
-}
+pub type MeshId = ResourceId;
 
 type VertexBuffer = Vec<Vertex>;
 type IndexBuffer = Vec<u32>;
 
+#[derive(Clone)]
 pub struct Mesh {
     pub vertex_buffer: VertexBuffer,
     pub index_buffer: Option<IndexBuffer>,
     pub primitive_type: PrimitiveType,
     pub material: MaterialId, // toutes les instances d'un même mesh devront utiliser un même matériau
     pub id: MeshId,
+}
+
+impl Resource for Mesh {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
 }
 
 impl Mesh {
@@ -75,47 +84,59 @@ impl Mesh {
             id: MeshId::null(),
         }
     }
+}
 
-    pub fn prepare_rendering(&self, display: &Display, gpu_assets: &mut GpuAssets) {
-        if gpu_assets.get_mesh(self.id).is_none() {
-            let vertex_buffer = glium::VertexBuffer::new(display, &self.vertex_buffer).unwrap();
+impl PrepareAsset for Mesh {
+    fn prepare_rendering(&self, display: &Display, assets: &Assets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
+        let vertex_buffer = glium::VertexBuffer::new(display, &self.vertex_buffer).unwrap();
 
-            if let Some(index_buffer) = &self.index_buffer {
-                let indices = glium::IndexBuffer::new(
-                    display, 
-                    glium::index::PrimitiveType::from(self.primitive_type),
-                    index_buffer
-                ).unwrap();
+        if let Some(index_buffer) = &self.index_buffer {
+            let indices = glium::IndexBuffer::new(
+                display, 
+                glium::index::PrimitiveType::from(self.primitive_type),
+                index_buffer
+            ).unwrap();
 
-                let gpu_mesh = GpuMesh::new(vertex_buffer, Some(indices));
-                gpu_assets.add_mesh(self.id, gpu_mesh);
-            }
-            else {
-                // let indices = glium::index::NoIndices(glium::index::PrimitiveType::from(render_pass.current_primitive));
-
-                let gpu_mesh = GpuMesh::new(vertex_buffer, None);
-                gpu_assets.add_mesh(self.id, gpu_mesh);
-            }
+            return Ok(
+                Box::new(
+                    GpuMesh::new(vertex_buffer, Some(indices))
+                )
+            );
         }
+
+        Ok(
+            Box::new(
+                GpuMesh::new(vertex_buffer, None)
+            )
+        )
     }
 }
 
 #[derive(Clone)]
-pub struct MeshHandle {
-    pub gpu: Rc<RefCell<GraphicsChip>>,
-    pub id: MeshId,
+pub struct MeshHandle(Handle<Mesh>);
+
+impl Deref for MeshHandle {
+    type Target = Handle<Mesh>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for MeshHandle {
+      fn deref_mut(&mut self) -> &mut Handle<Mesh> {
+        &mut self.0
+    }
 }
 
 impl MeshHandle {
-    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, id: MeshId) -> Self{
-        Self { 
-            gpu,
-            id,
-         }
+    pub fn new(assets: Rc<RefCell<Assets>>, id: MeshId) -> Self {
+        Self(Handle::new(assets, id))
     }
 
     pub fn set_vertices(&mut self, vertices: Table) {
-        if let Some(mesh) = self.gpu.borrow().database.borrow_mut().assets.get_mesh_mut(self.id)
+        let mesh_id = self.get_id();
+        if let Some(mesh) = self.get_assets_mut().get_mut::<Mesh>(mesh_id)
         {
             if let Ok(v_length) = vertices.len() {
                 mesh.vertex_buffer.resize(v_length as usize, Vertex::default());
@@ -134,14 +155,11 @@ impl MeshHandle {
     }
 
     pub fn set_primitive_type(&mut self, primitive_type: PrimitiveType) {
-        if let Some(mesh) = self.gpu.borrow().database.borrow_mut().assets.get_mesh_mut(self.id)
+        let mesh_id = self.get_id();
+        if let Some(mesh) = self.get_assets_mut().get_mut::<Mesh>(mesh_id)
         {
             mesh.primitive_type = primitive_type;
         }
-    }
-
-    pub fn draw(&self) {
-        self.gpu.borrow_mut().draw_mesh(self.id);
     }
 }
 
@@ -153,10 +171,6 @@ impl UserData for MeshHandle {
 
         methods.add_method_mut("setPrimitiveType", |_, mesh, primitive_string: String| {
             Ok(mesh.set_primitive_type(PrimitiveType::from(primitive_string)))
-        });
-
-        methods.add_method("draw", |_, mesh, ()| {
-            Ok(mesh.draw())
         });
     }
 }

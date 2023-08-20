@@ -1,21 +1,30 @@
-use std::{rc::Rc, cell::RefCell};
+use std::{rc::Rc, cell::RefCell, ops::Deref};
 
 use mlua::{UserData, UserDataMethods};
-use slotmap::{new_key_type, Key};
+use slotmap::Key;
+use verdi_database::{ResourceId, Resource, Assets, Handle};
 
 use crate::{
-    node::{Node, NodeHandle}, 
+    node::Node, 
     graphics_chip::GraphicsChip,
 };
 
-new_key_type! {
-    pub struct ModelId;
-}
+pub type ModelId = ResourceId;
 
 #[derive(Clone)]
 pub struct Model {
     pub nodes: Vec<Node>,
     pub id: ModelId,
+}
+
+impl Resource for Model {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
 }
 
 impl Model {
@@ -26,52 +35,61 @@ impl Model {
         }
     }
 
-    pub fn get_node(&self, index: u64) -> Option<&Node> {
-        self.nodes.get(index as usize)
+    pub fn get_node(&self, index: usize) -> Option<&Node> {
+        self.nodes.get(index)
     }
 
     pub fn get_nodes(&self) -> &Vec<Node> {
         &self.nodes
     }
 
-    pub fn draw(&self, gpu: &mut GraphicsChip) {
-        for node in self.nodes.iter() {
-            node.draw(gpu);
-        }
-    }
+    // pub fn draw(&self, gpu: &mut GraphicsChip) {
+    //     for node in self.nodes.iter() {
+    //         node.draw(gpu);
+    //     }
+    // }
 }
 
 #[derive(Clone)]
-pub struct ModelHandle {
-    pub gpu: Rc<RefCell<GraphicsChip>>,
-    pub id: ModelId,
+pub struct ModelHandle(Handle<Model>);
+
+impl Deref for ModelHandle {
+    type Target = Handle<Model>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl ModelHandle {
-    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, id: ModelId) -> Self{
-        Self {
-            gpu,
-            id
-        }
+    pub fn new(assets: Rc<RefCell<Assets>>, id: ModelId) -> Self{
+        Self(Handle::new(assets, id))
     }
 
-    pub fn draw(&self) {
-        self.gpu.borrow_mut().draw_model(self.id);
-    }
+    pub fn get_node(&self, index: usize) -> Node { // TODO: returns a copy -> is it ok?
+        // NodeHandle {
+        //     assets: self.assets.clone(),
+        //     model: self.clone(),
+        //     node_index: index as u64,
+        // }
 
-    pub fn get_node(&self, index: usize) -> NodeHandle {
-        NodeHandle {
-            gpu: self.gpu.clone(),
-            model: self.clone(),
-            node_index: index as u64,
-        }
+        self
+        .get_assets()
+        .get::<Model>(self.get_id())
+        .expect("Model not found")
+        .get_node(index)
+        .expect("Node not found")
+        .clone()
     }
 
     pub fn get_len(&self) -> Option<u64> {
-        let gpu = self.gpu.borrow();
-        let db = gpu.database.borrow();
-        let model = db.assets.get_model(self.id).unwrap();
-        Some(model.nodes.len() as u64)
+        Some(
+            self
+            .get_assets()
+            .get::<Model>(self.get_id())
+            .unwrap()
+            .nodes
+            .len() as u64)
     }
 }
 
@@ -82,11 +100,7 @@ impl UserData for ModelHandle {
         });
 
         methods.add_method("getNode", |_, model, index: usize| {
-            Ok(model.get_node(index))
-        });
-
-        methods.add_method("draw", |_, model, ()| {
-            Ok(model.draw())
+            Ok(model.get_node(index)) // TODO: warning -> copy of the node
         });
     }
 }

@@ -1,20 +1,19 @@
-use std::path::Path;
+use std::{path::Path, rc::Rc, cell::RefCell};
 
 use gltf::buffer::Data;
 use image::ImageError;
 
 use thiserror::Error;
-use verdi_math::{Mat4, prelude::Transform};
+use verdi_database::Assets;
+use verdi_math::{Mat4, prelude::{Transform, TransformHandle}};
 
 use crate::{
-    mesh::{Mesh, PrimitiveType}, 
-    image::Image, 
-    uniforms::{UniformId, TextureUniform}, 
+    mesh::{Mesh, PrimitiveType, MeshHandle}, 
+    image::{Image, ImageId}, 
     material::{Material, MaterialId}, 
     node::Node,
     vertex::Vertex, 
     model::Model, 
-    database::Database, 
     globals::Globals, 
 };
 
@@ -31,7 +30,7 @@ pub enum GltfError {
 pub struct GltfLoader;
 
 impl GltfLoader {
-    pub fn load<P: AsRef<Path>>(path: P, render_resources: &mut Database, globals: &Globals) -> Result<Model, GltfError> {
+    pub fn load<P: AsRef<Path>>(path: P, graphics_assets: Rc<RefCell<Assets>>, math_assets: Rc<RefCell<Assets>>, globals: &Globals) -> Result<Model, GltfError> {
         let mut model = Model::new();
 
         let gltf = gltf::Gltf::open(path.as_ref())?;
@@ -40,31 +39,31 @@ impl GltfLoader {
 
         let folder = path.as_ref().parent().unwrap();
 
-        let mut texture_uniforms = vec![];
+        let mut textures = vec![];
         for gltf_texture in gltf.textures() {
-            let image_id = render_resources.assets.add_texture(
-                GltfLoader::load_texture(
-                    gltf_texture, 
-                    &buffers,
-                    folder
-                )?
-            );
-
-            texture_uniforms.push(
-                render_resources.uniforms.add_texture(
-                    TextureUniform::new(image_id)
+            let image_id = graphics_assets.borrow_mut().add(
+                Box::new(
+                    GltfLoader::load_texture(
+                        gltf_texture, 
+                        &buffers,
+                        folder
+                    )?
                 )
             );
+
+            textures.push(image_id);
         }
 
         let mut materials = vec![];
         for gltf_material in gltf.materials() {
             materials.push(
-                render_resources.assets.add_material(
-                    GltfLoader::load_material(
-                        gltf_material,
-                        &texture_uniforms, 
-                        globals
+                graphics_assets.borrow_mut().add(
+                    Box::new(
+                        GltfLoader::load_material(
+                            gltf_material,
+                            &textures, 
+                            globals
+                        )
                     )
                 )
             )
@@ -75,29 +74,42 @@ impl GltfLoader {
             for gltf_primitive in gltf_mesh.primitives() {
                 // creates a mesh per gltf primitive
                 meshes.push(
-                    render_resources.assets.add_mesh(
-                        GltfLoader::load_primitive(
-                            gltf_primitive, 
-                            &buffers, 
-                            &materials
-                        )?
+                    graphics_assets.borrow_mut().add(
+                        Box::new(
+                            GltfLoader::load_primitive(
+                                gltf_primitive, 
+                                &buffers, 
+                                &materials
+                            )?
+                        )
                     )
                 );
             }
         }
 
+        
+
         for gltf_node in gltf.nodes() {
-            model.nodes.push( 
-                Node {
-                    mesh: gltf_node
-                        .mesh()
-                        .map(|mesh| mesh.index())
-                        .and_then(|i| meshes.get(i).cloned()),
-                    transform: Transform::from_matrix(
+            let mesh_id = gltf_node
+            .mesh()
+            .map(|mesh| mesh.index())
+            .and_then(|i| meshes.get(i).cloned())
+            .unwrap();
+
+            let transform_id = math_assets.borrow_mut().add(
+                Box::new(
+                    Transform::from_matrix(
                         Mat4::from_cols_array_2d(
                             &gltf_node.transform().matrix()
                         )
-                    ),
+                    )
+                )
+            );
+
+            model.nodes.push( 
+                Node {
+                    mesh: Some(MeshHandle::new(graphics_assets.clone(), mesh_id)),
+                    transform: TransformHandle::new(math_assets.clone(), transform_id),
                     children: vec![],
                 }
             );
@@ -181,7 +193,7 @@ impl GltfLoader {
         Ok(source)
     }
 
-    fn load_material(gltf_material: gltf::Material, textures: &Vec<UniformId>, globals: &Globals) -> Material {
+    fn load_material(gltf_material: gltf::Material, textures: &Vec<ImageId>, globals: &Globals) -> Material {
         let texture_id = gltf_material
             .pbr_metallic_roughness()
             .base_color_texture()

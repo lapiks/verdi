@@ -1,10 +1,9 @@
+use verdi_database::Assets;
 use verdi_math::{Vec2, Mat4};
 
 use crate::{
-    uniforms::{UniformId, Uniforms}, 
     program::{ProgramId, Program}, 
-    assets::Assets, 
-    shader::Shader, database::Database
+    shader::Shader, uniform::{UniformId, Uniform},
 };
 
 /// Indicates where to find some globals (shader and uniforms) in the database
@@ -15,10 +14,10 @@ pub struct Globals {
 }
 
 impl Globals {
-    pub fn new(database: &mut Database) -> Result<Self, std::io::Error> {
+    pub fn new(assets: &mut Assets) -> Result<Self, std::io::Error> {
         Ok(Self {
-            global_shaders: GlobalShaders::new(&mut database.assets)?,
-            global_uniforms: GlobalUniforms::new(&mut database.uniforms),
+            global_shaders: GlobalShaders::new(assets)?,
+            global_uniforms: GlobalUniforms::new(assets),
         })
     }
 }
@@ -34,19 +33,21 @@ pub struct GlobalUniforms {
     pub enable_fog: UniformId,
     pub fog_start: UniformId,
     pub fog_end: UniformId,
+    pub identity_mat: UniformId, // TODO: temporary
 }
 
 impl GlobalUniforms {
-    pub fn new(uniforms: &mut Uniforms) -> Self {
+    pub fn new(assets: &mut Assets) -> Self {
         Self {
-            model_matrix: uniforms.add_mat4(Mat4::IDENTITY),
-            view_matrix: uniforms.add_mat4(Mat4::IDENTITY),
-            projection_matrix: uniforms.add_mat4(Mat4::IDENTITY),
-            resolution: uniforms.add_vec2(Vec2::ZERO),
-            enable_lighting: uniforms.add_boolean(true),
-            enable_fog: uniforms.add_boolean(false),
-            fog_start: uniforms.add_float(0.0),
-            fog_end: uniforms.add_float(0.0),
+            model_matrix: assets.add(Box::new(Uniform::new(Mat4::IDENTITY))),
+            view_matrix: assets.add(Box::new(Uniform::new(Mat4::IDENTITY))),
+            projection_matrix: assets.add(Box::new(Uniform::new(Mat4::IDENTITY))),
+            resolution: assets.add(Box::new(Uniform::new(Vec2::ZERO))),
+            enable_lighting: assets.add(Box::new(Uniform::new(true))),
+            enable_fog: assets.add(Box::new(Uniform::new(false))),
+            fog_start: assets.add(Box::new(Uniform::new(0.0))),
+            fog_end: assets.add(Box::new(Uniform::new(0.0))),
+            identity_mat: assets.add(Box::new(Uniform::new(Mat4::IDENTITY))),
         }
     }
 }
@@ -80,7 +81,7 @@ impl GlobalShaders {
                 }
             }
         );
-        let vs_id = assets.add_shader(vs);
+        let vs_id = assets.add(Box::new(vs));
 
         let fs = Shader::new(
             match std::fs::read_to_string("./crates/verdi-graphics/shaders/gouraud.fs") {
@@ -91,9 +92,11 @@ impl GlobalShaders {
                 }
             }
         );
-        let fs_id = assets.add_shader(fs);
+        let fs_id = assets.add(Box::new(fs));
 
-        Ok(assets.add_program(Program::new(vs_id, fs_id)))
+        Ok(
+            assets.add(Box::new(Program::new(vs_id, fs_id)))
+        )
     }
 
     fn init_gouraud_textured(assets: &mut Assets) -> Result<ProgramId, std::io::Error> {
@@ -106,7 +109,7 @@ impl GlobalShaders {
                 }
             }
         );
-        let vs_id = assets.add_shader(vs);
+        let vs_id = assets.add(Box::new(vs));
 
         let fs = Shader::new(
             match std::fs::read_to_string("./crates/verdi-graphics/shaders/gouraud_textured.fs") {
@@ -117,9 +120,14 @@ impl GlobalShaders {
                 }
             }
         );
-        let fs_id = assets.add_shader(fs);
+        let fs_id = assets.add(Box::new(fs));
 
-        Ok(assets.add_program(Program::new(vs_id, fs_id)))
+        Ok(assets.add(
+                Box::new(
+                    Program::new(vs_id, fs_id)
+                )
+            )
+        )
     }
 
     fn init_std_2d(assets: &mut Assets) -> Result<ProgramId, std::io::Error> {
@@ -132,7 +140,7 @@ impl GlobalShaders {
                 }
             }
         );
-        let vs_id = assets.add_shader(vs);
+        let vs_id = assets.add(Box::new(vs));
 
         let fs = Shader::new(
             match std::fs::read_to_string("./crates/verdi-graphics/shaders/std2d.fs") {
@@ -143,8 +151,16 @@ impl GlobalShaders {
                 }
             }
         );
-        let fs_id = assets.add_shader(fs);
+        let fs_id = assets.add(Box::new(fs));
 
-        Ok(assets.add_program(Program::new(vs_id, fs_id)))
+        Ok(
+            assets.add(
+                Box::new(
+                    Program::new(
+                        vs_id, fs_id
+                    )
+                )
+            )
+        )
     }
 }

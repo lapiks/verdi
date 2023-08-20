@@ -2,6 +2,7 @@
 pub mod prelude {
     #[doc(hidden)]
     pub use crate::{
+        math::Math,
         bind_math::BindMath,
         transform::*,
         // glam types
@@ -23,5 +24,6 @@ pub mod prelude {
 pub use glam::*;
 
 mod transform;
+mod math;
 mod bind_math;
 mod types;

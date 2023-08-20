@@ -1,22 +1,31 @@
-use std::{rc::Rc, cell::RefCell};
+use std::{rc::Rc, cell::RefCell, ops::Deref};
 
 use mlua::UserData;
-use slotmap::{new_key_type, Key};
+use slotmap::Key;
+use verdi_database::{ResourceId, Resource, Assets, Handle};
 
 use crate::{
-    database::Database, 
     mesh::MeshId, 
     image::ImageId
 };
 
-new_key_type! {
-    pub struct SpriteId;
-}
+pub type SpriteId = ResourceId;
 
+#[derive(Clone)]
 pub struct Sprite {
     pub image_id: ImageId,
     pub quad_id: MeshId,
     pub id: SpriteId,
+}
+
+impl Resource for Sprite {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
 }
 
 impl Sprite {
@@ -30,9 +39,20 @@ impl Sprite {
 }
 
 #[derive(Clone)]
-pub struct SpriteHandle {
-    pub db: Rc<RefCell<Database>>,
-    pub id: SpriteId,
+pub struct SpriteHandle(Handle<Sprite>);
+
+impl Deref for SpriteHandle {
+    type Target = Handle<Sprite>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl SpriteHandle {
+    pub fn new(assets: Rc<RefCell<Assets>>, id: SpriteId) -> Self{
+        Self(Handle::new(assets, id))
+    }
 }
 
 impl UserData for SpriteHandle {}

@@ -1,35 +1,42 @@
-use std::{rc::Rc, cell::RefCell};
+use std::{rc::Rc, cell::RefCell, ops::{Deref, DerefMut}};
 
-use glium::{
-    uniforms::{
-        UniformValue, 
-        Uniforms as GliumUniforms, 
-    },
-    Display
-};
+use glium::
+    uniforms::{UniformValue, Uniforms as GliumUniforms}
+;
 
 use mlua::{UserData, UserDataMethods, prelude::LuaValue};
-use slotmap::{new_key_type, Key};
+use slotmap::Key;
+use verdi_database::{ResourceId, Resource, Assets, Handle};
 
 use crate::{
-    assets::Assets,
-    uniforms::{UniformId, Uniforms}, 
-    gpu_assets::{GpuAssets}, 
-    program::ProgramId, prelude::GraphicsChip, globals::GlobalUniforms, pass::Pass,
+    program::ProgramId, 
+    globals::GlobalUniforms, 
+    pass::Pass, 
+    image::ImageId, 
+    uniform::{Uniform, UniformId}, 
 };
 
 const MAX_UNIFORMS: usize = 64;
 
-new_key_type! {
-    pub struct MaterialId;
-}
+pub type MaterialId = ResourceId;
 
 /// A material defines the program and uniforms to use when rendering a mesh.
 #[derive(Clone)]
 pub struct Material {
     pub program: ProgramId,
+    textures: Vec<ImageId>,
     uniforms: Vec<Option<(String, UniformId)>>,
     pub id: MaterialId,
+}
+
+impl Resource for Material {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
 }
 
 impl Material {
@@ -43,6 +50,7 @@ impl Material {
 
         Self {
             program,
+            textures: Vec::default(),
             uniforms,
             id: MaterialId::null(),
         }
@@ -58,61 +66,58 @@ impl Material {
         self
     }
 
-    pub fn get_uniform_values<'a>(&'a self, uniforms: &'a Uniforms, gpu_assets: &'a GpuAssets, pass: &Pass) -> Option<UniformValues<'a>> {
+    pub fn get_textures(&self) -> &Vec<ImageId> {
+        &self.textures
+    }
+
+    pub fn get_uniform_values(&self, assets: &Assets, pass: &Pass) -> Option<UniformValues> {
         // construct uniform values from the material uniforms description 
         let mut uniform_values = [None; MAX_UNIFORMS];
-        for (uniform_value, uniform_id) in uniform_values.iter_mut().zip(&self.uniforms) {
-            if let Some((name, id)) = uniform_id {
-                if let Some(value) = uniforms.get_value(*id, gpu_assets) {
-                    *uniform_value = Some((&name[..], value));
-                }
-                else {
-                    // missing uniform
-                    return None;
-                }
-            }
-            else {
-                break;
-            }
-        }
 
-        //let program = gpu_assets.get_program(self.program)?;
+        // TODO: fix ça
+        // for (uniform_value, uniform_id) in uniform_values.iter_mut().zip(&self.uniforms) {
+        //     if let Some((name, id)) = uniform_id {
+        //         if let Some(value) = assets.get::<Uniform<f32>>(*id) {
+        //             *uniform_value = Some((&name[..], value.get_value()));
+        //         }
+        //         else {
+        //             // missing uniform
+        //             return None;
+        //         }
+        //     }
+        //     else {
+        //         break;
+        //     }
+        // }
+
+        //let program = gpu_resources.get_program(self.program)?;
 
         Some(UniformValues { 
             //program, 
             uniform_values 
         })
     }
+}
 
-    pub fn prepare_rendering(&self, display: &Display, uniforms: &Uniforms, assets: &Assets, gpu_assets: &mut GpuAssets) {
-        for uniform_id in &self.uniforms {
-            if uniform_id.is_some() {
-                match uniform_id.as_ref().unwrap().1 {
-                    UniformId::Texture(_) => {
-                        if let Some(texture_uniform) = uniforms.get_texture(uniform_id.as_ref().unwrap().1) {
-                            if let Some(texture) = assets.get_texture(texture_uniform.id) {
-                                texture.prepare_rendering(display, gpu_assets);
-                            }
-                        }
-                    },
-                    _ => {
-                        continue;
-                    }
-                }
-            }
-        }
+pub struct MaterialHandle(Handle<Material>);
+
+impl Deref for MaterialHandle {
+    type Target = Handle<Material>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
-#[derive(Clone)]
-pub struct MaterialHandle {
-    pub gpu: Rc<RefCell<GraphicsChip>>,
-    pub id: MaterialId,
+impl DerefMut for MaterialHandle {
+    fn deref_mut(&mut self) -> &mut Handle<Material> {
+        &mut self.0
+    }
 }
 
 impl MaterialHandle {
-    pub fn new(gpu: Rc<RefCell<GraphicsChip>>, id: MaterialId) -> Self{
-        Self { gpu, id }
+    pub fn new(assets: Rc<RefCell<Assets>>, id: MaterialId) -> Self{
+        Self(Handle::new(assets, id))
     }
 }
 
@@ -121,16 +126,16 @@ impl UserData for MaterialHandle {
         methods.add_method_mut("addUniform", |_, material, (name, value): (String, LuaValue)| {
             let mut uniform_id = None;
             {
-                let gpu = material.gpu.borrow_mut();
+                let mut assets = material.get_assets_mut();
                 match value {
                     LuaValue::Nil => todo!(),
                     LuaValue::Boolean(v) => {
-                        uniform_id = Some(gpu.database.borrow_mut().uniforms.add_boolean(v));
+                        uniform_id = Some(assets.add(Box::new(Uniform::new(v))));
                     },
                     LuaValue::LightUserData(_) => todo!(),
                     LuaValue::Integer(_) => todo!(),
                     LuaValue::Number(v) => {
-                        uniform_id = Some(gpu.database.borrow_mut().uniforms.add_float(v as f32));
+                        uniform_id = Some(assets.add(Box::new(Uniform::new(v as f32))));
                     }
                     LuaValue::String(_) => todo!(),
                     LuaValue::Table(_) => todo!(),
@@ -142,9 +147,11 @@ impl UserData for MaterialHandle {
             }
     
             if let Some(uniform_id) = uniform_id {
-                let gpu = material.gpu.borrow();
-                let material = gpu.database.borrow_mut().assets
-                    .get_material_mut(material.id).unwrap()
+                let material_id = material.get_id();
+                let mut assets = material.get_assets_mut();
+                let material = assets
+                    .get_mut::<Material>(material_id)
+                    .unwrap()
                     .add_uniform(&name, uniform_id);
             }
     

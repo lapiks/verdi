@@ -1,16 +1,16 @@
 use std::{cell::RefCell, rc::Rc};
 
 use mlua::{UserData, UserDataMethods};
-use verdi_math::prelude::Transform;
+use verdi_math::prelude::{TransformHandle, Transform};
 
 use crate::{
     render_cmds::DrawCmd, 
-    mesh::{MeshHandle, MeshId}, 
+    mesh::MeshHandle, 
     render_graph::RenderGraph, 
-    model::ModelHandle, 
+    model::{ModelHandle, Model}, 
     render_state::RenderState, 
-    camera::CameraHandle, 
-    sprite::SpriteHandle
+    camera::{CameraHandle, Camera}, 
+    sprite::{SpriteHandle, Sprite}
 };
 
 pub struct CmdQueue {
@@ -44,7 +44,7 @@ impl Pass {
         }
     }
 
-    pub fn add_draw_cmd(&mut self, mesh: MeshId, transform: Transform, perspective: bool) {
+    pub fn add_draw_cmd(&mut self, mesh: MeshHandle, transform: TransformHandle, perspective: bool) {
         let cmd = DrawCmd {
             mesh,
             transform,
@@ -69,8 +69,10 @@ impl UserData for PassHandle {
         methods.add_method_mut("submit", |_, pass, camera: CameraHandle| {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
-                    if let Some(cam_ref) = camera.database.borrow().assets.get_camera(camera.id) {
-                        pass.render_state.view = cam_ref.transform.to_matrix().inverse();
+                    if let Some(cam_ref) = camera.get_assets().get::<Camera>(camera.get_id()) {
+                        if let Some(transform_ref) = cam_ref.transform.get_assets().get::<Transform>(cam_ref.transform.get_id()) {
+                            pass.render_state.view = transform_ref.to_matrix().inverse();
+                        }   
                     }
                 }
             })
@@ -78,32 +80,44 @@ impl UserData for PassHandle {
         methods.add_method_mut("drawModel", |_, pass, model: ModelHandle| {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
-                    if let Some(model_ref) = model.gpu.borrow().database.borrow().assets.get_model(model.id) {
+                    if let Some(model_ref) = model.get_assets().get::<Model>(model.get_id()) {
                         for node in model_ref.get_nodes().iter() {
                             if let Some(mesh) = node.mesh {
-                                pass.add_draw_cmd(mesh, node.transform, true);
+                                pass.add_draw_cmd(
+                                    mesh, 
+                                    node.transform, 
+                                    true
+                                );
                             }
                         }
                     }
                 }
             })
         });
-        methods.add_method_mut("drawMesh", |_, pass, (mesh, transform): (MeshHandle, Transform)| {
+        methods.add_method_mut("drawMesh", |_, pass, (mesh, transform): (MeshHandle, TransformHandle)| {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
-                    pass.add_draw_cmd(mesh.id, transform, true);
+                    pass.add_draw_cmd(
+                        mesh, 
+                        transform, 
+                        true
+                    );
                 }
             })
         });
-        methods.add_method_mut("drawSprite", |_, pass, sprite: SpriteHandle| {
-            Ok({
-                if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
-                    if let Some(sprite_ref) = sprite.db.borrow().assets.get_sprite(sprite.id) {
-                        pass.add_draw_cmd(sprite_ref.quad_id, Transform::default(), false);
-                    }
-                }
-            })
-        });
+        // methods.add_method_mut("drawSprite", |_, pass, (sprite, transform): (SpriteHandle, TransformHandle)| {
+        //     Ok({
+        //         if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
+        //             if let Some(sprite_ref) = sprite.get_assets().get::<Sprite>(sprite.get_id()) {
+        //                 pass.add_draw_cmd(
+        //                     sprite_ref.quad_id, 
+        //                     transform.get_id(), 
+        //                     false
+        //                 );
+        //             }
+        //         }
+        //     })
+        // });
         methods.add_method_mut("enableLighting", |_, pass, value: bool| {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {

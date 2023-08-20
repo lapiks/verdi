@@ -1,0 +1,86 @@
+use std::{rc::Rc, cell::RefCell};
+
+use glium::uniforms::UniformValue;
+use mlua::UserData;
+use verdi_database::{Resource, ResourceId, Assets};
+use verdi_math::{Vec2, Mat4};
+
+use crate::gpu_image::GpuImage;
+
+pub type UniformId = ResourceId;
+
+pub trait UniformType: 'static {
+    fn get_value(&self) -> UniformValue;
+}
+
+impl UniformType for f32 {
+    fn get_value(&self) -> UniformValue {
+        UniformValue::Float(*self)
+    }
+}
+
+impl UniformType for Vec2 {
+    fn get_value(&self) -> UniformValue {
+        UniformValue::Vec2(self.to_array())
+    }
+}
+
+impl UniformType for Mat4 {
+    fn get_value(&self) -> UniformValue {
+        UniformValue::Mat4(self.to_cols_array_2d())
+    }
+}
+
+impl UniformType for GpuImage {
+    fn get_value(&self) -> UniformValue {
+        UniformValue::SrgbTexture2d(&self.gl, Some(self.sampler))
+    }
+}
+
+impl UniformType for bool {
+    fn get_value(&self) -> UniformValue {
+        UniformValue::Bool(*self)
+    }
+}
+
+pub struct Uniform<T: UniformType> {
+    pub value: T,
+}
+
+impl<T: UniformType> Resource for Uniform<T> {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+}
+
+impl<T: UniformType> Uniform<T> {
+    pub fn new(value: T) -> Self {
+        Self {
+            value
+        }
+    }
+
+    pub fn get_value(&self)  -> UniformValue {
+        self.get_value()
+    }
+}
+
+pub struct UniformHandle {
+    assets: Rc<RefCell<Assets>>,
+    id: UniformId,
+}
+
+impl UniformHandle {
+    pub fn new(assets: Rc<RefCell<Assets>>, id: UniformId) -> Self {
+        Self {
+            assets,
+            id,
+        }
+    }
+}
+
+impl UserData for UniformHandle {}

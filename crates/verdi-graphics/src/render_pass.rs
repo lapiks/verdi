@@ -1,12 +1,10 @@
-use verdi_math::prelude::Transform;
+use verdi_math::prelude::TransformHandle;
 
-use crate::{  
-    mesh::MeshId,
-};
+use crate::mesh::MeshHandle;
 
 /// A render command defining what to draw.
 pub struct RenderPass {
     // plutôt node qui contient mesh + transform ?
-    pub mesh_id: MeshId,
-    pub transform: Transform
+    pub mesh: MeshHandle,
+    pub transform: TransformHandle
 }

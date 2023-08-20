@@ -5,10 +5,7 @@ use glium::{
 
 use std::{path::Path, cell::RefCell, rc::Rc};
 
-use verdi_graphics::prelude::{
-    Database, 
-    Globals
-};
+use verdi_graphics::prelude::Globals;
 use verdi_window::prelude::*;
 use verdi_system::prelude::{
     System, 
@@ -33,8 +30,6 @@ pub enum AppMode {
 /// Handle events and disptach them to the different systems.
 pub struct App {
     window: Window,
-    database: Rc<RefCell<Database>>,
-    globals: Rc<Globals>,
     gui: Gui,
     game: Option<System>,
     editor: Option<System>,
@@ -45,17 +40,6 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
-        let database = Rc::new(
-            RefCell::new(
-                Database::new()
-            )
-        );
-        let globals = Rc::new(
-            Globals::new(
-                &mut database.borrow_mut()
-            ).expect("Globals creation failed")
-        );
-
         let window = Window::new(1920, 1080);
 
         // gui initialisation
@@ -68,8 +52,6 @@ impl App {
 
         Self {
             window,
-            database,
-            globals,
             gui,
             game: None,
             editor: None,
@@ -284,9 +266,7 @@ impl App {
 
         let mut system = System::new(
             path, 
-            self.window.get_display(), 
-            self.database.clone(), 
-            self.globals.clone()
+            self.window.get_display()
         )?;
 
         system.load()?;

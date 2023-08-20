@@ -1,6 +1,6 @@
-use verdi_math::prelude::Transform;
+use verdi_math::prelude::TransformHandle;
 
-use crate::mesh::MeshId;
+use crate::mesh::MeshHandle;
 
 pub trait RenderCmd {
     fn execute(&self);
@@ -9,8 +9,8 @@ pub trait RenderCmd {
 pub struct DrawCmd {
     // pourrait être plus bas niveau : buffers, primitive type, etc..
     // ici ça ne marche que pour un mesh
-    pub mesh: MeshId,
-    pub transform: Transform,
+    pub mesh: MeshHandle,
+    pub transform: TransformHandle,
     pub perspective: bool,
 }
 

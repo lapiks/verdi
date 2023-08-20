@@ -1,26 +1,33 @@
   
-use std::path::Path;
+use std::{path::Path, cell::RefCell, rc::Rc};
 use glium::Display;
 use image::{io::Reader as ImageReader, RgbaImage, ImageError};
 use mlua::UserData;
-use slotmap::{new_key_type, Key};
+use slotmap::Key;
+use verdi_database::{ResourceId, Resource, Assets};
 
 use crate::{
-    assets::AssetState, 
-    gpu_assets::GpuAssets, 
+    gpu_assets::{GpuAsset, GpuAssetError, PrepareAsset}, 
     gpu_image::GpuImage
 };
 
-new_key_type! {
-    pub struct ImageId;
-}
+pub type ImageId = ResourceId;
 
 pub struct Image {
     width: u32,
     height: u32,
     data: RgbaImage,
-    state: AssetState,
     pub id: ImageId,
+}
+
+impl Resource for Image {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
 }
 
 impl Image {
@@ -34,7 +41,6 @@ impl Image {
             width: dim.0, 
             height: dim.1,
             data: rgba8_img,
-            state: AssetState::Created,
             id: ImageId::null(),
         })
     }
@@ -53,17 +59,8 @@ impl Image {
             width: dim.0, 
             height: dim.1,
             data: rgba8_img,
-            state: AssetState::Created,
             id: ImageId::null(),
         })
-    }
-
-    pub fn is_loaded(&self) -> bool {
-        self.state == AssetState::Loaded
-    }
-
-    pub fn set_loaded(&mut self) {
-        self.state = AssetState::Loaded
     }
 
     pub fn get_data(&self) -> &RgbaImage {
@@ -73,23 +70,27 @@ impl Image {
     pub fn get_dimensions(&self) -> (u32, u32) {
         return (self.width, self.height)
     }
+}
 
-    pub fn prepare_rendering(&self, display: &Display, gpu_assets: &mut GpuAssets) {
-        if gpu_assets.get_texture(self.id).is_none() {
-            let gpu_image = GpuImage::new(display, self);
-            gpu_assets.add_texture(self.id, gpu_image);
-        }
+impl PrepareAsset for Image {
+    fn prepare_rendering(&self, display: &Display, assets: &Assets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
+        Ok(
+            Box::new(
+                GpuImage::new(display, self)
+            )
+        )
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct ImageHandle {
+    pub assets: Rc<RefCell<Assets>>,
     pub id: ImageId,
 }
 
 impl ImageHandle {
-    pub fn new(id: ImageId) -> Self{
-        Self { id }
+    pub fn new(assets: Rc<RefCell<Assets>>, id: ImageId) -> Self{
+        Self { assets, id }
     }
 }
 

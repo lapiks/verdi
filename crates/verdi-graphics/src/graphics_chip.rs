@@ -4,21 +4,25 @@ use crate::{
     vertex::Vertex, 
     render_pass::RenderPass, 
     image::{Image, ImageHandle, ImageId}, 
-    model::ModelId, 
-    uniforms::{UniformId, TextureUniform}, 
+    model::{ModelId, Model}, 
     gltf_loader::{GltfError, GltfLoader}, 
     node::Node, 
     material::{Material, MaterialId}, 
     globals::Globals, 
-    mesh::{MeshId, Mesh, PrimitiveType}, 
-    prelude::Database, 
+    mesh::{MeshId, Mesh, PrimitiveType, MeshHandle}, 
     render_state::RenderState, 
     pass::PassHandle, 
     render_graph::RenderGraph, 
-    camera::{CameraId, Camera}, sprite::{SpriteId, Sprite},
+    camera::{CameraId, Camera, CameraHandle, self}, 
+    sprite::{SpriteId, Sprite}, 
+    uniform::{Uniform, UniformType, UniformId}, 
+    gpu_assets::{GpuAssets, PrepareAsset}, 
+    program::Program, gpu_image::GpuImage, gpu_mesh,
 };
 
+use glium::Display;
 use image::ImageError;
+use verdi_database::Assets;
 use verdi_math::prelude::*;
 
 /// High level access to rendering features.
@@ -26,48 +30,62 @@ pub struct GraphicsChip {
     pub render_graph: Rc<RefCell<RenderGraph>>,
     pub render_passes: Vec<RenderPass>,
     pub stream_buffer: StreamBufferState,
-    pub database: Rc<RefCell<Database>>,
+    pub assets: Rc<RefCell<Assets>>,
+    pub gpu_assets: Rc<RefCell<GpuAssets>>,
     pub globals: Rc<Globals>,
     pub render_state: RenderState,
-    pub camera: CameraId,
 }
 
 // Public API
 impl GraphicsChip {
-    pub fn new(database: Rc<RefCell<Database>>, globals: Rc<Globals>) -> Result<Self, std::io::Error> {
-        let mat_2d = database.borrow_mut().assets.add_material(
-            Material::new(globals.global_shaders.gouraud, &globals.global_uniforms)
-                .clone()
+    pub fn new() -> Result<Self, std::io::Error> {
+        let mut assets = Rc::new(RefCell::new(Assets::new()));
+
+        let globals = Rc::new(
+            Globals::new(
+                &mut assets.borrow_mut()
+            ).expect("Globals creation failed")
         );
 
-        let streaming_mesh = database.borrow_mut().assets.add_mesh(
-            Mesh::new(
-                vec![Vertex::default(); 1024 * 1024],
-                None,
-                //PrimitiveType::Triangles,
-                PrimitiveType::Lines,
-                mat_2d,
+        let mat_2d = assets
+            .borrow_mut()
+            .add(
+                Box::new(
+                    Material::new(globals.global_shaders.gouraud, &globals.global_uniforms)
+                        .clone()
+                )
+        );
+
+        let streaming_mesh_id = assets
+            .borrow_mut()
+            .add(
+                Box::new(
+                    Mesh::new(
+                        vec![Vertex::default(); 1024 * 1024],
+                        None,
+                        //PrimitiveType::Triangles,
+                        PrimitiveType::Lines,
+                        mat_2d,
+                    )
             )
         );
 
+        let streaming_mesh = MeshHandle::new(assets.clone(), streaming_mesh_id);
+
         let stream_buffer = StreamBufferState {
-            mesh_id: streaming_mesh,
+            mesh: streaming_mesh,
             vertex_count: 0,
             current_offset: 0,
         };
-
-        // default camera
-        let camera = Camera::new();
-        let camera_id = database.borrow_mut().assets.add_camera(camera);
 
         Ok(Self { 
             render_graph: Rc::new(RefCell::new(RenderGraph::new())),
             render_passes: Vec::new(),
             stream_buffer,
-            database,
+            assets,
+            gpu_assets: Rc::new(RefCell::new(GpuAssets::new())),
             globals,
             render_state: RenderState::new(),
-            camera: camera_id,
         })
     }
 
@@ -76,9 +94,9 @@ impl GraphicsChip {
     }
 
     pub fn on_game_shutdown(&mut self) {
-        self.database.borrow_mut().assets.clear();
+        self.assets.borrow_mut().clear();
+        self.gpu_assets.borrow_mut().clear();
         self.render_passes.clear();
-        self.database.borrow_mut().uniforms.clear();
     }
 
     pub fn new_frame(&mut self) {
@@ -96,6 +114,66 @@ impl GraphicsChip {
         self.render_passes.clear();   
         self.render_graph.borrow_mut().clear();
         //self.buffer_state.next_frame();
+    }
+
+    pub fn prepare_gpu_assets(&mut self, display: &Display) {
+        let assets = self.assets.borrow();
+
+        // à rendre générique
+        for pass in self.render_graph.borrow().get_passes().iter() {
+            for cmd in pass.get_cmds() {
+                let mesh = assets
+                    .get::<Mesh>(cmd.mesh.get_id())
+                    .expect("Missing primitive resource");
+
+                // construct gpu primitive
+                match mesh.prepare_rendering(display, &self.assets.borrow()) {
+                    Ok(gpu_mesh) => self.gpu_assets.borrow_mut().add(cmd.mesh.get_id(), gpu_mesh),
+                    Err(_) => todo!(),
+                }
+
+                // construct gpu objects needed by the material
+                if let Some(material) = assets.get::<Material>(mesh.material) {
+                    for texture_id in material.get_textures() {
+                        if let Some(texture) = self.assets.borrow_mut().get_mut::<Image>(*texture_id) {
+                            match texture.prepare_rendering(display, &assets)  {
+                                Ok(gpu_texture) => self.gpu_assets.borrow_mut().add(*texture_id, gpu_texture),
+                                Err(_) => todo!(),
+                            }
+                        }
+                    }
+                }     
+            }     
+        }
+        
+        // construct gpu programs
+        // Pas fou !
+        if self.gpu_assets.borrow().get::<Program>(self.globals.global_shaders.gouraud).is_none() {
+            if let Some(program) = assets.get::<Program>(self.globals.global_shaders.gouraud) {
+                match program.prepare_rendering(display, &self.assets.borrow())  {
+                    Ok(gpu_program) => self.gpu_assets.borrow_mut().add(self.globals.global_shaders.gouraud, gpu_program),
+                    Err(_) => todo!(),
+                }
+            }   
+        }
+
+        if self.gpu_assets.borrow().get::<Program>(self.globals.global_shaders.gouraud_textured).is_none() {
+            if let Some(program) = assets.get::<Program>(self.globals.global_shaders.gouraud_textured) {
+                match program.prepare_rendering(display, &self.assets.borrow())  {
+                    Ok(gpu_program) => self.gpu_assets.borrow_mut().add(self.globals.global_shaders.gouraud_textured, gpu_program),
+                    Err(_) => todo!(),
+                }
+            }   
+        }
+
+        if self.gpu_assets.borrow().get::<Program>(self.globals.global_shaders.std_2d).is_none() {
+            if let Some(program) = assets.get::<Program>(self.globals.global_shaders.std_2d) {
+                match program.prepare_rendering(display, &self.assets.borrow())  {
+                    Ok(gpu_program) => self.gpu_assets.borrow_mut().add(self.globals.global_shaders.std_2d, gpu_program),
+                    Err(_) => todo!(),
+                }
+            }   
+        }
     }
 
     pub fn begin(&mut self, primitive_type: PrimitiveType) {
@@ -184,7 +262,7 @@ impl GraphicsChip {
     pub fn new_image(&mut self, path: &String) -> Result<ImageId, ImageError> {
         let image = Image::new(path)?;
 
-        Ok(self.database.borrow_mut().assets.add_texture(image))
+        Ok(self.assets.borrow_mut().add(Box::new(image)))
     }
 
     pub fn bind_texture(&mut self, image: ImageHandle) {
@@ -196,57 +274,57 @@ impl GraphicsChip {
         // };
     }
 
-    pub fn draw_model(&mut self, model_id: ModelId) {
-        let db = self.database.borrow();
-        let model = db.assets.get_model(model_id).unwrap();
-        for node in model.nodes.iter() {
-            // nothing to draw
-            if node.mesh.is_none() {
-                continue;
-            }
+    // pub fn draw_model(&mut self, model_id: ModelId) {
+    //     let db = self.assets.borrow();
+    //     let model = db.get::<Model>(model_id).unwrap();
+    //     for node in model.nodes.iter() {
+    //         // nothing to draw
+    //         if node.mesh.is_none() {
+    //             continue;
+    //         }
 
-            if let Some(mesh) = db.assets.get_mesh(node.mesh.unwrap()) {
-                self.render_passes.push(
-                    RenderPass { 
-                        mesh_id: mesh.id,
-                        transform: node.transform.clone(),
-                    }
-                );
-            }
-        }
-    }
+    //         if let Some(mesh) = db.get::<Mesh>(node.mesh.unwrap().get_id()) {
+    //             self.render_passes.push(
+    //                 RenderPass { 
+    //                     mesh_id: mesh.id,
+    //                     transform: node.transform,
+    //                 }
+    //             );
+    //         }
+    //     }
+    // }
 
-    pub fn draw_mesh(&mut self, mesh_id: MeshId) {
-        if let Some(mesh) = self.database.borrow().assets.get_mesh(mesh_id) {
-            self.render_passes.push(
-                RenderPass { 
-                    mesh_id: mesh.id,
-                    transform: Transform::IDENTITY,
-                }
-            );
-        }
-    }
+    // pub fn draw_mesh(&mut self, mesh_id: MeshId, transform_id: TransformId) {
+    //     if let Some(mesh) = self.assets.borrow().get::<Mesh>(mesh_id) {
+    //         self.render_passes.push(
+    //             RenderPass { 
+    //                 mesh_id: mesh.id,
+    //                 transform: transform_id,
+    //             }
+    //         );
+    //     }
+    // }
 
-    pub fn draw_node(&mut self, node: &Node) {
-        // nothing to draw
-        if node.mesh.is_none() {
-            return;
-        }
+    // pub fn draw_node(&mut self, node: &Node) {
+    //     // nothing to draw
+    //     if node.mesh.is_none() {
+    //         return;
+    //     }
 
-        if let Some(mesh) = self.database.borrow().assets.get_mesh(node.mesh.unwrap()) {
-            self.render_passes.push(
-                RenderPass { 
-                    mesh_id: mesh.id,
-                    transform: node.transform.clone(),
-                }
-            );
-        }
-    }
+    //     if let Some(mesh) = self.assets.borrow().get::<Mesh>(node.mesh.unwrap().get_id()) {
+    //         self.render_passes.push(
+    //             RenderPass { 
+    //                 mesh_id: node.mesh.unwrap(),
+    //                 transform: node.transform.clone(),
+    //             }
+    //         );
+    //     }
+    // }
 
     pub fn new_model(&mut self, path: &String) -> Result<ModelId, GltfError> {
-        let model = GltfLoader::load(path, &mut self.database.borrow_mut(), &self.globals)?;
+        let model = GltfLoader::load(path, &mut self.assets.borrow_mut(), &self.globals)?;
 
-        Ok(self.database.borrow_mut().assets.add_model(model))
+        Ok(self.assets.borrow_mut().add(Box::new(model)))
     }
     
     pub fn new_mesh(&mut self) -> Result<MeshId, GltfError> {
@@ -255,76 +333,83 @@ impl GraphicsChip {
 
         let material_id = self.new_gouraud_material();
 
-        Ok(self.database.borrow_mut().assets.add_mesh(
-            Mesh::new(
-                vertex_buffer,
-                index_buffer,
-                PrimitiveType::Triangles,
-                material_id
+        Ok(self.assets.borrow_mut().add(
+            Box::new(
+                Mesh::new(
+                    vertex_buffer,
+                    index_buffer,
+                    PrimitiveType::Triangles,
+                    material_id
+                )
             )
         ))
     }
 
-    pub fn new_sprite(&mut self, image: ImageHandle) -> SpriteId {
-        let mut dimensions = (100, 100);
-        if let Some(image_ref) = self.database.borrow().assets.get_texture(image.id) {
-            dimensions = image_ref.get_dimensions();
-        }
+    // pub fn new_sprite(&mut self, image: ImageHandle) -> SpriteId {
+    //     let mut dimensions = (100, 100);
+    //     if let Some(image_ref) = self.assets.borrow().get::<Image>(image.id) {
+    //         dimensions = image_ref.get_dimensions();
+    //     }
         
-        let vertex_buffer:Vec<Vertex> = vec![
-            Vertex {
-                position: [0.0, 0.0, 0.0],
-                normal: [0.0, 0.0, 0.0],
-                uv: [0.0, 0.0],
-                color: [0.0, 0.0, 0.0, 0.0],
-            },
-            Vertex {
-                position: [0.0, dimensions.1 as f32, 0.0],
-                normal: [0.0, 0.0, 0.0],
-                uv: [0.0, 1.0],
-                color: [0.0, 0.0, 0.0, 0.0],
-            },
-            Vertex {
-                position: [dimensions.0 as f32, 0.0, 0.0],
-                normal: [0.0, 0.0, 0.0],
-                uv: [1.0, 0.0],
-                color: [0.0, 0.0, 0.0, 0.0],
-            },
-            Vertex {
-                position: [dimensions.0 as f32, dimensions.1 as f32, 0.0],
-                normal: [0.0, 0.0, 0.0],
-                uv: [1.0, 1.0],
-                color: [0.0, 0.0, 0.0, 0.0],
-            },
-        ];
-        let index_buffer = vec![0, 1, 2, 2, 1, 3];
+    //     let vertex_buffer:Vec<Vertex> = vec![
+    //         Vertex {
+    //             position: [0.0, 0.0, 0.0],
+    //             normal: [0.0, 0.0, 0.0],
+    //             uv: [0.0, 0.0],
+    //             color: [0.0, 0.0, 0.0, 0.0],
+    //         },
+    //         Vertex {
+    //             position: [0.0, dimensions.1 as f32, 0.0],
+    //             normal: [0.0, 0.0, 0.0],
+    //             uv: [0.0, 1.0],
+    //             color: [0.0, 0.0, 0.0, 0.0],
+    //         },
+    //         Vertex {
+    //             position: [dimensions.0 as f32, 0.0, 0.0],
+    //             normal: [0.0, 0.0, 0.0],
+    //             uv: [1.0, 0.0],
+    //             color: [0.0, 0.0, 0.0, 0.0],
+    //         },
+    //         Vertex {
+    //             position: [dimensions.0 as f32, dimensions.1 as f32, 0.0],
+    //             normal: [0.0, 0.0, 0.0],
+    //             uv: [1.0, 1.0],
+    //             color: [0.0, 0.0, 0.0, 0.0],
+    //         },
+    //     ];
+    //     let index_buffer = vec![0, 1, 2, 2, 1, 3];
 
-        let tex_uniform_id = self.database.borrow_mut().uniforms.add_texture(
-            TextureUniform::new(image.id)
-        );
+    //     let mut material = Material::new(
+    //         self.globals.global_shaders.std_2d, 
+    //         &self.globals.global_uniforms
+    //     );
 
-        let mut material = Material::new(
-            self.globals.global_shaders.std_2d, 
-            &self.globals.global_uniforms
-        );
-        material.add_uniform("u_texture", tex_uniform_id);
+    //     let tex_uniform_id = self.assets.borrow_mut().add(
+    //         Box::new(
+    //             Uniform::new(image)
+    //         )
+    //     );
+    //     material.add_uniform("u_texture", tex_uniform_id);
 
-        let material_id = self.database.borrow_mut().assets.add_material(
-            material
-        );
+    //     let material_id = self.assets.borrow_mut().add(
+    //         Box::new(material)
+    //     );
 
-        let quad = self.database.borrow_mut().assets.add_mesh(
-            Mesh::new(
-                vertex_buffer,
-                Some(index_buffer),
-                PrimitiveType::Triangles,
-                material_id
-            )
-        );
-        let sprite = Sprite::new(image.id, quad);
+    //     // TODO: reuse same mesh
+    //     let quad = self.assets.borrow_mut().add(
+    //         Box::new(
+    //             Mesh::new(
+    //                 vertex_buffer,
+    //                 Some(index_buffer),
+    //                 PrimitiveType::Triangles,
+    //                 material_id
+    //             )
+    //         )
+    //     );
+    //     let sprite = Sprite::new(image.id, quad);
 
-        self.database.borrow_mut().assets.add_sprite(sprite)
-    }
+    //     self.assets.borrow_mut().add(Box::new(sprite))
+    // }
 
     pub fn new_gouraud_material(&mut self) -> MaterialId {
         let mut material = Material::new(
@@ -335,27 +420,39 @@ impl GraphicsChip {
         material.add_uniform("u_fog_end", self.globals.global_uniforms.fog_end);
         material.add_uniform("u_enable_lighting", self.globals.global_uniforms.enable_lighting);
 
-        self.database.borrow_mut().assets.add_material(
-            material
+        self.assets.borrow_mut().add(
+            Box::new(material)
         )
     }
 
     pub fn new_2d_material(&mut self) -> MaterialId {
-        let mut material = Material::new(
+        let material = Material::new(
             self.globals.global_shaders.std_2d, 
             &self.globals.global_uniforms
         );
-        self.database.borrow_mut().assets.add_material(
-            material
+        self.assets.borrow_mut().add(
+            Box::new(material)
         )
     }
 
-    pub fn new_uniform_float(&mut self, value: f32) -> UniformId {
-        self.database.borrow_mut().uniforms.add_float(value)
+    pub fn new_uniform<T: UniformType>(&mut self, value: T) -> UniformId {
+        self.assets.borrow_mut().add(
+            Box::new(
+                Uniform::new(value)
+            )
+        )
     }
 
-    pub fn new_uniform_vec2(&mut self, value: Vec2) -> UniformId {
-        self.database.borrow_mut().uniforms.add_vec2(value)
+    pub fn new_camera(&mut self, transform: TransformHandle) -> CameraHandle {
+        let camera_id = self.assets.borrow_mut().add(
+            Box::new(
+                Camera::new(transform)
+            )
+        );
+        CameraHandle::new(
+            self.assets.clone(),
+            camera_id
+        )
     }
 
     pub fn new_pass(&mut self) -> PassHandle {
@@ -370,7 +467,7 @@ impl GraphicsChip {
     }
 
     // pub fn translate(&mut self, v: &Vec3) {
-    //     *self.database.borrow_mut().uniforms
+    //     *self.assets.borrow_mut().uniforms
     //         .get_mat4_mut(
     //             self.globals.global_uniforms.view_matrix
     //         ).unwrap() 
@@ -378,7 +475,7 @@ impl GraphicsChip {
     // }
 
     // pub fn rotate(&mut self, angle: f32, axis: &Vec3) {
-    //     *self.database.borrow_mut().uniforms
+    //     *self.assets.borrow_mut().uniforms
     //         .get_mat4_mut(
     //             self.globals.global_uniforms.view_matrix
     //         ).unwrap() 
@@ -412,7 +509,7 @@ impl GraphicsChip {
 }
 
 pub struct StreamBufferState {
-    pub mesh_id: MeshId, 
+    pub mesh: MeshHandle, 
     pub vertex_count: u32,
     pub current_offset: usize,
 }
@@ -438,17 +535,17 @@ pub struct DrawCommand<'a> {
 // Private impl
 impl GraphicsChip {
     fn request_flush(&mut self, cmd: &DrawCommand) {
-        let mut db = self.database.borrow_mut();
-        let mesh = db.assets
-            .get_mesh_mut(self.stream_buffer.mesh_id)
+        let mut assets: std::cell::RefMut<'_, _> = self.assets.borrow_mut();
+        let mesh = assets
+            .get_mut::<Mesh>(self.stream_buffer.mesh.get_id())
             .expect("Primitive not found");
 
         if cmd.primitive_type != mesh.primitive_type {
             //self.flush_stream_buffer();
             self.render_passes.push(
                 RenderPass {
-                    mesh_id: self.stream_buffer.mesh_id,
-                    transform: Transform::IDENTITY,
+                    mesh: self.stream_buffer.mesh,
+                    transform: self.globals.global_uniforms.identity_mat,
                 }
             );
 
@@ -478,8 +575,8 @@ impl GraphicsChip {
     pub fn flush_stream_buffer(&mut self) {
         self.render_passes.push(
             RenderPass {
-                mesh_id: self.stream_buffer.mesh_id,
-                transform: Transform::IDENTITY,
+                mesh: self.stream_buffer.mesh,
+                transform: self.globals.global_uniforms.identity_mat,
             }
         )
     }

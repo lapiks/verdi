@@ -1,12 +1,27 @@
+use std::{rc::Rc, cell::RefCell, ops::{Deref, DerefMut}};
+
 use mlua::{UserData, UserDataMethods};
+use verdi_database::{ResourceId, Resource, Assets, Handle};
 
 use crate::{Vec3, Quat, Mat4, types::LuaVec3};
 
-#[derive(PartialEq, Clone, Copy)]
+pub type TransformId = ResourceId;
+
+#[derive(PartialEq, Clone)]
 pub struct Transform {
     translation: Vec3,
     rotation: Quat,
     scale: Vec3,
+}
+
+impl Resource for Transform {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
 }
 
 impl Transform {
@@ -111,84 +126,172 @@ impl Default for Transform {
     }
 }
 
-impl UserData for Transform {
+#[derive(Clone)]
+pub struct TransformHandle(Handle<Transform>);
+
+impl Deref for TransformHandle {
+    type Target = Handle<Transform>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for TransformHandle {
+    fn deref_mut(&mut self) -> &mut Handle<Transform> {
+        &mut self.0
+    }
+}
+
+impl TransformHandle {
+    pub fn new(assets: Rc<RefCell<Assets>>, id: TransformId) -> Self{
+        Self(Handle::new(assets, id))
+    }
+}
+
+
+impl UserData for TransformHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method_mut("reset", |_, transform, ()| {
-            Ok(transform.reset())
+        methods.add_method_mut("reset", |_, this, ()| {
+            Ok({
+                let transform_id = this.get_id();
+                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                    transform.reset();
+                }
+            })
         });
 
-        // methods.add_method_mut("translate", |_, transform, (x, y, z): (f32, f32, f32)| {
-        //     Ok(transform.translate(Vec3::new(x, y, z)))
-        // });
-
-        methods.add_method_mut("translate", |_, transform, v: LuaVec3| {
-            Ok(transform.translate(Vec3::from(v)))
+        methods.add_method_mut("translate", |_, this, v: LuaVec3| {
+            Ok({
+                let transform_id = this.get_id();
+                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                    transform.translate(Vec3::from(v));
+                }
+            })
         });
 
-        methods.add_method_mut("rotate", |_, transform, (angle, x, y, z): (f32, f32, f32, f32)| {
-            Ok(transform.rotate(angle, Vec3::new(x, y, z)))
+        methods.add_method_mut("rotate", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
+            Ok({
+                let transform_id = this.get_id();
+                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                    transform.rotate(angle, Vec3::new(x, y, z));
+                }
+            })
         });
 
-        methods.add_method_mut("scale", |_, transform, (x, y, z): (f32, f32, f32)| {
-            Ok(transform.scale(Vec3::new(x, y, z)))
+        methods.add_method_mut("scale", |_, this, (x, y, z): (f32, f32, f32)| {
+            Ok({
+                let transform_id = this.get_id();
+                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                    transform.scale(Vec3::new(x, y, z));
+                }
+            })
         });
 
-        // methods.add_method_mut("setPosition", |_, transform, (x, y, z): (f32, f32, f32)| {
-        //     Ok(transform.set_position(Vec3::new(x, y, z)))
-        // });
-
-        methods.add_method_mut("setPosition", |_, transform, v: LuaVec3| {
-            Ok(transform.set_position(Vec3::from(v)))
+        methods.add_method_mut("setPosition", |_, this, v: LuaVec3| {
+            Ok({
+                let transform_id = this.get_id();
+                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                    transform.set_position(Vec3::from(v));
+                }
+            })
         });
 
-        methods.add_method("getPosition", |_, transform, ()| {
-            Ok(LuaVec3(transform.get_position()))
+        methods.add_method("getPosition", |_, this, ()| {
+            Ok({
+                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                    LuaVec3(transform.get_position());
+                }
+            })
         });
 
-        methods.add_method_mut("setRotation", |_, transform, (angle, x, y, z): (f32, f32, f32, f32)| {
-            Ok(transform.set_rotation(angle, Vec3::new(x, y, z)))
+        methods.add_method_mut("setRotation", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
+            Ok({
+                let transform_id = this.get_id();
+                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                    transform.set_rotation(angle, Vec3::new(x, y, z));
+                }
+            })
         });
 
-        methods.add_method_mut("setScale", |_, transform, (x, y, z): (f32, f32, f32)| {
-            Ok(transform.set_scale(Vec3::new(x, y, z)))
+        methods.add_method_mut("setScale", |_, this, (x, y, z): (f32, f32, f32)| {
+            Ok({
+                let transform_id = this.get_id();
+                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                    transform.set_scale(Vec3::new(x, y, z));
+                }
+            })
         });
 
-        methods.add_method_mut("apply", |_, transform, other: Transform| {
-            Ok(transform.apply(&other))
+        methods.add_method_mut("apply", |_, this, other: TransformHandle| {
+            Ok({
+                let transform_id = this.get_id();
+                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                    if let Some(other_transform) = other.get_assets().get(other.get_id()) {
+                        transform.apply(&other_transform);
+                    }
+                }
+            })
         });
 
-        methods.add_method("transformPoint", |_, transform, (x, y, z): (f32, f32, f32)| {
-            Ok(
-                LuaVec3(
-                    transform.transform_point(
-                        Vec3::new(x, y, z)
-                    )
-                )
-            )
+        methods.add_method("transformPoint", |_, this, (x, y, z): (f32, f32, f32)| {
+            Ok({
+                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                    LuaVec3(
+                        transform.transform_point(
+                            Vec3::new(x, y, z)
+                        )
+                    );
+                }
+            })
         });
 
-        methods.add_method("right", |_, transform, ()| {
-            Ok(LuaVec3(transform.right()))
+        methods.add_method("right", |_, this, ()| {
+            Ok({
+                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                    LuaVec3(transform.right());
+                }
+            })
         });
 
-        methods.add_method("left", |_, transform, ()| {
-            Ok(LuaVec3(transform.left()))
+        methods.add_method("left", |_, this, ()| {
+            Ok({
+                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                    LuaVec3(transform.left());
+                }
+            })
         });
 
-        methods.add_method("up", |_, transform, ()| {
-            Ok(LuaVec3(transform.up()))
+        methods.add_method("up", |_, this, ()| {
+            Ok({
+                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                    LuaVec3(transform.up());
+                }
+            })
         });
 
-        methods.add_method("down", |_, transform, ()| {
-            Ok(LuaVec3(transform.down()))
+        methods.add_method("down", |_, this, ()| {
+            Ok({
+                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                    LuaVec3(transform.down());
+                }
+            })
         });
 
-        methods.add_method("forward", |_, transform, ()| {
-            Ok(LuaVec3(transform.forward()))
+        methods.add_method("forward", |_, this, ()| {
+            Ok({
+                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                    LuaVec3(transform.forward());
+                }
+            })
         });
 
-        methods.add_method("backward", |_, transform, ()| {
-            Ok(LuaVec3(transform.backward()))
+        methods.add_method("backward", |_, this, ()| {
+            Ok({
+                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                    LuaVec3(transform.backward());
+                }
+            })
         });
     }
 }

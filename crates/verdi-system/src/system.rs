@@ -14,12 +14,11 @@ use verdi_graphics::prelude::{
     Renderer, 
     BindGraphicsChip, 
     RenderTarget,
-    Database, 
     Globals, 
     PassHandle,
 };
 use verdi_input::prelude::{Inputs, BindInputs};
-use verdi_math::prelude::BindMath;
+use verdi_math::prelude::{BindMath, Math};
 
 use crate::{
     lua_context::LuaContext, 
@@ -60,6 +59,7 @@ pub struct System {
     render_target: RenderTarget,
     inputs: Rc<RefCell<Inputs>>,
     audio: AudioHandle,
+    math: Math,
     path: PathBuf,
     scripts: Rc<RefCell<Scripts>>,
     pub time_step: TimeStep,
@@ -67,33 +67,32 @@ pub struct System {
 }
 
 impl System {
-    pub fn new<P: AsRef<Path>>(path: P, display: &Display, database: Rc<RefCell<Database>>, globals: Rc<Globals>) -> Result<Self, SystemError> {
-            let gpu = Rc::new(
-                RefCell::new(
-                    GraphicsChip::new(database, globals)
-                        .expect("GraphicsChip initialisation failed")
-                )
-            );
+    pub fn new<P: AsRef<Path>>(path: P, display: &Display) -> Result<Self, SystemError> {
+        let gpu = Rc::new(
+            RefCell::new(
+                GraphicsChip::new().expect("GraphicsChip initialisation failed")
+            )
+        );
 
-            let renderer = Renderer::new();
+        let renderer = Renderer::new();
 
-            let render_target = RenderTarget::new(
-                display, 
-                320, 
-                240)
-                .expect("Render target creation failed");
+        let render_target = RenderTarget::new(
+            display, 
+            320, 
+            240)
+            .expect("Render target creation failed");
 
-            let world = Rc::new(
-                RefCell::new(
-                    World::new()
-                )
-            );
+        let world = Rc::new(
+            RefCell::new(
+                World::new()
+            )
+        );
 
-            let audio = Rc::new(
-                RefCell::new(
-                    Audio::new()
-                )
-            );
+        let audio = Rc::new(
+            RefCell::new(
+                Audio::new()
+            )
+        );
 
         Ok(Self { 
             state: SystemState::Unloaded,
@@ -104,6 +103,7 @@ impl System {
             render_target,
             inputs: Rc::new(RefCell::new(Inputs::new())),
             audio: AudioHandle::new(audio),
+            math: Math::new(),
             path: path.as_ref().to_path_buf(),
             scripts: Rc::new(RefCell::new(Scripts::new(path)?)),
             time_step: TimeStep::new(),
@@ -125,7 +125,7 @@ impl System {
         BindWorld::bind(&self.lua, self.world.clone())?;
         BindGraphicsChip::bind(&self.lua, self.gpu.clone())?;
         BindInputs::bind(&self.lua, self.inputs.clone())?;
-        BindMath::bind(&self.lua)?;
+        BindMath::bind(&self.lua, &self.math)?;
         BindAudio::bind(&self.lua, self.audio.clone())?;
         
         LuaContext::load_internal_scripts(&self.lua)?;
@@ -165,8 +165,8 @@ impl System {
     pub fn render(&mut self, display: &Display, frame: &mut Frame) {
         self.gpu.borrow_mut().new_frame();
     
-        // prepare assets for rendering
-        self.renderer.prepare_assets(display, &self.gpu.borrow());
+        // prepare resources for rendering
+        self.gpu.borrow_mut().prepare_gpu_assets(display);
 
         // create a framebuffer to draw into 
         let color_target = self.render_target.get_color_target();
@@ -205,7 +205,6 @@ impl System {
 
     pub fn shutdown(&mut self) {
         self.gpu.borrow_mut().on_game_shutdown();
-        self.renderer.on_game_shutdown();
     }
 
     pub fn get_scripts(&self) -> Rc<RefCell<Scripts>> {

@@ -1,9 +1,11 @@
-use glium::Display;
+use glium::{Display, uniforms::{SamplerBehavior, MinifySamplerFilter, MagnifySamplerFilter}};
+use verdi_database::Resource;
 
-use crate::image::Image;
+use crate::{image::Image, gpu_assets::GpuAsset};
 
 pub struct GpuImage {
     pub gl: glium::texture::SrgbTexture2d,
+    pub sampler: SamplerBehavior,
 }
 
 impl GpuImage {
@@ -17,8 +19,28 @@ impl GpuImage {
             raw_image
         ).unwrap();
 
+        // TODO: to be settable
+        let sampler = SamplerBehavior {
+            minify_filter: MinifySamplerFilter::Nearest,
+            magnify_filter: MagnifySamplerFilter::Nearest,
+            .. Default::default()
+        };
+
         Self {
             gl: texture,
+            sampler,
         }
     }
 }
+
+impl Resource for GpuImage {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+}
+
+impl GpuAsset for GpuImage {}

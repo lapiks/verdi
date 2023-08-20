@@ -1,21 +1,30 @@
+use std::{ops::Deref, cell::RefCell, rc::Rc};
+
 use glium::Display;
-use slotmap::{new_key_type, Key};
+use slotmap::Key;
+use verdi_database::{ResourceId, Resource, Assets, Handle};
 
 use crate::{
-    shader::ShaderId, 
-    assets::Assets, 
-    gpu_assets::GpuAssets, 
-    gpu_program::GpuProgram
+    shader::{ShaderId, Shader}, 
+    gpu_program::GpuProgram, gpu_assets::{GpuAsset, GpuAssetError, PrepareAsset}
 };
 
-new_key_type! {
-    pub struct ProgramId;
-}
+pub type ProgramId = ResourceId;
 
 pub struct Program {
     pub vs: ShaderId,
     pub fs: ShaderId,
     pub id: ProgramId,
+}
+
+impl Resource for Program {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
 }
 
 impl Program {
@@ -26,26 +35,36 @@ impl Program {
             id: ProgramId::null(),
         }
     }
+}
 
-    pub fn prepare_rendering(&self, display: &Display, assets: &Assets, gpu_assets: &mut GpuAssets) {
-        if gpu_assets.get_program(self.id).is_none() {
-            if let Some(vs) = assets.get_shader(self.vs) {
-                if let Some(fs) = assets.get_shader(self.fs) {
-                    let gpu_program = GpuProgram::new(display, vs, fs);
-                    gpu_assets.add_program(self.id, gpu_program);
-                }
+impl PrepareAsset for Program {
+    fn prepare_rendering(&self, display: &Display, db: &Assets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
+        if let Some(vs) = db.get::<Shader>(self.vs) {
+            if let Some(fs) = db.get::<Shader>(self.fs) {
+                return Ok(
+                    Box::new(
+                        GpuProgram::new(display, vs, fs)
+                    )
+                );
             }
         }
+
+        Err(GpuAssetError::PreparationFailed)
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct ProgramHandle {
-    pub id: ProgramId,
+pub struct ProgramHandle(Handle<Program>);
+
+impl Deref for ProgramHandle {
+    type Target = Handle<Program>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl ProgramHandle {
-    pub fn new(id: ProgramId) -> Self{
-        Self { id }
+    pub fn new(assets: Rc<RefCell<Assets>>, id: ProgramId) -> Self{
+        Self(Handle::new(assets, id))
     }
 }

@@ -1,7 +1,7 @@
 function verdi.start()
-    model = graphics.newModel("./game_example/assets/tank.gltf")
+    model = graphics.newModel("./game_example/resources/tank.gltf")
     transform = math.newTransform()
-    image = graphics.newImage("./game_example/assets/Palette.png")
+    image = graphics.newImage("./game_example/resources/Palette.png")
     sprite = graphics.newSprite(image)
 
     x = 5

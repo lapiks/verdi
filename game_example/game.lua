@@ -5,7 +5,7 @@ function verdi.start()
     mesh = graphics.newMesh()
     transform = math.newTransform()
     image = graphics.newImage("./game_example/assets/Palette.png")
-    sprite = graphics.newSprite(image)
+    --sprite = graphics.newSprite(image)
 
     graphics.camera.transform:setPosition(math.vec3(0, 2.5, 0))
 
@@ -34,7 +34,7 @@ function verdi.start()
 
     test.func()
 
-    --local source = audio.newSource("./game_example/assets/Mgła - Age of Excuse - 01 Age of Excuse I.mp3")
+    --local source = audio.newSource("./game_example/resources/Mgła - Age of Excuse - 01 Age of Excuse I.mp3")
     --audio.play(source)
 end
 
@@ -69,7 +69,6 @@ function verdi.update(deltaTime)
     --camTF:setRotation(camYaw, 0, 1, 0)
     --camTF:translate(camPos)
     camTF:rotate(camYaw, 0, 1, 0)
-    camTF:rotate(camPitch, 1, 0, 0)
 
     local mouseDelta = {input.getMouseDelta()}
     camYaw = camYaw + mouseDelta[1] * deltaTime * 10
@@ -96,8 +95,8 @@ function verdi.draw(pass)
     pass:setFogStart(10.0)
     pass:setFogEnd(25.0)
     pass:drawModel(model)
-    pass:drawMesh(mesh, transform)
-    pass:drawSprite(sprite)
+    --pass:drawMesh(mesh, transform)
+    --pass:drawSprite(sprite)
 
     pass:submit(graphics.camera)
 

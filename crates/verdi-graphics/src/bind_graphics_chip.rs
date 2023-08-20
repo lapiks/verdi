@@ -6,7 +6,12 @@ use verdi_math::prelude::*;
 use crate::{
     prelude::GraphicsChip, 
     image::ImageHandle, 
-    model::ModelHandle, mesh::{MeshHandle, PrimitiveType}, material::MaterialHandle, uniforms::UniformId, camera::CameraHandle, sprite::SpriteHandle
+    model::ModelHandle, 
+    mesh::{MeshHandle, PrimitiveType}, 
+    material::MaterialHandle, 
+    camera::CameraHandle, 
+    sprite::SpriteHandle, 
+    uniform::UniformHandle
 };
 
 pub struct BindGraphicsChip;
@@ -42,36 +47,47 @@ impl<'lua> BindGraphicsChip {
     }
 
     // object construction
-    fn new_image(gpu: &mut GraphicsChip, path: &String) -> ImageHandle {
-        let image_id = gpu.new_image(path).unwrap();
-        ImageHandle::new(image_id)
+    fn new_image(gpu: Rc<RefCell<GraphicsChip>>, path: &String) -> ImageHandle {
+        let image_id = gpu.borrow_mut().new_image(path).unwrap();
+        ImageHandle::new(gpu.borrow().assets.clone(), image_id)
     }
 
     fn new_model(gpu: Rc<RefCell<GraphicsChip>>, path: &String) -> ModelHandle {
         let model_id = gpu.borrow_mut().new_model(path).unwrap();
-        ModelHandle::new(gpu.clone(), model_id)
+        ModelHandle::new(gpu.borrow().assets.clone(), model_id)
     }
     
     fn new_mesh(gpu: Rc<RefCell<GraphicsChip>>) -> MeshHandle {
         let mesh_id = gpu.borrow_mut().new_mesh().unwrap();
-        MeshHandle::new(gpu.clone(), mesh_id)
+        MeshHandle::new(gpu.borrow().assets.clone(), mesh_id)
     }
 
-    fn new_sprite(gpu: Rc<RefCell<GraphicsChip>>, image: ImageHandle) -> SpriteHandle {
-        let sprite_id = gpu.borrow_mut().new_sprite(image);
-        SpriteHandle { 
-            db: gpu.borrow().database.clone(), 
-            id: sprite_id,
-        }
-    }
+    // fn new_sprite(gpu: Rc<RefCell<GraphicsChip>>, image: ImageHandle) -> SpriteHandle {
+    //     let sprite_id = gpu.borrow_mut().new_sprite(image);
+    //     SpriteHandle { 
+    //         assets: gpu.borrow().assets.clone(), 
+    //         id: sprite_id,
+    //     }
+    // }
 
     fn new_material(gpu: Rc<RefCell<GraphicsChip>>) -> MaterialHandle {
         let mat_id = gpu.borrow_mut().new_gouraud_material();
-        MaterialHandle::new(gpu.clone(), mat_id)
+        MaterialHandle::new(
+            gpu.borrow().assets.clone(), 
+            mat_id
+        )
     }
 
-    fn new_uniform(gpu: &mut GraphicsChip, value: f32) -> UniformId {
-        gpu.new_uniform_float(value)
+    fn new_camera(gpu: Rc<RefCell<GraphicsChip>>, transform: TransformHandle) -> CameraHandle {
+        gpu.borrow_mut().new_camera(transform)
+    }
+
+    fn new_uniform(gpu: Rc<RefCell<GraphicsChip>>, value: f32) -> UniformHandle {
+        let uniform_id = gpu.borrow_mut().new_uniform(value);
+        UniformHandle::new(
+            gpu.borrow().assets.clone(), 
+            uniform_id
+        )
     }
 
     fn set_clear_color(gpu: &mut GraphicsChip, color: &Vec4) {
@@ -89,6 +105,10 @@ impl<'lua> BindGraphicsChip {
     fn draw_line(gpu: &mut GraphicsChip, p1: &Vec2, p2: &Vec2) {
         gpu.draw_line(p1, p2);
     }
+
+    // fn draw_mesh(gpu: &mut GraphicsChip, mesh: MeshHandle, transform: TransformHandle) {
+    //     gpu.draw_mesh(mesh.id, transform.id);
+    // }
 
     pub fn bind(lua: &Lua, gpu: Rc<RefCell<GraphicsChip>>) -> Result<()> {
         let globals = lua.globals();
@@ -157,13 +177,14 @@ impl<'lua> BindGraphicsChip {
         }
         {
             let gpu = gpu.clone();
-            let func = lua.create_function(move |_, path: String| Ok(BindGraphicsChip::new_image(&mut gpu.borrow_mut(), &path)))?;
-            module_table.set("newImage", func)?;
-        }
-        {
-            let gpu = gpu.clone();
             let func = lua.create_function_mut(move |_, image: ImageHandle| Ok(BindGraphicsChip::bind_texture(&mut gpu.borrow_mut(), image)))?;
             module_table.set("bindTexture", func)?;
+        }
+        // New objects
+        {
+            let gpu = gpu.clone();
+            let func = lua.create_function(move |_, path: String| Ok(BindGraphicsChip::new_image(gpu.clone(), &path)))?;
+            module_table.set("newImage", func)?;
         }
         {
             let gpu = gpu.clone();
@@ -175,11 +196,11 @@ impl<'lua> BindGraphicsChip {
             let func = lua.create_function_mut(move |_, ()| Ok(BindGraphicsChip::new_mesh(gpu.clone())))?;
             module_table.set("newMesh", func)?;
         }
-        {
-            let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, image: ImageHandle| Ok(BindGraphicsChip::new_sprite(gpu.clone(), image)))?;
-            module_table.set("newSprite", func)?;
-        }
+        // {
+        //     let gpu = gpu.clone();
+        //     let func = lua.create_function_mut(move |_, image: ImageHandle| Ok(BindGraphicsChip::new_sprite(gpu.clone(), image)))?;
+        //     module_table.set("newSprite", func)?;
+        // }
         {
             let gpu = gpu.clone();
             let func = lua.create_function_mut(move |_, ()| Ok(BindGraphicsChip::new_material(gpu.clone())))?;
@@ -187,8 +208,13 @@ impl<'lua> BindGraphicsChip {
         }
         {
             let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, value: f32| Ok(BindGraphicsChip::new_uniform(&mut gpu.borrow_mut(), value)))?;
+            let func = lua.create_function_mut(move |_, value: f32| Ok(BindGraphicsChip::new_uniform(gpu.clone(), value)))?;
             module_table.set("newUniform", func)?;
+        }
+        {
+            let gpu = gpu.clone();
+            let func = lua.create_function_mut(move |_, transform: TransformHandle| Ok(BindGraphicsChip::new_camera(gpu.clone(), transform)))?;
+            module_table.set("newCamera", func)?;
         }
         {
             let gpu = gpu.clone();
@@ -199,6 +225,7 @@ impl<'lua> BindGraphicsChip {
             )?;
             module_table.set("newPass", func)?;
         }
+        // Render state
         {
             let gpu = gpu.clone();
             let func = lua.create_function_mut(
@@ -211,6 +238,7 @@ impl<'lua> BindGraphicsChip {
             )?;
             module_table.set("setClearColor", func)?;
         }
+        // Draw
         {
             let gpu = gpu.clone();
             let func = lua.create_function_mut(
@@ -224,38 +252,6 @@ impl<'lua> BindGraphicsChip {
             )?;
             module_table.set("line", func)?;
         }
-        // {
-        //     let gpu = gpu.clone();
-        //     let func = lua.create_function_mut(
-        //         move |_, (x, y, z): (f32, f32, f32)| Ok(
-        //             BindGraphicsChip::translate(
-        //                 &mut gpu.borrow_mut(),
-        //                 &Vec3::new(x, y, z)
-        //             )
-        //         )
-        //     )?;
-        //     module_table.set("translate", func)?;
-        // }
-        // {
-        //     let gpu = gpu.clone();
-        //     let func = lua.create_function_mut(
-        //         move |_, (angle, x, y, z): (f32, f32, f32, f32)| Ok(
-        //             BindGraphicsChip::rotate(
-        //                 &mut gpu.borrow_mut(),
-        //                 angle,
-        //                 &Vec3::new(x, y, z)
-        //             )
-        //         )
-        //     )?;
-        //     module_table.set("rotate", func)?;
-        // }
-
-        // default camera
-        let camera = CameraHandle {
-            database: gpu.borrow().database.clone(),
-            id: gpu.borrow().camera,
-        };
-        module_table.set("camera", camera)?;
 
         // add table to globals
         globals.set("graphics", module_table)?;

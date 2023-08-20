@@ -1,4 +1,3 @@
-use crate::{vertex::Vertex};
 
 pub struct VertexBuffer {
     pub internal_buffer: glium::VertexBuffer<Vertex>,

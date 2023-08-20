@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+verdi-database = { path = "../verdi-database" }
 verdi-math = { path = "../verdi-math" }
 glium = "*"
 mlua = { version = "0.8", features = ["lua54", "vendored"] }

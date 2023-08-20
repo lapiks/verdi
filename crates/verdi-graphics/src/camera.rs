@@ -1,24 +1,32 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, ops::Deref};
 
-use mlua::{UserData, UserDataMethods, UserDataFields};
-use slotmap::{new_key_type, Key};
-use verdi_math::{Mat4, prelude::Transform, Vec3};
+use mlua::{UserData, UserDataFields};
+use slotmap::Key;
+use verdi_database::{ResourceId, Resource, Assets, Handle};
+use verdi_math::{Mat4, prelude::TransformHandle};
 
-use crate::database::Database;
+pub type CameraId = ResourceId;
 
-new_key_type! {
-    pub struct CameraId;
-}
-
+#[derive(Clone)] // TODO: is it really clonable?
 pub struct Camera {
-    pub transform: Transform,
+    pub transform: TransformHandle,
     pub id: CameraId,
 }
 
+impl Resource for Camera {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+}
+
 impl Camera {
-    pub fn new() -> Self {
+    pub fn new(transform: TransformHandle) -> Self {
         Self {
-            transform: Transform::new(),
+            transform,
             id: CameraId::null(),
         }
     }
@@ -100,81 +108,35 @@ impl Camera {
 }
 
 #[derive(Clone)]
-pub struct CameraHandle {
-    pub database: Rc<RefCell<Database>>,
-    pub id: CameraId,
+pub struct CameraHandle(Handle<Camera>);
+
+impl Deref for CameraHandle {
+    type Target = Handle<Camera>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl CameraHandle {
+    pub fn new(assets: Rc<RefCell<Assets>>, id: CameraId) -> Self{
+        Self(Handle::new(assets, id))
+    }
 }
 
 impl UserData for CameraHandle {
     fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
         fields.add_field_method_get("transform", |_, this| {
             Ok({
-                if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-                    camera.transform
-                }
-                else {
-                    Transform::new()
-                }
+                this.get_assets()
+                    .get::<Camera>(this.get_id())
+                    .expect("Camera not found")
+                    .transform.clone()
             })
         });
     }
     
-    fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-        // TODO : to keep?
-        // methods.add_method_mut("reset", |_, this, ()| {
-        //     Ok({
-        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-        //             camera.transform.reset();
-        //         }
-        //     })
-        // });
+    // fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
 
-        // methods.add_method_mut("translate", |_, this, (x, y, z): (f32, f32, f32)| {
-        //     Ok({
-        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-        //             camera.transform.translate(Vec3::new(x, y, z));
-        //         }
-        //     })
-        // });
-
-        // methods.add_method_mut("rotate", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
-        //     Ok({
-        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-        //             camera.transform.rotate(angle, Vec3::new(x, y, z));
-        //         }
-        //     })
-        // });
-
-        // methods.add_method_mut("scale", |_, this, (x, y, z): (f32, f32, f32)| {
-        //     Ok({
-        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-        //             camera.transform.scale(Vec3::new(x, y, z));
-        //         }
-        //     })
-        // });
-
-        // methods.add_method_mut("setPosition", |_, this, (x, y, z): (f32, f32, f32)| {
-        //     Ok({
-        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-        //             camera.transform.set_position(Vec3::new(x, y, z));
-        //         }
-        //     })
-        // });
-
-        // methods.add_method_mut("setRotation", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
-        //     Ok({
-        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-        //             camera.transform.set_rotation(angle, Vec3::new(x, y, z));
-        //         }
-        //     })
-        // });
-
-        // methods.add_method_mut("setScale", |_, this, (x, y, z): (f32, f32, f32)| {
-        //     Ok({
-        //         if let Some(camera) = this.database.borrow_mut().assets.get_camera_mut(this.id) {
-        //             camera.transform.set_scale(Vec3::new(x, y, z));
-        //         }
-        //     })
-        // });
-    }
+    // }
 }
