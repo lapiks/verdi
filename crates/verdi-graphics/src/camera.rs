@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc, ops::Deref};
+use std::ops::Deref;
 
 use mlua::{UserData, UserDataFields};
 use slotmap::Key;
@@ -119,8 +119,8 @@ impl Deref for CameraHandle {
 }
 
 impl CameraHandle {
-    pub fn new(assets: Rc<RefCell<Assets>>, id: CameraId) -> Self{
-        Self(Handle::new(assets, id))
+    pub fn new(assets: Assets, id: CameraId) -> Self{
+        CameraHandle(assets.new_handle(id))
     }
 }
 
@@ -128,7 +128,7 @@ impl UserData for CameraHandle {
     fn add_fields<'lua, F: UserDataFields<'lua, Self>>(fields: &mut F) {
         fields.add_field_method_get("transform", |_, this| {
             Ok({
-                this.get_assets()
+                this.get_datas()
                     .get::<Camera>(this.get_id())
                     .expect("Camera not found")
                     .transform.clone()

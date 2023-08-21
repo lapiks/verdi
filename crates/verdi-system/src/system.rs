@@ -14,7 +14,6 @@ use verdi_graphics::prelude::{
     Renderer, 
     BindGraphicsChip, 
     RenderTarget,
-    Globals, 
     PassHandle,
 };
 use verdi_input::prelude::{Inputs, BindInputs};
@@ -59,7 +58,7 @@ pub struct System {
     render_target: RenderTarget,
     inputs: Rc<RefCell<Inputs>>,
     audio: AudioHandle,
-    math: Math,
+    math: Rc<RefCell<Math>>,
     path: PathBuf,
     scripts: Rc<RefCell<Scripts>>,
     pub time_step: TimeStep,
@@ -68,9 +67,11 @@ pub struct System {
 
 impl System {
     pub fn new<P: AsRef<Path>>(path: P, display: &Display) -> Result<Self, SystemError> {
+        let math = Rc::new(RefCell::new(Math::new()));
+
         let gpu = Rc::new(
             RefCell::new(
-                GraphicsChip::new().expect("GraphicsChip initialisation failed")
+                GraphicsChip::new(math.clone()).expect("GraphicsChip initialisation failed")
             )
         );
 
@@ -103,7 +104,7 @@ impl System {
             render_target,
             inputs: Rc::new(RefCell::new(Inputs::new())),
             audio: AudioHandle::new(audio),
-            math: Math::new(),
+            math,
             path: path.as_ref().to_path_buf(),
             scripts: Rc::new(RefCell::new(Scripts::new(path)?)),
             time_step: TimeStep::new(),
@@ -125,7 +126,7 @@ impl System {
         BindWorld::bind(&self.lua, self.world.clone())?;
         BindGraphicsChip::bind(&self.lua, self.gpu.clone())?;
         BindInputs::bind(&self.lua, self.inputs.clone())?;
-        BindMath::bind(&self.lua, &self.math)?;
+        BindMath::bind(&self.lua, self.math.clone())?;
         BindAudio::bind(&self.lua, self.audio.clone())?;
         
         LuaContext::load_internal_scripts(&self.lua)?;

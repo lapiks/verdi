@@ -1,10 +1,10 @@
   
-use std::{path::Path, cell::RefCell, rc::Rc};
+use std::{path::Path, ops::Deref};
 use glium::Display;
 use image::{io::Reader as ImageReader, RgbaImage, ImageError};
 use mlua::UserData;
 use slotmap::Key;
-use verdi_database::{ResourceId, Resource, Assets};
+use verdi_database::{ResourceId, Resource, Assets, Handle};
 
 use crate::{
     gpu_assets::{GpuAsset, GpuAssetError, PrepareAsset}, 
@@ -13,6 +13,7 @@ use crate::{
 
 pub type ImageId = ResourceId;
 
+#[derive(Clone)]
 pub struct Image {
     width: u32,
     height: u32,
@@ -83,14 +84,19 @@ impl PrepareAsset for Image {
 }
 
 #[derive(Clone)]
-pub struct ImageHandle {
-    pub assets: Rc<RefCell<Assets>>,
-    pub id: ImageId,
+pub struct ImageHandle(Handle<Image>);
+
+impl Deref for ImageHandle {
+    type Target = Handle<Image>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl ImageHandle {
-    pub fn new(assets: Rc<RefCell<Assets>>, id: ImageId) -> Self{
-        Self { assets, id }
+    pub fn new(assets: Assets, id: ImageId) -> Self {
+        ImageHandle(assets.new_handle(id))
     }
 }
 

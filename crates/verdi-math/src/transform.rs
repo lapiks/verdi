@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell, ops::{Deref, DerefMut}};
+use std::ops::{Deref, DerefMut};
 
 use mlua::{UserData, UserDataMethods};
 use verdi_database::{ResourceId, Resource, Assets, Handle};
@@ -144,8 +144,9 @@ impl DerefMut for TransformHandle {
 }
 
 impl TransformHandle {
-    pub fn new(assets: Rc<RefCell<Assets>>, id: TransformId) -> Self{
-        Self(Handle::new(assets, id))
+    pub fn new(assets: Assets, id: TransformId) -> Self {
+        TransformHandle(assets.new_handle::<Transform>(id))
+
     }
 }
 
@@ -155,7 +156,7 @@ impl UserData for TransformHandle {
         methods.add_method_mut("reset", |_, this, ()| {
             Ok({
                 let transform_id = this.get_id();
-                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                if let Some(transform) = this.get_datas_mut().get_mut::<Transform>(transform_id) {
                     transform.reset();
                 }
             })
@@ -164,7 +165,7 @@ impl UserData for TransformHandle {
         methods.add_method_mut("translate", |_, this, v: LuaVec3| {
             Ok({
                 let transform_id = this.get_id();
-                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                if let Some(transform) = this.get_datas_mut().get_mut::<Transform>(transform_id) {
                     transform.translate(Vec3::from(v));
                 }
             })
@@ -173,7 +174,7 @@ impl UserData for TransformHandle {
         methods.add_method_mut("rotate", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
             Ok({
                 let transform_id = this.get_id();
-                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                if let Some(transform) = this.get_datas_mut().get_mut::<Transform>(transform_id) {
                     transform.rotate(angle, Vec3::new(x, y, z));
                 }
             })
@@ -182,7 +183,7 @@ impl UserData for TransformHandle {
         methods.add_method_mut("scale", |_, this, (x, y, z): (f32, f32, f32)| {
             Ok({
                 let transform_id = this.get_id();
-                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                if let Some(transform) = this.get_datas_mut().get_mut::<Transform>(transform_id) {
                     transform.scale(Vec3::new(x, y, z));
                 }
             })
@@ -191,7 +192,7 @@ impl UserData for TransformHandle {
         methods.add_method_mut("setPosition", |_, this, v: LuaVec3| {
             Ok({
                 let transform_id = this.get_id();
-                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                if let Some(transform) = this.get_datas_mut().get_mut::<Transform>(transform_id) {
                     transform.set_position(Vec3::from(v));
                 }
             })
@@ -199,7 +200,7 @@ impl UserData for TransformHandle {
 
         methods.add_method("getPosition", |_, this, ()| {
             Ok({
-                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
                     LuaVec3(transform.get_position());
                 }
             })
@@ -208,7 +209,7 @@ impl UserData for TransformHandle {
         methods.add_method_mut("setRotation", |_, this, (angle, x, y, z): (f32, f32, f32, f32)| {
             Ok({
                 let transform_id = this.get_id();
-                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                if let Some(transform) = this.get_datas_mut().get_mut::<Transform>(transform_id) {
                     transform.set_rotation(angle, Vec3::new(x, y, z));
                 }
             })
@@ -217,7 +218,7 @@ impl UserData for TransformHandle {
         methods.add_method_mut("setScale", |_, this, (x, y, z): (f32, f32, f32)| {
             Ok({
                 let transform_id = this.get_id();
-                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
+                if let Some(transform) = this.get_datas_mut().get_mut::<Transform>(transform_id) {
                     transform.set_scale(Vec3::new(x, y, z));
                 }
             })
@@ -226,8 +227,8 @@ impl UserData for TransformHandle {
         methods.add_method_mut("apply", |_, this, other: TransformHandle| {
             Ok({
                 let transform_id = this.get_id();
-                if let Some(transform) = this.get_assets_mut().get_mut::<Transform>(transform_id) {
-                    if let Some(other_transform) = other.get_assets().get(other.get_id()) {
+                if let Some(transform) = this.get_datas_mut().get_mut::<Transform>(transform_id) {
+                    if let Some(other_transform) = other.get_datas().get(other.get_id()) {
                         transform.apply(&other_transform);
                     }
                 }
@@ -236,7 +237,7 @@ impl UserData for TransformHandle {
 
         methods.add_method("transformPoint", |_, this, (x, y, z): (f32, f32, f32)| {
             Ok({
-                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
                     LuaVec3(
                         transform.transform_point(
                             Vec3::new(x, y, z)
@@ -248,7 +249,7 @@ impl UserData for TransformHandle {
 
         methods.add_method("right", |_, this, ()| {
             Ok({
-                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
                     LuaVec3(transform.right());
                 }
             })
@@ -256,7 +257,7 @@ impl UserData for TransformHandle {
 
         methods.add_method("left", |_, this, ()| {
             Ok({
-                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
                     LuaVec3(transform.left());
                 }
             })
@@ -264,7 +265,7 @@ impl UserData for TransformHandle {
 
         methods.add_method("up", |_, this, ()| {
             Ok({
-                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
                     LuaVec3(transform.up());
                 }
             })
@@ -272,7 +273,7 @@ impl UserData for TransformHandle {
 
         methods.add_method("down", |_, this, ()| {
             Ok({
-                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
                     LuaVec3(transform.down());
                 }
             })
@@ -280,7 +281,7 @@ impl UserData for TransformHandle {
 
         methods.add_method("forward", |_, this, ()| {
             Ok({
-                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
                     LuaVec3(transform.forward());
                 }
             })
@@ -288,7 +289,7 @@ impl UserData for TransformHandle {
 
         methods.add_method("backward", |_, this, ()| {
             Ok({
-                if let Some(transform) = this.get_assets().get::<Transform>(this.get_id()) {
+                if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
                     LuaVec3(transform.backward());
                 }
             })

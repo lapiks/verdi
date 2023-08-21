@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell, ops::Deref};
+use std::ops::Deref;
 
 use slotmap::Key;
 use verdi_database::{ResourceId, Resource, Handle, Assets};
@@ -44,7 +44,7 @@ impl Deref for ShaderHandle {
 }
 
 impl ShaderHandle {
-    pub fn new(assets: Rc<RefCell<Assets>>, id: ShaderId) -> Self{
-        Self(Handle::new(assets, id))
+    pub fn new(assets: Assets, id: ShaderId) -> Self{
+        ShaderHandle(assets.new_handle(id))
     }
 }

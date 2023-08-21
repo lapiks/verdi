@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell, ops::Deref};
+use std::ops::Deref;
 
 use mlua::UserData;
 use slotmap::Key;
@@ -50,8 +50,8 @@ impl Deref for SpriteHandle {
 }
 
 impl SpriteHandle {
-    pub fn new(assets: Rc<RefCell<Assets>>, id: SpriteId) -> Self{
-        Self(Handle::new(assets, id))
+    pub fn new(assets: Assets, id: SpriteId) -> Self {
+        SpriteHandle(assets.new_handle(id))
     }
 }
 

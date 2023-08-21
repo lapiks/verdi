@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc, ops::{Deref, DerefMut}};
+use std::ops::{Deref, DerefMut};
 
 use glium::Display;
 use mlua::{UserData, UserDataMethods, Table};
@@ -130,13 +130,13 @@ impl DerefMut for MeshHandle {
 }
 
 impl MeshHandle {
-    pub fn new(assets: Rc<RefCell<Assets>>, id: MeshId) -> Self {
-        Self(Handle::new(assets, id))
+    pub fn new(assets: Assets, id: MeshId) -> Self {
+        MeshHandle(assets.new_handle(id))
     }
 
     pub fn set_vertices(&mut self, vertices: Table) {
         let mesh_id = self.get_id();
-        if let Some(mesh) = self.get_assets_mut().get_mut::<Mesh>(mesh_id)
+        if let Some(mesh) = self.get_datas_mut().get_mut::<Mesh>(mesh_id)
         {
             if let Ok(v_length) = vertices.len() {
                 mesh.vertex_buffer.resize(v_length as usize, Vertex::default());
@@ -156,7 +156,7 @@ impl MeshHandle {
 
     pub fn set_primitive_type(&mut self, primitive_type: PrimitiveType) {
         let mesh_id = self.get_id();
-        if let Some(mesh) = self.get_assets_mut().get_mut::<Mesh>(mesh_id)
+        if let Some(mesh) = self.get_datas_mut().get_mut::<Mesh>(mesh_id)
         {
             mesh.primitive_type = primitive_type;
         }

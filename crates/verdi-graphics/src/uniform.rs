@@ -1,8 +1,8 @@
-use std::{rc::Rc, cell::RefCell};
+use std::ops::{Deref, DerefMut};
 
 use glium::uniforms::UniformValue;
 use mlua::UserData;
-use verdi_database::{Resource, ResourceId, Assets};
+use verdi_database::{Resource, ResourceId, Assets, Handle};
 use verdi_math::{Vec2, Mat4};
 
 use crate::gpu_image::GpuImage;
@@ -43,6 +43,7 @@ impl UniformType for bool {
     }
 }
 
+#[derive(Clone)]
 pub struct Uniform<T: UniformType> {
     pub value: T,
 }
@@ -69,18 +70,27 @@ impl<T: UniformType> Uniform<T> {
     }
 }
 
-pub struct UniformHandle {
-    assets: Rc<RefCell<Assets>>,
-    id: UniformId,
-}
+#[derive(Clone)]
+pub struct UniformHandle<T: UniformType>(Handle<Uniform<T>>);
 
-impl UniformHandle {
-    pub fn new(assets: Rc<RefCell<Assets>>, id: UniformId) -> Self {
-        Self {
-            assets,
-            id,
-        }
+impl<T: UniformType> UniformHandle<T> {
+    pub fn new(assets: Assets, id: UniformId) -> Self {
+        UniformHandle(assets.new_handle(id))
     }
 }
 
-impl UserData for UniformHandle {}
+impl<T: UniformType> Deref for UniformHandle<T> {
+    type Target = Handle<Uniform<T>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T: UniformType> DerefMut for UniformHandle<T> {
+      fn deref_mut(&mut self) -> &mut Handle<Uniform<T>> {
+        &mut self.0
+    }
+}
+
+impl<T: UniformType> UserData for UniformHandle<T> {}

@@ -82,7 +82,7 @@ impl<'lua> BindGraphicsChip {
         gpu.borrow_mut().new_camera(transform)
     }
 
-    fn new_uniform(gpu: Rc<RefCell<GraphicsChip>>, value: f32) -> UniformHandle {
+    fn new_uniform(gpu: Rc<RefCell<GraphicsChip>>, value: f32) -> UniformHandle<f32> {
         let uniform_id = gpu.borrow_mut().new_uniform(value);
         UniformHandle::new(
             gpu.borrow().assets.clone(), 

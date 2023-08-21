@@ -1,5 +1,3 @@
-mod assets;
-
 use std::{any::Any, rc::Rc, cell::{RefCell, Ref, RefMut}, marker::PhantomData};
 
 use slotmap::{SlotMap, new_key_type};
@@ -13,17 +11,58 @@ pub trait Resource: 'static {
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-pub struct Assets(SlotMap<ResourceId, Box<dyn Resource>>);
+#[derive(Clone)]
+pub struct Assets(Rc<RefCell<AssetDatas>>);
+
+impl Assets {
+    pub fn new_handle<R: Resource>(&self, id: ResourceId) -> Handle<R> {
+        Handle::new(self.clone(), id)
+    }
+}
 
 impl Assets {
     pub fn new() -> Self {
-        Self(SlotMap::default())
+        Self(
+            Rc::new(
+                RefCell::new(
+                    AssetDatas(
+                        SlotMap::default()
+                    )
+                )
+            )
+        )
     }
 
     pub fn add(&mut self, res: Box<dyn Resource>) -> ResourceId {
-        self.0.insert(res)
+        self.0.borrow_mut().0.insert(res)
     }
 
+    pub fn clear(&mut self) {
+        self.0.borrow_mut().0.clear();
+    }
+
+    pub fn get_datas(&self) -> Ref<'_, AssetDatas> {
+        self.0.borrow()
+    }
+
+    pub fn get_datas_mut(&mut self) -> RefMut<'_, AssetDatas> {
+        self.0.borrow_mut()
+    }
+}
+
+impl Resource for Assets {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+}
+
+pub struct AssetDatas(SlotMap<ResourceId, Box<dyn Resource>>);
+
+impl AssetDatas {
     pub fn get<R: Any>(&self, id: ResourceId) -> Option<&R> {
         match self.0.get(id) {
             Some(value) => {
@@ -41,31 +80,17 @@ impl Assets {
             None => return None,
         };
     }
-
-    pub fn clear(&mut self) {
-        self.0.clear();
-    }
-}
-
-impl Resource for Assets {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
 }
 
 #[derive(Clone)]
 pub struct Handle<R: Resource> {
-    assets: Rc<RefCell<Assets>>,
+    assets: Assets,
     id: ResourceId,
     marker: PhantomData<fn() -> R>,
 }
 
 impl<R: Resource> Handle<R> {
-    pub fn new(assets: Rc<RefCell<Assets>>, id: ResourceId) -> Self {
+    pub fn new(assets: Assets, id: ResourceId) -> Self {
         Self { assets, id, marker: PhantomData }
     }
 
@@ -73,44 +98,19 @@ impl<R: Resource> Handle<R> {
         self.id
     }
 
-    pub fn get_assets(&self) -> Ref<'_, Assets> {
-        self.assets.borrow()
+    pub fn get_assets(&self) -> &Assets {
+        &self.assets
     }
 
-    pub fn get_assets_mut(&mut self) -> RefMut<'_, Assets> {
-        self.assets.borrow_mut()
+    pub fn get_assets_mut(&mut self) -> &mut Assets {
+        &mut self.assets
+    }
+
+    pub fn get_datas(&self) -> Ref<'_, AssetDatas> {
+        self.assets.get_datas()
+    }
+
+    pub fn get_datas_mut(&mut self) -> RefMut<'_, AssetDatas> {
+        self.assets.get_datas_mut()
     }
 }
-
-pub struct Database {
-    images: Assets<Image>,
-}
-
-// impl Database {
-//     pub fn add(&mut self, res: Box<dyn Resource>) -> ResourceId {
-//         self.resources.insert(res)
-//     }
-
-//     pub fn get<R: Any>(&self, id: ResourceId) -> Option<&R> {
-//         match self.resources.get(id) {
-//             Some(value) => {
-//                 return value.as_any().downcast_ref();
-//             },
-//             None => return None,
-//         };
-//     }
-
-//     pub fn get_mut<R: Any>(&mut self, id: ResourceId) -> Option<&mut R> {
-//         match self.resources.get_mut(id) {
-//             Some(value) => {
-//                 return value.as_any_mut().downcast_mut();
-//             },
-//             None => return None,
-//         };
-//     }
-
-//     pub fn clear(&mut self) {
-//         self.resources.clear();
-//     }
-// }
-

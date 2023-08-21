@@ -3,7 +3,7 @@ use verdi_math::{Vec2, Mat4};
 
 use crate::{
     program::{ProgramId, Program}, 
-    shader::Shader, uniform::{UniformId, Uniform},
+    shader::Shader, uniform::{Uniform, UniformHandle},
 };
 
 /// Indicates where to find some globals (shader and uniforms) in the database
@@ -25,29 +25,66 @@ impl Globals {
 /// Indicates where to find the global uniforms in the uniform database.
 #[derive(Clone)]
 pub struct GlobalUniforms {
-    pub model_matrix: UniformId,
-    pub view_matrix: UniformId,
-    pub projection_matrix: UniformId,
-    pub resolution: UniformId,
-    pub enable_lighting: UniformId,
-    pub enable_fog: UniformId,
-    pub fog_start: UniformId,
-    pub fog_end: UniformId,
-    pub identity_mat: UniformId, // TODO: temporary
+    pub model_matrix: UniformHandle<Mat4>,
+    pub view_matrix: UniformHandle<Mat4>,
+    pub projection_matrix: UniformHandle<Mat4>,
+    pub resolution: UniformHandle<Vec2>,
+    pub enable_lighting: UniformHandle<bool>,
+    pub enable_fog: UniformHandle<bool>,
+    pub fog_start: UniformHandle<f32>,
+    pub fog_end: UniformHandle<f32>,
+    pub identity_mat: UniformHandle<Mat4>, // TODO: temporary
 }
 
 impl GlobalUniforms {
     pub fn new(assets: &mut Assets) -> Self {
+        let model_matrix = UniformHandle::new(
+            assets.clone(), 
+            assets.add(Box::new(Uniform::new(Mat4::IDENTITY)))
+        );
+        let view_matrix = UniformHandle::new(
+            assets.clone(), 
+            assets.add(Box::new(Uniform::new(Mat4::IDENTITY)))
+        );
+        let projection_matrix = UniformHandle::new(
+            assets.clone(), 
+            assets.add(Box::new(Uniform::new(Mat4::IDENTITY)))
+        );
+        let resolution = UniformHandle::new(
+            assets.clone(), 
+            assets.add(Box::new(Uniform::new(Vec2::ZERO)))
+        );
+        let enable_lighting = UniformHandle::new(
+            assets.clone(), 
+            assets.add(Box::new(Uniform::new(true)))
+        );
+        let enable_fog = UniformHandle::new(
+            assets.clone(), 
+            assets.add(Box::new(Uniform::new(false)))
+        );
+        let fog_start = UniformHandle::new(
+            assets.clone(), 
+            assets.add(Box::new(Uniform::new(0.0)))
+        );
+        let fog_end = UniformHandle::new(
+            assets.clone(), 
+            assets.add(Box::new(Uniform::new(0.0)))
+        );
+        let identity_mat = UniformHandle::new(
+            assets.clone(), 
+            assets.add(Box::new(Uniform::new(Mat4::IDENTITY)))
+        );
+
         Self {
-            model_matrix: assets.add(Box::new(Uniform::new(Mat4::IDENTITY))),
-            view_matrix: assets.add(Box::new(Uniform::new(Mat4::IDENTITY))),
-            projection_matrix: assets.add(Box::new(Uniform::new(Mat4::IDENTITY))),
-            resolution: assets.add(Box::new(Uniform::new(Vec2::ZERO))),
-            enable_lighting: assets.add(Box::new(Uniform::new(true))),
-            enable_fog: assets.add(Box::new(Uniform::new(false))),
-            fog_start: assets.add(Box::new(Uniform::new(0.0))),
-            fog_end: assets.add(Box::new(Uniform::new(0.0))),
-            identity_mat: assets.add(Box::new(Uniform::new(Mat4::IDENTITY))),
+            model_matrix,
+            view_matrix,
+            projection_matrix,
+            resolution,
+            enable_lighting,
+            enable_fog,
+            fog_start,
+            fog_end,
+            identity_mat,
         }
     }
 }

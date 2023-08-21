@@ -1,13 +1,10 @@
-use std::{rc::Rc, cell::RefCell, ops::Deref};
+use std::ops::Deref;
 
 use mlua::{UserData, UserDataMethods};
 use slotmap::Key;
 use verdi_database::{ResourceId, Resource, Assets, Handle};
 
-use crate::{
-    node::Node, 
-    graphics_chip::GraphicsChip,
-};
+use crate::node::Node;
 
 pub type ModelId = ResourceId;
 
@@ -62,8 +59,8 @@ impl Deref for ModelHandle {
 }
 
 impl ModelHandle {
-    pub fn new(assets: Rc<RefCell<Assets>>, id: ModelId) -> Self{
-        Self(Handle::new(assets, id))
+    pub fn new(assets: Assets, id: ModelId) -> Self{
+        ModelHandle(assets.new_handle(id))
     }
 
     pub fn get_node(&self, index: usize) -> Node { // TODO: returns a copy -> is it ok?
@@ -74,7 +71,7 @@ impl ModelHandle {
         // }
 
         self
-        .get_assets()
+        .get_datas()
         .get::<Model>(self.get_id())
         .expect("Model not found")
         .get_node(index)
@@ -85,7 +82,7 @@ impl ModelHandle {
     pub fn get_len(&self) -> Option<u64> {
         Some(
             self
-            .get_assets()
+            .get_datas()
             .get::<Model>(self.get_id())
             .unwrap()
             .nodes

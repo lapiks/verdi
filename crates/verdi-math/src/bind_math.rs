@@ -2,21 +2,18 @@ use std::{rc::Rc, cell::RefCell};
 
 use glam::{Vec3, Vec2};
 use mlua::{Lua, Result};
-use verdi_database::Assets;
 
 use crate::{
-    transform::{TransformHandle, Transform}, 
-    types::{LuaVec3, LuaVec2}, math::Math, 
+    transform::TransformHandle, 
+    types::{LuaVec3, LuaVec2}, 
+    math::Math, 
 };
 
 pub struct BindMath;
 
 impl<'lua> BindMath {
-    fn new_transform(assets: Rc<RefCell<Assets>>) -> TransformHandle {
-        TransformHandle::new(
-            assets.clone(),
-            assets.borrow_mut().add(Box::new(Transform::new()))
-        )
+    fn new_transform(math: Rc<RefCell<Math>>) -> TransformHandle {
+        math.borrow_mut().new_transform()
     }
 
     fn new_vec2() -> LuaVec2 {
@@ -27,18 +24,16 @@ impl<'lua> BindMath {
         LuaVec3(Vec3{x, y, z})
     }
 
-    pub fn bind(lua: &Lua, math: &Math) -> Result<()> {
+    pub fn bind(lua: &Lua, math: Rc<RefCell<Math>>) -> Result<()> {
         let globals = lua.globals();
 
         // create inputs module table
         let module_table = lua.create_table()?;
-
-        let assets = math.assets.clone();
         
         // add functions
         {
             //let inputs = inputs.clone();
-            let func = lua.create_function(move |_, ()| Ok(BindMath::new_transform(assets.clone())))?;
+            let func = lua.create_function(move |_, ()| Ok(BindMath::new_transform(math.clone())))?;
             module_table.set("newTransform", func)?;
 
             let func = lua.create_function(move |_, ()| Ok(BindMath::new_vec2()))?;

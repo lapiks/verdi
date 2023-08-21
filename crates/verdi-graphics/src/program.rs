@@ -1,4 +1,4 @@
-use std::{ops::Deref, cell::RefCell, rc::Rc};
+use std::ops::Deref;
 
 use glium::Display;
 use slotmap::Key;
@@ -38,9 +38,9 @@ impl Program {
 }
 
 impl PrepareAsset for Program {
-    fn prepare_rendering(&self, display: &Display, db: &Assets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
-        if let Some(vs) = db.get::<Shader>(self.vs) {
-            if let Some(fs) = db.get::<Shader>(self.fs) {
+    fn prepare_rendering(&self, display: &Display, assets: &Assets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
+        if let Some(vs) = assets.get_datas().get::<Shader>(self.vs) {
+            if let Some(fs) = assets.get_datas().get::<Shader>(self.fs) {
                 return Ok(
                     Box::new(
                         GpuProgram::new(display, vs, fs)
@@ -64,7 +64,7 @@ impl Deref for ProgramHandle {
 }
 
 impl ProgramHandle {
-    pub fn new(assets: Rc<RefCell<Assets>>, id: ProgramId) -> Self{
-        Self(Handle::new(assets, id))
+    pub fn new(assets: Assets, id: ProgramId) -> Self {
+        ProgramHandle(assets.new_handle(id))
     }
 }

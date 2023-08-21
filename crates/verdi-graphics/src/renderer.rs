@@ -34,8 +34,8 @@ impl Renderer {
 
     pub fn render(&mut self, framebuffer: &mut SimpleFrameBuffer, gpu: &mut GraphicsChip) {
         let global_uniforms = &gpu.globals.global_uniforms;
-        let mut assets = gpu.assets.borrow_mut();
-        let gpu_assets = gpu.gpu_assets.borrow_mut();
+        let mut asset_datas = gpu.assets.get_datas_mut();
+        let gpu_assets = gpu.gpu_assets.borrow();
 
         let clear_color = gpu.render_state.clear_color;
         framebuffer.clear_color_and_depth(
@@ -66,52 +66,60 @@ impl Renderer {
             10.0,
         );
 
-        assets.get_mut::<Uniform<Vec2>>(global_uniforms.resolution)
+        asset_datas
+            .get_mut::<Uniform<Vec2>>(global_uniforms.resolution.get_id())
             .expect("Resolution uniform missing")
             .value = Vec2::new(
-                target_dimensions.0 as f32, 
-                target_dimensions.1 as f32
-            );
+                    target_dimensions.0 as f32, 
+                    target_dimensions.1 as f32
+                );
 
         for pass in gpu.render_graph.borrow().get_passes().iter() {
             for cmd in pass.get_cmds() {
                 // get transform
-                let transform = assets
+                let transform = asset_datas
                     .get::<Transform>(cmd.transform.get_id())
                     .expect("Transform missing");
 
                 // model matrix
-                assets.get_mut::<Uniform<Mat4>>(global_uniforms.model_matrix)
+                asset_datas
+                    .get_mut::<Uniform<Mat4>>(global_uniforms.model_matrix.get_id())
                     .expect("Model matrix uniform missing")
                     .value = transform.to_matrix();
                 
                 // view matrix
-                assets.get_mut::<Uniform<Mat4>>(global_uniforms.view_matrix)
+                asset_datas
+                    .get_mut::<Uniform<Mat4>>(global_uniforms.view_matrix.get_id())
                     .expect("View matrix uniform missing")
                     .value = pass.render_state.view;
 
                 // projection matrix
-                assets.get_mut::<Uniform<Mat4>>(global_uniforms.projection_matrix)
+                asset_datas
+                    .get_mut::<Uniform<Mat4>>(global_uniforms.projection_matrix.get_id())
                     .expect("Perspective matrix uniform missing")
                     .value = if cmd.perspective { perspective_matrix } else { ortho_matrix };
 
-                assets.get_mut::<Uniform<bool>>(global_uniforms.enable_lighting)
+                asset_datas
+                    .get_mut::<Uniform<bool>>(global_uniforms.enable_lighting.get_id())
                     .expect("Enable lighting uniform missing")
                     .value = pass.render_state.enable_lighting;
 
-                assets.get_mut::<Uniform<bool>>(global_uniforms.enable_fog)
+                asset_datas
+                    .get_mut::<Uniform<bool>>(global_uniforms.enable_fog.get_id())
                     .expect("Enable fog uniform missing")
                     .value = pass.render_state.enable_fog;
 
-                assets.get_mut::<Uniform<f32>>(global_uniforms.fog_start)
+                asset_datas
+                    .get_mut::<Uniform<f32>>(global_uniforms.fog_start.get_id())
                     .expect("Fog start uniform missing")
                     .value = pass.render_state.fog_start;
 
-                assets.get_mut::<Uniform<f32>>(global_uniforms.fog_end)
+                asset_datas
+                    .get_mut::<Uniform<f32>>(global_uniforms.fog_end.get_id())
                     .expect("Fog end uniform missing")
                     .value = pass.render_state.fog_end;
 
-                let mesh = assets
+                let mesh = asset_datas
                     .get::<Mesh>(cmd.mesh.get_id())
                     .expect("Mesh resource not found");
 
@@ -119,12 +127,12 @@ impl Renderer {
                     .get::<GpuMesh>(cmd.mesh.get_id())
                     .expect("Gpu mesh not found");
 
-                let material = assets
+                let material = asset_datas
                     .get::<Material>(mesh.material)
                     .expect("Material not found");
 
                 let uniform_values = material
-                    .get_uniform_values(&assets, pass)
+                    .get_uniform_values(gpu.assets, pass)
                     .expect("Unable to generate uniform values");
 
                 let program = gpu_assets
@@ -193,8 +201,9 @@ impl Renderer {
     }
 
     pub fn post_render(&self, gpu: &mut GraphicsChip) {
-        gpu.assets.borrow_mut()
-            .get_mut::<Uniform<Mat4>>(gpu.globals.global_uniforms.view_matrix)
+        gpu.assets
+            .get_datas_mut()
+            .get_mut::<Uniform<Mat4>>(gpu.globals.global_uniforms.view_matrix.get_id())
             .expect("View matrix uniform missing")
             .value = Mat4::IDENTITY;
     }

@@ -1,10 +1,7 @@
 use mlua::UserData;
 use verdi_math::prelude::TransformHandle;
 
-use crate::{
-    mesh::MeshHandle, 
-    prelude::GraphicsChip
-};
+use crate::mesh::MeshHandle;
 
 
 #[derive(Clone)]

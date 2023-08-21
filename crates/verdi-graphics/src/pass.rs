@@ -69,8 +69,8 @@ impl UserData for PassHandle {
         methods.add_method_mut("submit", |_, pass, camera: CameraHandle| {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
-                    if let Some(cam_ref) = camera.get_assets().get::<Camera>(camera.get_id()) {
-                        if let Some(transform_ref) = cam_ref.transform.get_assets().get::<Transform>(cam_ref.transform.get_id()) {
+                    if let Some(cam_ref) = camera.get_assets().get_datas().get::<Camera>(camera.get_id()) {
+                        if let Some(transform_ref) = cam_ref.transform.get_assets().get_datas().get::<Transform>(cam_ref.transform.get_id()) {
                             pass.render_state.view = transform_ref.to_matrix().inverse();
                         }   
                     }
@@ -80,12 +80,12 @@ impl UserData for PassHandle {
         methods.add_method_mut("drawModel", |_, pass, model: ModelHandle| {
             Ok({
                 if let Some(pass) = pass.graph.borrow_mut().get_pass_mut(pass.id) {
-                    if let Some(model_ref) = model.get_assets().get::<Model>(model.get_id()) {
+                    if let Some(model_ref) = model.get_assets().get_datas().get::<Model>(model.get_id()) {
                         for node in model_ref.get_nodes().iter() {
-                            if let Some(mesh) = node.mesh {
+                            if let Some(mesh) = &node.mesh {
                                 pass.add_draw_cmd(
-                                    mesh, 
-                                    node.transform, 
+                                    mesh.clone(), 
+                                    node.transform.clone(), 
                                     true
                                 );
                             }
