@@ -108,10 +108,10 @@ impl Camera {
 }
 
 #[derive(Clone)]
-pub struct CameraHandle(Handle<Camera>);
+pub struct CameraHandle(Handle);
 
 impl Deref for CameraHandle {
-    type Target = Handle<Camera>;
+    type Target = Handle;
 
     fn deref(&self) -> &Self::Target {
         &self.0

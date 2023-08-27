@@ -53,10 +53,10 @@ impl PrepareAsset for Program {
     }
 }
 
-pub struct ProgramHandle(Handle<Program>);
+pub struct ProgramHandle(Handle);
 
 impl Deref for ProgramHandle {
-    type Target = Handle<Program>;
+    type Target = Handle;
 
     fn deref(&self) -> &Self::Target {
         &self.0

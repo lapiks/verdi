@@ -127,10 +127,10 @@ impl Default for Transform {
 }
 
 #[derive(Clone)]
-pub struct TransformHandle(Handle<Transform>);
+pub struct TransformHandle(Handle);
 
 impl Deref for TransformHandle {
-    type Target = Handle<Transform>;
+    type Target = Handle;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -138,14 +138,14 @@ impl Deref for TransformHandle {
 }
 
 impl DerefMut for TransformHandle {
-    fn deref_mut(&mut self) -> &mut Handle<Transform> {
+    fn deref_mut(&mut self) -> &mut Handle {
         &mut self.0
     }
 }
 
 impl TransformHandle {
     pub fn new(assets: Assets, id: TransformId) -> Self {
-        TransformHandle(assets.new_handle::<Transform>(id))
+        TransformHandle(assets.new_handle(id))
 
     }
 }

@@ -13,7 +13,7 @@ use crate::{
     globals::GlobalUniforms, 
     pass::Pass, 
     image::ImageId, 
-    uniform::{Uniform, UniformId}, 
+    uniform::{Uniform, UniformHandle}, 
 };
 
 const MAX_UNIFORMS: usize = 64;
@@ -25,7 +25,7 @@ pub type MaterialId = ResourceId;
 pub struct Material {
     pub program: ProgramId,
     textures: Vec<ImageId>,
-    uniforms: Vec<Option<(String, UniformId)>>,
+    uniforms: Vec<Option<(String, UniformHandle)>>,
     pub id: MaterialId,
 }
 
@@ -43,10 +43,10 @@ impl Material {
     pub fn new(program: ProgramId, global_uniforms: &GlobalUniforms) -> Self {
         let mut uniforms = vec![None; MAX_UNIFORMS];
         // add global uniforms to the material
-        uniforms[0] = Some(("u_model".to_string(), global_uniforms.model_matrix.get_id()));
-        uniforms[1] = Some(("u_view".to_string(), global_uniforms.view_matrix.get_id()));
-        uniforms[2] = Some(("u_projection".to_string(), global_uniforms.projection_matrix.get_id()));
-        uniforms[3] = Some(("u_resolution".to_string(), global_uniforms.resolution.get_id()));
+        uniforms[0] = Some(("u_model".to_string(), global_uniforms.model_matrix.clone()));
+        uniforms[1] = Some(("u_view".to_string(), global_uniforms.view_matrix.clone()));
+        uniforms[2] = Some(("u_projection".to_string(), global_uniforms.projection_matrix.clone()));
+        uniforms[3] = Some(("u_resolution".to_string(), global_uniforms.resolution.clone()));
 
         Self {
             program,
@@ -56,10 +56,10 @@ impl Material {
         }
     }
 
-    pub fn add_uniform(&mut self, name: &str, id: UniformId) -> &mut Self {
+    pub fn add_uniform(&mut self, name: String, uniform_handle: UniformHandle) -> &mut Self {
         for uniform in &mut self.uniforms[..] {
             if uniform.is_none() {
-                *uniform = Some((name.to_string(), id));
+                *uniform = Some((name, uniform_handle));
                 break;
             }
         }
@@ -70,14 +70,15 @@ impl Material {
         &self.textures
     }
 
-    pub fn get_uniform_values(&self, assets: &Assets, pass: &Pass) -> Option<UniformValues> {
+    pub fn get_uniform_values(&self) -> Option<UniformValues> {
         // construct uniform values from the material uniforms description 
         let mut uniform_values = [None; MAX_UNIFORMS];
 
-        for (uniform_value, uniform_id) in uniform_values.iter_mut().zip(&self.uniforms) {
-            if let Some((name, id)) = uniform_id {
-                if let Some(value) = assets.get_datas().get::<Uniform<f32>>(*id) {
-                    *uniform_value = Some((&name[..], value.get_value()));
+        for (uniform_value, uniform_handle) in uniform_values.iter_mut().zip(self.uniforms.clone()) {
+            if let Some((name, handle)) = uniform_handle.clone() {
+                let asset_datas = handle.get_datas();
+                if let Some(uniform) = asset_datas.get::<Uniform<f32>>(handle.get_id()) {
+                    *uniform_value = Some((name.as_str(), uniform.get_value()));
                 }
                 else {
                     // missing uniform
@@ -98,10 +99,10 @@ impl Material {
     }
 }
 
-pub struct MaterialHandle(Handle<Material>);
+pub struct MaterialHandle(Handle);
 
 impl Deref for MaterialHandle {
-    type Target = Handle<Material>;
+    type Target = Handle;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -109,7 +110,7 @@ impl Deref for MaterialHandle {
 }
 
 impl DerefMut for MaterialHandle {
-    fn deref_mut(&mut self) -> &mut Handle<Material> {
+    fn deref_mut(&mut self) -> &mut Handle {
         &mut self.0
     }
 }
@@ -123,18 +124,18 @@ impl MaterialHandle {
 impl UserData for MaterialHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("addUniform", |_, material, (name, value): (String, LuaValue)| {
-            let mut uniform_id = None;
+            let mut uniform = None;
             {
                 let assets = material.get_assets_mut();
                 match value {
                     LuaValue::Nil => todo!(),
                     LuaValue::Boolean(v) => {
-                        uniform_id = Some(assets.add(Box::new(Uniform::new(v))));
+                        uniform = Some(UniformHandle::new(assets.clone(), assets.add(Box::new(Uniform::new(v)))));
                     },
                     LuaValue::LightUserData(_) => todo!(),
                     LuaValue::Integer(_) => todo!(),
                     LuaValue::Number(v) => {
-                        uniform_id = Some(assets.add(Box::new(Uniform::new(v as f32))));
+                        uniform = Some(UniformHandle::new(assets.clone(), assets.add(Box::new(Uniform::new(v as f32)))));
                     }
                     LuaValue::String(_) => todo!(),
                     LuaValue::Table(_) => todo!(),
@@ -145,13 +146,13 @@ impl UserData for MaterialHandle {
                 };
             }
     
-            if let Some(uniform_id) = uniform_id {
+            if let Some(uniform) = uniform {
                 let material_id = material.get_id();
                 let mut assets = material.get_datas_mut();
                 let material = assets
                     .get_mut::<Material>(material_id)
                     .unwrap()
-                    .add_uniform(&name, uniform_id);
+                    .add_uniform(name, uniform);
             }
     
             Ok(())

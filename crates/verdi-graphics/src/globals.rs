@@ -25,15 +25,15 @@ impl Globals {
 /// Indicates where to find the global uniforms in the uniform database.
 #[derive(Clone)]
 pub struct GlobalUniforms {
-    pub model_matrix: UniformHandle<Mat4>,
-    pub view_matrix: UniformHandle<Mat4>,
-    pub projection_matrix: UniformHandle<Mat4>,
-    pub resolution: UniformHandle<Vec2>,
-    pub enable_lighting: UniformHandle<bool>,
-    pub enable_fog: UniformHandle<bool>,
-    pub fog_start: UniformHandle<f32>,
-    pub fog_end: UniformHandle<f32>,
-    pub identity_mat: UniformHandle<Mat4>, // TODO: temporary
+    pub model_matrix: UniformHandle,
+    pub view_matrix: UniformHandle,
+    pub projection_matrix: UniformHandle,
+    pub resolution: UniformHandle,
+    pub enable_lighting: UniformHandle,
+    pub enable_fog: UniformHandle,
+    pub fog_start: UniformHandle,
+    pub fog_end: UniformHandle,
+    pub identity_mat: UniformHandle, // TODO: temporary
 }
 
 impl GlobalUniforms {

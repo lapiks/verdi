@@ -65,32 +65,32 @@ impl<T: UniformType> Uniform<T> {
         }
     }
 
-    pub fn get_value(&self)  -> UniformValue {
-        self.get_value()
+    pub fn get_value(&self) -> UniformValue {
+        self.value.get_value()
     }
 }
 
 #[derive(Clone)]
-pub struct UniformHandle<T: UniformType>(Handle<Uniform<T>>);
+pub struct UniformHandle(Handle);
 
-impl<T: UniformType> UniformHandle<T> {
+impl UniformHandle {
     pub fn new(assets: Assets, id: UniformId) -> Self {
         UniformHandle(assets.new_handle(id))
     }
 }
 
-impl<T: UniformType> Deref for UniformHandle<T> {
-    type Target = Handle<Uniform<T>>;
+impl Deref for UniformHandle {
+    type Target = Handle;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<T: UniformType> DerefMut for UniformHandle<T> {
-      fn deref_mut(&mut self) -> &mut Handle<Uniform<T>> {
+impl DerefMut for UniformHandle {
+      fn deref_mut(&mut self) -> &mut Handle {
         &mut self.0
     }
 }
 
-impl<T: UniformType> UserData for UniformHandle<T> {}
+impl UserData for UniformHandle {}

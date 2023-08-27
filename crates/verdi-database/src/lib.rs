@@ -1,4 +1,4 @@
-use std::{any::Any, rc::Rc, cell::{RefCell, Ref, RefMut}, marker::PhantomData};
+use std::{any::Any, rc::Rc, cell::{RefCell, Ref, RefMut}};
 
 use slotmap::{SlotMap, new_key_type};
 
@@ -15,7 +15,7 @@ pub trait Resource: 'static {
 pub struct Assets(Rc<RefCell<AssetDatas>>);
 
 impl Assets {
-    pub fn new_handle<R: Resource>(&self, id: ResourceId) -> Handle<R> {
+    pub fn new_handle(&self, id: ResourceId) -> Handle {
         Handle::new(self.clone(), id)
     }
 }
@@ -83,15 +83,14 @@ impl AssetDatas {
 }
 
 #[derive(Clone)]
-pub struct Handle<R: Resource> {
+pub struct Handle {
     assets: Assets,
     id: ResourceId,
-    marker: PhantomData<fn() -> R>,
 }
 
-impl<R: Resource> Handle<R> {
+impl Handle {
     pub fn new(assets: Assets, id: ResourceId) -> Self {
-        Self { assets, id, marker: PhantomData }
+        Self { assets, id }
     }
 
     pub fn get_id(&self) -> ResourceId {

@@ -33,10 +33,10 @@ impl Shader {
     }
 }
 
-pub struct ShaderHandle(Handle<Shader>);
+pub struct ShaderHandle(Handle);
 
 impl Deref for ShaderHandle {
-    type Target = Handle<Shader>;
+    type Target = Handle;
 
     fn deref(&self) -> &Self::Target {
         &self.0

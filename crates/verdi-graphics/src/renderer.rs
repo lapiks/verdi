@@ -132,7 +132,7 @@ impl Renderer {
                     .expect("Material not found");
 
                 let uniform_values = material
-                    .get_uniform_values(gpu.assets, pass)
+                    .get_uniform_values()
                     .expect("Unable to generate uniform values");
 
                 let program = gpu_assets

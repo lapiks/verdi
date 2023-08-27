@@ -113,10 +113,10 @@ impl PrepareAsset for Mesh {
 }
 
 #[derive(Clone)]
-pub struct MeshHandle(Handle<Mesh>);
+pub struct MeshHandle(Handle);
 
 impl Deref for MeshHandle {
-    type Target = Handle<Mesh>;
+    type Target = Handle;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -124,7 +124,7 @@ impl Deref for MeshHandle {
 }
 
 impl DerefMut for MeshHandle {
-      fn deref_mut(&mut self) -> &mut Handle<Mesh> {
+      fn deref_mut(&mut self) -> &mut Handle {
         &mut self.0
     }
 }

@@ -199,14 +199,14 @@ impl GltfLoader {
             .and_then(|i| textures.get(i).cloned());
 
         let mut material = Material::new(globals.global_shaders.gouraud_textured, &globals.global_uniforms);
-        material.add_uniform("u_enable_fog", globals.global_uniforms.enable_fog.get_id());
-        material.add_uniform("u_fog_start", globals.global_uniforms.fog_start.get_id());
-        material.add_uniform("u_fog_end", globals.global_uniforms.fog_end.get_id());
-        material.add_uniform("u_enable_lighting", globals.global_uniforms.enable_lighting.get_id());
+        material.add_uniform("u_enable_fog".to_string(), globals.global_uniforms.enable_fog.clone());
+        material.add_uniform("u_fog_start".to_string(), globals.global_uniforms.fog_start.clone());
+        material.add_uniform("u_fog_end".to_string(), globals.global_uniforms.fog_end.clone());
+        material.add_uniform("u_enable_lighting".to_string(), globals.global_uniforms.enable_lighting.clone());
 
-        if let Some(id) = texture_id {
-            material.add_uniform("u_texture", id);
-        }
+        // if let Some(id) = texture_id {
+        //     material.add_uniform("u_texture", id);
+        // }
 
         material.to_owned()
     }

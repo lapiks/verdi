@@ -39,10 +39,10 @@ impl Sprite {
 }
 
 #[derive(Clone)]
-pub struct SpriteHandle(Handle<Sprite>);
+pub struct SpriteHandle(Handle);
 
 impl Deref for SpriteHandle {
-    type Target = Handle<Sprite>;
+    type Target = Handle;
 
     fn deref(&self) -> &Self::Target {
         &self.0

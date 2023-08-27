@@ -48,10 +48,10 @@ impl Model {
 }
 
 #[derive(Clone)]
-pub struct ModelHandle(Handle<Model>);
+pub struct ModelHandle(Handle);
 
 impl Deref for ModelHandle {
-    type Target = Handle<Model>;
+    type Target = Handle;
 
     fn deref(&self) -> &Self::Target {
         &self.0

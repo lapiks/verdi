@@ -6,5 +6,5 @@ use crate::{mesh::MeshHandle, uniform::UniformHandle};
 pub struct RenderPass {
     // plutôt node qui contient mesh + transform ?
     pub mesh: MeshHandle,
-    pub transform_matrix: UniformHandle<Mat4>
+    pub transform_matrix: UniformHandle
 }

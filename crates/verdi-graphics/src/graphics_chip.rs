@@ -414,9 +414,9 @@ impl GraphicsChip {
             self.globals.global_shaders.gouraud, 
             &self.globals.global_uniforms
         );
-        material.add_uniform("u_fog_start", self.globals.global_uniforms.fog_start.get_id());
-        material.add_uniform("u_fog_end", self.globals.global_uniforms.fog_end.get_id());
-        material.add_uniform("u_enable_lighting", self.globals.global_uniforms.enable_lighting.get_id());
+        material.add_uniform("u_fog_start".to_string(), self.globals.global_uniforms.fog_start.clone());
+        material.add_uniform("u_fog_end".to_string(), self.globals.global_uniforms.fog_end.clone());
+        material.add_uniform("u_enable_lighting".to_string(), self.globals.global_uniforms.enable_lighting.clone());
 
         self.assets.add(
             Box::new(material)

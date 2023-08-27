@@ -84,10 +84,10 @@ impl PrepareAsset for Image {
 }
 
 #[derive(Clone)]
-pub struct ImageHandle(Handle<Image>);
+pub struct ImageHandle(Handle);
 
 impl Deref for ImageHandle {
-    type Target = Handle<Image>;
+    type Target = Handle;
 
     fn deref(&self) -> &Self::Target {
         &self.0
