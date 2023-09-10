@@ -11,7 +11,4 @@ void main() {
 
     // wo texture
     color = mix(v_color, fog_color, v_fog_density);
-
-    // solid color
-    //color = v_color;
 }

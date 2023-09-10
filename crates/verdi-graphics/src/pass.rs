@@ -4,7 +4,7 @@ use mlua::{UserData, UserDataMethods};
 use verdi_math::prelude::{TransformHandle, Transform};
 
 use crate::{
-    render_cmds::DrawCmd, 
+    render_cmds::{DrawCmd, DrawCmd2}, 
     mesh::MeshHandle, 
     render_graph::RenderGraph, 
     model::{ModelHandle, Model}, 

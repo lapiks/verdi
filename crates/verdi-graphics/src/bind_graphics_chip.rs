@@ -82,33 +82,21 @@ impl<'lua> BindGraphicsChip {
         gpu.borrow_mut().new_camera(transform)
     }
 
-    fn new_uniform(gpu: Rc<RefCell<GraphicsChip>>, value: f32) -> UniformHandle {
-        let uniform_id = gpu.borrow_mut().new_uniform(value);
-        UniformHandle::new(
-            gpu.borrow().assets.clone(), 
-            uniform_id
-        )
-    }
+    // fn new_uniform(gpu: Rc<RefCell<GraphicsChip>>, value: f32) -> UniformHandle {
+    //     let uniform_id = gpu.borrow_mut().new_uniform(value);
+    //     UniformHandle::new(
+    //         gpu.borrow().assets.clone(), 
+    //         uniform_id
+    //     )
+    // }
 
     fn set_clear_color(gpu: &mut GraphicsChip, color: &Vec4) {
         gpu.set_clear_color(color);
     }
 
-    // fn translate(gpu: &mut GraphicsChip, v: &Vec3) {
-    //     gpu.translate(v);
-    // }
-
-    // fn rotate(gpu: &mut GraphicsChip, angle: f32, axis: &Vec3) {
-    //     gpu.rotate(angle, axis);
-    // }
-
     fn draw_line(gpu: &mut GraphicsChip, p1: &Vec2, p2: &Vec2) {
         gpu.draw_line(p1, p2);
     }
-
-    // fn draw_mesh(gpu: &mut GraphicsChip, mesh: MeshHandle, transform: TransformHandle) {
-    //     gpu.draw_mesh(mesh.id, transform.id);
-    // }
 
     pub fn bind(lua: &Lua, gpu: Rc<RefCell<GraphicsChip>>) -> Result<()> {
         let globals = lua.globals();
@@ -206,11 +194,11 @@ impl<'lua> BindGraphicsChip {
             let func = lua.create_function_mut(move |_, ()| Ok(BindGraphicsChip::new_material(gpu.clone())))?;
             module_table.set("newMaterial", func)?;
         }
-        {
-            let gpu = gpu.clone();
-            let func = lua.create_function_mut(move |_, value: f32| Ok(BindGraphicsChip::new_uniform(gpu.clone(), value)))?;
-            module_table.set("newUniform", func)?;
-        }
+        // {
+        //     let gpu = gpu.clone();
+        //     let func = lua.create_function_mut(move |_, value: f32| Ok(BindGraphicsChip::new_uniform(gpu.clone(), value)))?;
+        //     module_table.set("newUniform", func)?;
+        // }
         {
             let gpu = gpu.clone();
             let func = lua.create_function_mut(move |_, transform: TransformHandle| Ok(BindGraphicsChip::new_camera(gpu.clone(), transform)))?;

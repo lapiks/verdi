@@ -1,6 +1,5 @@
 use std::any::Any;
 
-use glium::Display;
 use slotmap::SecondaryMap;
 use verdi_database::{ResourceId, Resource, Assets};
 
@@ -10,12 +9,14 @@ use thiserror::Error;
 pub enum GpuAssetError {
     #[error("Gpu asset creation failed")]
     PreparationFailed,
+    #[error("Miniquad shader compilation error")]
+    ShaderError(#[from] miniquad::ShaderError),
 }
 
 pub trait GpuAsset: Resource {}
 
 pub(crate) trait PrepareAsset {
-    fn prepare_rendering(&self, display: &Display, db: &Assets) -> Result<Box<dyn GpuAsset>, GpuAssetError>;
+    fn prepare_rendering(&self, ctx: &mut dyn miniquad::RenderingBackend, assets: &Assets, gpu_assets: &GpuAssets) -> Result<Box<dyn GpuAsset>, GpuAssetError>;
 }
 
 pub struct GpuAssets(SecondaryMap<ResourceId, Box<dyn GpuAsset>>);

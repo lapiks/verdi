@@ -250,7 +250,10 @@ impl UserData for TransformHandle {
         methods.add_method("right", |_, this, ()| {
             Ok({
                 if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
-                    LuaVec3(transform.right());
+                    LuaVec3(transform.right())
+                }
+                else {
+                    todo!()
                 }
             })
         });
@@ -258,7 +261,10 @@ impl UserData for TransformHandle {
         methods.add_method("left", |_, this, ()| {
             Ok({
                 if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
-                    LuaVec3(transform.left());
+                    LuaVec3(transform.left())
+                }
+                else {
+                    todo!()
                 }
             })
         });
@@ -266,7 +272,10 @@ impl UserData for TransformHandle {
         methods.add_method("up", |_, this, ()| {
             Ok({
                 if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
-                    LuaVec3(transform.up());
+                    LuaVec3(transform.up())
+                }
+                else {
+                    todo!()
                 }
             })
         });
@@ -274,7 +283,10 @@ impl UserData for TransformHandle {
         methods.add_method("down", |_, this, ()| {
             Ok({
                 if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
-                    LuaVec3(transform.down());
+                    LuaVec3(transform.down())
+                }
+                else {
+                    todo!()
                 }
             })
         });
@@ -282,7 +294,10 @@ impl UserData for TransformHandle {
         methods.add_method("forward", |_, this, ()| {
             Ok({
                 if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
-                    LuaVec3(transform.forward());
+                    LuaVec3(transform.forward())
+                }
+                else {
+                    todo!()
                 }
             })
         });
@@ -290,7 +305,10 @@ impl UserData for TransformHandle {
         methods.add_method("backward", |_, this, ()| {
             Ok({
                 if let Some(transform) = this.get_datas().get::<Transform>(this.get_id()) {
-                    LuaVec3(transform.backward());
+                    LuaVec3(transform.backward())
+                }
+                else {
+                    todo!()
                 }
             })
         });

@@ -11,10 +11,6 @@ out vec4 v_color;
 out vec2 v_uv;
 out float v_fog_density;
 
-// light
-uniform bool u_enable_lighting;
-uniform vec3 u_light;
-
 // matrices
 uniform mat4 u_model;
 uniform mat4 u_view;
@@ -26,6 +22,10 @@ uniform vec2 u_resolution;
 uniform bool u_enable_fog;
 uniform float u_fog_start;
 uniform float u_fog_end;
+
+// light
+uniform bool u_enable_lighting;
+//uniform vec3 u_light;
 
 // Polygon jittering
 vec4 snap(vec4 vertex) {
@@ -71,12 +71,13 @@ void main() {
 
         // diffuse
         vec3 v_normal = normalize(mat3(transpose(inverse(u_model))) * normal);
+        vec3 u_light = vec3(1.0, 0.0, 0.0);
         vec3 lighting_dir = normalize(u_light - world_vertex.xyz);
         float light_mag = max(dot(lighting_dir, v_normal), 0.0);
         vec3 diffuse_comp = light_mag * light_color;
 
         // final color
-        v_color = vec4(color.xyz * (ambient_comp + diffuse_comp), color.w);
+        v_color = vec4(color.xyz * (ambient_comp + diffuse_comp), 1.0);
     }
     else {
         v_color = color;

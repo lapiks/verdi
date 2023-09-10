@@ -1,5 +1,5 @@
 use crate::{
-    gui::GUIPanel, 
+    //gui::GUIPanel, 
     commands::Command, 
     app_commands::{
         Run, 
@@ -21,20 +21,20 @@ impl Toolbar {
     }
 }
 
-impl GUIPanel for Toolbar {
-    fn name(&self) -> &'static str {
-        "Toolbar"
-    }
+// impl GUIPanel for Toolbar {
+//     fn name(&self) -> &'static str {
+//         "Toolbar"
+//     }
 
-    fn show(&mut self, ctx: &egui::Context, _open: &mut bool) -> Option<Box<dyn Command>> {
-        let mut command = None;
-        egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
-            command = self.ui(ui);
-        });
+//     fn show(&mut self, ctx: &egui::Context, _open: &mut bool) -> Option<Box<dyn Command>> {
+//         let mut command = None;
+//         egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
+//             command = self.ui(ui);
+//         });
 
-        command
-    }
-}
+//         command
+//     }
+// }
 
 impl Toolbar {
     fn ui(&mut self, ui: &mut egui::Ui) -> Option<Box<dyn Command>> {

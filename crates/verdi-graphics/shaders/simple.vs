@@ -1,0 +1,41 @@
+#version 150
+
+// in
+in vec3 position;
+in vec3 normal;
+in vec4 color;
+in vec2 uv;
+
+out vec4 v_color;
+
+// matrices
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_projection;
+
+uniform vec2 resolution;
+
+
+void main() {
+    vec4 world_vertex = u_model * vec4(position, 1.0);
+    vec4 view_vertex = u_view * world_vertex;
+    vec4 proj_vertex = u_projection * view_vertex;
+
+    const vec3 light_color = vec3(1.0, 1.0, 1.0);
+
+    // ambient
+    const float ambient_strength = 0.1;
+    vec3 ambient_comp = ambient_strength * light_color;
+
+    // diffuse
+    vec3 v_normal = normalize(mat3(transpose(inverse(u_model))) * normal);
+    vec3 u_light = vec3(1.0, 0.0, 0.0);
+    vec3 lighting_dir = normalize(u_light - world_vertex.xyz);
+    float light_mag = max(dot(lighting_dir, v_normal), 0.0);
+    vec3 diffuse_comp = light_mag * light_color;
+
+    // final color
+    v_color = vec4(vec3(1.0, 0.0, 0.0) * (ambient_comp + diffuse_comp), 1.0);
+
+    gl_Position = proj_vertex;
+}

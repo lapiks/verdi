@@ -27,14 +27,14 @@ pub enum ScriptError {
 
 pub struct Scripts {
     scripts: HashMap<PathBuf, Script>,
-    file_watcher: FileWatcher,
+    file_watcher: Option<FileWatcher>,
 }
 
 impl Scripts {
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, ScriptError> {
+    pub fn new() -> Result<Self, ScriptError> {
         Ok(Self {
             scripts: HashMap::default(),
-            file_watcher: FileWatcher::new(path, Duration::from_secs(5))?,
+            file_watcher: None,
         })
     }
 
@@ -54,6 +54,12 @@ impl Scripts {
                 self.add_script(script)
             }
         }
+
+        Ok(())
+    }
+
+    pub fn add_file_watcher<P: AsRef<Path>>(&mut self, dir_path: P) -> Result<(), ScriptError> {
+        self.file_watcher = Some(FileWatcher::new(dir_path, Duration::from_secs(5))?);
 
         Ok(())
     }
@@ -79,19 +85,21 @@ impl Scripts {
     }
 
     pub fn hot_reload(&mut self, lua: &Lua) -> Result<(), ScriptError> {
-        if let Some(watcher_event) = self.file_watcher.get_event() {
-            if let notify::EventKind::Modify(_) = watcher_event.kind {
-                for path in watcher_event.paths.iter() {
-                    if let Ok(relative_path) = make_relative_path(path) {
-                        if let Some(script) = self.scripts.get_mut(&relative_path) {
-                            // reload script
-                            script.reload_from(relative_path)?;
-
-                            // update lua context
-                            LuaContext::load_script(
-                                lua, 
-                                script
-                            )?;
+        if let Some(file_watcher) = &self.file_watcher {
+            if let Some(watcher_event) = file_watcher.get_event() {
+                if let notify::EventKind::Modify(_) = watcher_event.kind {
+                    for path in watcher_event.paths.iter() {
+                        if let Ok(relative_path) = make_relative_path(path) {
+                            if let Some(script) = self.scripts.get_mut(&relative_path) {
+                                // reload script
+                                script.reload_from(relative_path)?;
+    
+                                // update lua context
+                                LuaContext::load_script(
+                                    lua, 
+                                    script
+                                )?;
+                            }
                         }
                     }
                 }

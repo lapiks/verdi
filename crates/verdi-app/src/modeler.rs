@@ -1,4 +1,4 @@
-use crate::{gui::GUIPanel, commands::Command, prelude::App};
+use crate::commands::Command;
 
 pub struct Modeler;
 
@@ -13,17 +13,18 @@ impl Modeler {
         None
     }
 }
-impl GUIPanel for Modeler {
-    fn name(&self) -> &'static str {
-        "3D Modeler"
-    }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool) -> Option<Box<dyn Command>> {
-        let mut cmd = None;
-        egui::CentralPanel::default().show(ctx, |ui| { 
-            cmd = self.ui(ui);
-        });
+// impl GUIPanel for Modeler {
+//     fn name(&self) -> &'static str {
+//         "3D Modeler"
+//     }
 
-        cmd
-    }
-}
+//     fn show(&mut self, ctx: &egui::Context, open: &mut bool) -> Option<Box<dyn Command>> {
+//         let mut cmd = None;
+//         egui::CentralPanel::default().show(ctx, |ui| { 
+//             cmd = self.ui(ui);
+//         });
+
+//         cmd
+//     }
+// }

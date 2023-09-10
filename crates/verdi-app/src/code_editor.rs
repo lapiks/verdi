@@ -3,7 +3,7 @@ use std::{path::PathBuf, rc::Rc, cell::RefCell};
 use verdi_system::prelude::Scripts;
 
 use crate::{
-    gui::GUIPanel, 
+    //gui::GUIPanel, 
     commands::Command
 };
 
@@ -21,29 +21,29 @@ impl CodeEditor {
     }
 }
 
-impl GUIPanel for CodeEditor {
-    fn name(&self) -> &'static str {
-        "Code Editor"
-    }
+// impl GUIPanel for CodeEditor {
+//     fn name(&self) -> &'static str {
+//         "Code Editor"
+//     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool) -> Option<Box<dyn Command>> {
-        egui::Window::new(self.name())
-            //.open(open)
-            .default_height(800.0)
-            .show(ctx, |ui| { 
-                if ui.input().key_pressed(egui::Key::Escape) {
-                    *open = true;
-                }
-                return self.ui(ui); 
-            }
-        );
-        // egui::CentralPanel::default().show(ctx, |ui| { 
-        //     self.draw(ui);
-        // });
+//     fn show(&mut self, ctx: &egui::Context, open: &mut bool) -> Option<Box<dyn Command>> {
+//         egui::Window::new(self.name())
+//             //.open(open)
+//             .default_height(800.0)
+//             .show(ctx, |ui| { 
+//                 if ui.input().key_pressed(egui::Key::Escape) {
+//                     *open = true;
+//                 }
+//                 return self.ui(ui); 
+//             }
+//         );
+//         // egui::CentralPanel::default().show(ctx, |ui| { 
+//         //     self.draw(ui);
+//         // });
 
-        None
-    }
-}
+//         None
+//     }
+// }
 
 impl CodeEditor {
     pub fn set_scripts(&mut self, scripts: Rc<RefCell<Scripts>>) {

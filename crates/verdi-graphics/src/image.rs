@@ -1,13 +1,12 @@
   
 use std::{path::Path, ops::Deref};
-use glium::Display;
 use image::{io::Reader as ImageReader, RgbaImage, ImageError};
 use mlua::UserData;
 use slotmap::Key;
 use verdi_database::{ResourceId, Resource, Assets, Handle};
 
 use crate::{
-    gpu_assets::{GpuAsset, GpuAssetError, PrepareAsset}, 
+    gpu_assets::{GpuAsset, GpuAssetError, PrepareAsset, GpuAssets}, 
     gpu_image::GpuImage
 };
 
@@ -71,13 +70,21 @@ impl Image {
     pub fn get_dimensions(&self) -> (u32, u32) {
         return (self.width, self.height)
     }
+
+    pub fn get_width(&self) -> u32 {
+        self.width
+    }
+
+    pub fn get_height(&self) -> u32 {
+        self.height
+    }
 }
 
 impl PrepareAsset for Image {
-    fn prepare_rendering(&self, display: &Display, assets: &Assets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
+    fn prepare_rendering(&self, ctx: &mut dyn miniquad::RenderingBackend, assets: &Assets, gpu_assets: &GpuAssets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
         Ok(
             Box::new(
-                GpuImage::new(display, self)
+                GpuImage::new(ctx, self)
             )
         )
     }

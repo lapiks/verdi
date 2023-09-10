@@ -6,10 +6,6 @@ pub mod app {
     pub use verdi_app::*;
 }
 
-pub mod window {
-    pub use verdi_window::*;
-}
-
 pub mod graphics {
     pub use verdi_graphics::*;
 }

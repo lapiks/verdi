@@ -1,22 +1,15 @@
 use std::ops::{Deref, DerefMut};
 
-use glium::
-    uniforms::{UniformValue, Uniforms as GliumUniforms}
-;
-
 use mlua::{UserData, UserDataMethods, prelude::LuaValue};
 use slotmap::Key;
 use verdi_database::{ResourceId, Resource, Assets, Handle};
 
 use crate::{
-    program::ProgramId, 
+    program::{ProgramId, Program}, 
     globals::GlobalUniforms, 
-    pass::Pass, 
     image::ImageId, 
-    uniform::{Uniform, UniformHandle}, 
+    uniform::{Uniform, UniformHandle, UniformValue}, gpu_assets::{PrepareAsset, GpuAssets, GpuAsset, GpuAssetError}, shader::Shader, gpu_program::GpuProgram, 
 };
-
-const MAX_UNIFORMS: usize = 64;
 
 pub type MaterialId = ResourceId;
 
@@ -25,7 +18,7 @@ pub type MaterialId = ResourceId;
 pub struct Material {
     pub program: ProgramId,
     textures: Vec<ImageId>,
-    uniforms: Vec<Option<(String, UniformHandle)>>,
+    uniforms: Vec<(String, UniformHandle)>,
     pub id: MaterialId,
 }
 
@@ -41,12 +34,12 @@ impl Resource for Material {
 
 impl Material {
     pub fn new(program: ProgramId, global_uniforms: &GlobalUniforms) -> Self {
-        let mut uniforms = vec![None; MAX_UNIFORMS];
+        let mut uniforms = Vec::with_capacity(4);
         // add global uniforms to the material
-        uniforms[0] = Some(("u_model".to_string(), global_uniforms.model_matrix.clone()));
-        uniforms[1] = Some(("u_view".to_string(), global_uniforms.view_matrix.clone()));
-        uniforms[2] = Some(("u_projection".to_string(), global_uniforms.projection_matrix.clone()));
-        uniforms[3] = Some(("u_resolution".to_string(), global_uniforms.resolution.clone()));
+        uniforms.push(("u_model".to_string(), global_uniforms.model_matrix.clone()));
+        uniforms.push(("u_view".to_string(), global_uniforms.view_matrix.clone()));
+        uniforms.push(("u_projection".to_string(), global_uniforms.projection_matrix.clone()));
+        uniforms.push(("u_resolution".to_string(), global_uniforms.resolution.clone()));
 
         Self {
             program,
@@ -57,45 +50,80 @@ impl Material {
     }
 
     pub fn add_uniform(&mut self, name: String, uniform_handle: UniformHandle) -> &mut Self {
-        for uniform in &mut self.uniforms[..] {
-            if uniform.is_none() {
-                *uniform = Some((name, uniform_handle));
-                break;
-            }
-        }
+        self.uniforms.push((name, uniform_handle));
+
         self
+    }
+
+    pub fn add_texture(&mut self, texture: ImageId) {
+        self.textures.push(texture);
     }
 
     pub fn get_textures(&self) -> &Vec<ImageId> {
         &self.textures
     }
 
-    pub fn get_uniform_values(&self) -> Option<UniformValues> {
-        // construct uniform values from the material uniforms description 
-        let mut uniform_values = [None; MAX_UNIFORMS];
+    pub fn get_uniform_values(&self) -> Option<Vec<u8>> {
+        // construct a buffer of uniform values from the material uniforms description as buffer of bytes
+        let mut uniform_values = Vec::default();
 
-        for (uniform_value, uniform_handle) in uniform_values.iter_mut().zip(self.uniforms.clone()) {
-            if let Some((name, handle)) = uniform_handle.clone() {
-                let asset_datas = handle.get_datas();
-                if let Some(uniform) = asset_datas.get::<Uniform<f32>>(handle.get_id()) {
-                    *uniform_value = Some((name.as_str(), uniform.get_value()));
-                }
-                else {
-                    // missing uniform
-                    return None;
-                }
+        for (_, uniform_handle) in self.uniforms.iter() {
+            if let Some(uniform) = uniform_handle.get_datas().get::<Uniform>(uniform_handle.get_id()) {
+                uniform_values.append(&mut uniform.encode_u8());
             }
             else {
-                break;
+                // missing uniform
+                return None;
             }
         }
 
-        //let program = gpu_resources.get_program(self.program)?;
+        Some(uniform_values)
+    }
+}
 
-        Some(UniformValues { 
-            //program, 
-            uniform_values 
-        })
+impl PrepareAsset for Material {
+    fn prepare_rendering(&self, ctx: &mut dyn miniquad::RenderingBackend, assets: &Assets, gpu_assets: &GpuAssets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
+        if let Some(program) = assets.get_datas().get::<Program>(self.program) {
+            if let Some(vs) = assets.get_datas().get::<Shader>(program.vs) {
+                if let Some(fs) = assets.get_datas().get::<Shader>(program.fs) {
+                    let mut uniform_descs = Vec::with_capacity(self.uniforms.len());
+                    for uniform in &self.uniforms {
+                        if let Some(uniform_value) = assets.get_datas().get::<Uniform>(uniform.1.get_id())
+                        {
+                            uniform_descs.push(
+                                miniquad::UniformDesc::new(
+                                    uniform.0.as_str(),
+                                    uniform_value.get_quad_type(),
+                                )
+                            );
+                        }
+                    }
+
+                    let shader_meta = miniquad::ShaderMeta {
+                        images: vec!["u_texture".to_string()], // TODO
+                        uniforms: miniquad::UniformBlockLayout {
+                            uniforms: uniform_descs,
+                        },
+                    };
+
+                    let shader = ctx.new_shader(
+                        miniquad::ShaderSource::Glsl { 
+                            vertex: vs.get_source(), 
+                            fragment: fs.get_source() 
+                        },
+                        shader_meta
+                    )?;
+    
+                    return Ok(
+                        Box::new(
+                            GpuProgram::new(shader)
+                        )
+                    );
+                }
+            }
+        }
+        
+        Err(GpuAssetError::PreparationFailed)
     }
 }
 
@@ -130,12 +158,34 @@ impl UserData for MaterialHandle {
                 match value {
                     LuaValue::Nil => todo!(),
                     LuaValue::Boolean(v) => {
-                        uniform = Some(UniformHandle::new(assets.clone(), assets.add(Box::new(Uniform::new(v)))));
+                        uniform = Some(
+                            UniformHandle::new(
+                                assets.clone(), 
+                                assets.add(
+                                    Box::new(
+                                        Uniform::new(
+                                            UniformValue::Bool(v)
+                                        )
+                                    )
+                                )
+                            )
+                        );
                     },
                     LuaValue::LightUserData(_) => todo!(),
                     LuaValue::Integer(_) => todo!(),
                     LuaValue::Number(v) => {
-                        uniform = Some(UniformHandle::new(assets.clone(), assets.add(Box::new(Uniform::new(v as f32)))));
+                        uniform = Some(
+                            UniformHandle::new(
+                                assets.clone(), 
+                                assets.add(
+                                    Box::new(
+                                        Uniform::new(
+                                            UniformValue::Float(v as f32)
+                                        )
+                                    )
+                                )
+                            )
+                        );
                     }
                     LuaValue::String(_) => todo!(),
                     LuaValue::Table(_) => todo!(),
@@ -157,23 +207,5 @@ impl UserData for MaterialHandle {
     
             Ok(())
         });
-    }
-}
-
-pub struct UniformValues<'a> {
-    //program: &'a GpuProgram,
-    uniform_values: [Option<(&'a str, UniformValue<'a>)>; MAX_UNIFORMS],
-}
-
-impl<'material> GliumUniforms for UniformValues<'material> {
-    fn visit_values<'a, F>(&'a self, mut set_uniform: F)
-    where
-        F: FnMut(&str, UniformValue<'a>),
-    {
-        for uniform in &self.uniform_values[..] {
-            if let Some((name, value)) = *uniform {
-                set_uniform(name, value);
-            }
-        }
     }
 }

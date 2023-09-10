@@ -13,7 +13,7 @@ verdi-math = { path = "../verdi-math" }
 verdi-ecs = { path = "../verdi-ecs" }
 verdi-audio = { path = "../verdi-audio" }
 verdi-database = { path = "../verdi-database" }
-glium = "*"
+miniquad = "0.4.0-alpha.6"
 mlua = { version = "0.8", features = ["lua54", "vendored"] }
 thiserror = "1.0.34"
 notify = "5.0.0"

@@ -1,28 +1,18 @@
-use slotmap::{new_key_type, Key};
 use verdi_database::Resource;
 
-use crate::{shader::Shader, gpu_assets::GpuAsset};
+use crate::gpu_assets::GpuAsset;
 
-new_key_type! {
-    pub struct GpuProgramId;
-}
+pub struct GpuProgram(miniquad::ShaderId);
 
-pub struct GpuProgram {
-    pub gl: glium::Program,
-    pub id: GpuProgramId,
+impl GpuProgram {
+    pub fn new(id: miniquad::ShaderId) -> Self {
+        Self(id)
+    }
 }
 
 impl GpuProgram {
-    pub fn new(display: &glium::Display, vs: &Shader, fs: &Shader) -> Self {
-        Self {
-            gl: glium::Program::from_source(
-                display, 
-                vs.get_source(), 
-                fs.get_source(), 
-                None
-            ).unwrap(),
-            id: GpuProgramId::null(),
-        } 
+    pub fn get_shader(&self) -> miniquad::ShaderId {
+        self.0
     }
 }
 

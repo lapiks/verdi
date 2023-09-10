@@ -16,11 +16,11 @@ use crate::{
     sprite::{SpriteId, Sprite}, 
     uniform::{Uniform, UniformType, UniformId}, 
     gpu_assets::{GpuAssets, PrepareAsset}, 
-    program::Program,
+    gpu_pipeline::GpuPipeline, pipeline::Pipeline,
 };
 
-use glium::Display;
 use image::ImageError;
+use miniquad::RenderingBackend;
 use verdi_database::Assets;
 use verdi_math::prelude::*;
 
@@ -30,7 +30,7 @@ pub struct GraphicsChip {
     pub render_passes: Vec<RenderPass>,
     pub stream_buffer: StreamBufferState,
     pub assets: Assets,
-    pub gpu_assets: Rc<RefCell<GpuAssets>>,
+    pub gpu_assets: GpuAssets,
     pub globals: Rc<Globals>,
     pub render_state: RenderState,
     math: Rc<RefCell<Math>>, 
@@ -48,7 +48,7 @@ impl GraphicsChip {
         let mat_2d = assets
             .add(
                 Box::new(
-                    Material::new(globals.global_shaders.gouraud, &globals.global_uniforms)
+                    Material::new(globals.global_programs.gouraud, &globals.global_uniforms)
                         .clone()
                 )
         );
@@ -58,7 +58,7 @@ impl GraphicsChip {
                 Box::new(
                     Mesh::new(
                         vec![Vertex::default(); 1024 * 1024],
-                        None,
+                        vec![], // TODO: fill something
                         //PrimitiveType::Triangles,
                         PrimitiveType::Lines,
                         mat_2d,
@@ -79,7 +79,7 @@ impl GraphicsChip {
             render_passes: Vec::new(),
             stream_buffer,
             assets,
-            gpu_assets: Rc::new(RefCell::new(GpuAssets::new())),
+            gpu_assets: GpuAssets::new(),
             globals,
             render_state: RenderState::new(),
             math,
@@ -92,7 +92,7 @@ impl GraphicsChip {
 
     pub fn on_game_shutdown(&mut self) {
         self.assets.clear();
-        self.gpu_assets.borrow_mut().clear();
+        self.gpu_assets.clear();
         self.render_passes.clear();
     }
 
@@ -113,10 +113,39 @@ impl GraphicsChip {
         //self.buffer_state.next_frame();
     }
 
-    pub fn prepare_gpu_assets(&mut self, display: &Display) {
+    pub fn prepare_gpu_assets(&mut self, ctx: &mut dyn RenderingBackend) {
         // à rendre générique
 
         let asset_datas = self.assets.get_datas();
+
+        // construct gpu programs
+        // Pas fou !
+        // if self.gpu_assets.get::<Material>(self.globals.global_programs.gouraud).is_none() {
+        //     if let Some(program) = self.assets.get_datas().get::<Material>(self.globals.global_programs.gouraud) {
+        //         match program.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
+        //             Ok(gpu_program) => self.gpu_assets.add(self.globals.global_programs.gouraud, gpu_program),
+        //             Err(_) => todo!(),
+        //         }
+        //     }   
+        // }
+
+        // if self.gpu_assets.get::<Material>(self.globals.global_programs.gouraud_textured).is_none() {
+        //     if let Some(program) = self.assets.get_datas().get::<Material>(self.globals.global_programs.gouraud_textured) {
+        //         match program.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
+        //             Ok(gpu_program) => self.gpu_assets.add(self.globals.global_programs.gouraud_textured, gpu_program),
+        //             Err(_) => todo!(),
+        //         }
+        //     }   
+        // }
+
+        // if self.gpu_assets.get::<Material>(self.globals.global_programs.std_2d).is_none() {
+        //     if let Some(program) = self.assets.get_datas().get::<Material>(self.globals.global_programs.std_2d) {
+        //         match program.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
+        //             Ok(gpu_program) => self.gpu_assets.add(self.globals.global_programs.std_2d, gpu_program),
+        //             Err(_) => todo!(),
+        //         }
+        //     }   
+        // }
 
         for pass in self.render_graph.borrow().get_passes().iter() {
             for cmd in pass.get_cmds() {
@@ -125,49 +154,34 @@ impl GraphicsChip {
                     .expect("Missing primitive resource");
 
                 // construct gpu primitive
-                match mesh.prepare_rendering(display, &self.assets) {
-                    Ok(gpu_mesh) => self.gpu_assets.borrow_mut().add(cmd.mesh.get_id(), gpu_mesh),
+                match mesh.prepare_rendering(ctx, &self.assets, &self.gpu_assets) {
+                    Ok(gpu_mesh) => self.gpu_assets.add(cmd.mesh.get_id(), gpu_mesh),
                     Err(_) => todo!(),
                 }
 
                 // construct gpu objects needed by the material
                 if let Some(material) = self.assets.get_datas().get::<Material>(mesh.material) {
+                    match material.prepare_rendering(ctx, &self.assets, &self.gpu_assets) {
+                        Ok(gpu_program) => self.gpu_assets.add(material.program, gpu_program),
+                        Err(_) => todo!(),
+                    }   
                     for texture_id in material.get_textures() {
                         if let Some(texture) = asset_datas.get::<Image>(*texture_id) {
-                            match texture.prepare_rendering(display, &self.assets)  {
-                                Ok(gpu_texture) => self.gpu_assets.borrow_mut().add(*texture_id, gpu_texture),
+                            match texture.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
+                                Ok(gpu_texture) => self.gpu_assets.add(*texture_id, gpu_texture),
                                 Err(_) => todo!(),
+
                             }
                         }
                     }
                 }     
             }     
         }
-        
-        // construct gpu programs
-        // Pas fou !
-        if self.gpu_assets.borrow().get::<Program>(self.globals.global_shaders.gouraud).is_none() {
-            if let Some(program) = self.assets.get_datas().get::<Program>(self.globals.global_shaders.gouraud) {
-                match program.prepare_rendering(display, &self.assets)  {
-                    Ok(gpu_program) => self.gpu_assets.borrow_mut().add(self.globals.global_shaders.gouraud, gpu_program),
-                    Err(_) => todo!(),
-                }
-            }   
-        }
 
-        if self.gpu_assets.borrow().get::<Program>(self.globals.global_shaders.gouraud_textured).is_none() {
-            if let Some(program) = self.assets.get_datas().get::<Program>(self.globals.global_shaders.gouraud_textured) {
-                match program.prepare_rendering(display, &self.assets)  {
-                    Ok(gpu_program) => self.gpu_assets.borrow_mut().add(self.globals.global_shaders.gouraud_textured, gpu_program),
-                    Err(_) => todo!(),
-                }
-            }   
-        }
-
-        if self.gpu_assets.borrow().get::<Program>(self.globals.global_shaders.std_2d).is_none() {
-            if let Some(program) = self.assets.get_datas().get::<Program>(self.globals.global_shaders.std_2d) {
-                match program.prepare_rendering(display, &self.assets)  {
-                    Ok(gpu_program) => self.gpu_assets.borrow_mut().add(self.globals.global_shaders.std_2d, gpu_program),
+        if self.gpu_assets.get::<GpuPipeline>(self.globals.global_pipelines.default_pipeline.get_id()).is_none() {
+            if let Some(pipeline) = self.assets.get_datas().get::<Pipeline>(self.globals.global_pipelines.default_pipeline.get_id()) {
+                match pipeline.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
+                    Ok(gpu_pipeline) => self.gpu_assets.add(self.globals.global_pipelines.default_pipeline.get_id(), gpu_pipeline),
                     Err(_) => todo!(),
                 }
             }   
@@ -327,15 +341,21 @@ impl GraphicsChip {
     
     pub fn new_mesh(&mut self) -> Result<MeshId, GltfError> {
         let vertex_buffer:Vec<Vertex> = Vec::new();
-        let index_buffer = None;
-
         let material_id = self.new_gouraud_material();
+        // let material = Material::new(
+        //     self.globals.global_programs.gouraud, 
+        //     &self.globals.global_uniforms
+        // );
+
+        // let material_id = self.assets.add(
+        //     Box::new(material)
+        // );
 
         Ok(self.assets.add(
             Box::new(
                 Mesh::new(
                     vertex_buffer,
-                    index_buffer,
+                    vec![], // TODO: fill something,
                     PrimitiveType::Triangles,
                     material_id
                 )
@@ -378,7 +398,7 @@ impl GraphicsChip {
     //     let index_buffer = vec![0, 1, 2, 2, 1, 3];
 
     //     let mut material = Material::new(
-    //         self.globals.global_shaders.std_2d, 
+    //         self.globals.global_materials.std_2d, 
     //         &self.globals.global_uniforms
     //     );
 
@@ -411,9 +431,10 @@ impl GraphicsChip {
 
     pub fn new_gouraud_material(&mut self) -> MaterialId {
         let mut material = Material::new(
-            self.globals.global_shaders.gouraud, 
+            self.globals.global_programs.gouraud_textured, 
             &self.globals.global_uniforms
         );
+        material.add_uniform("u_enable_fog".to_string(), self.globals.global_uniforms.enable_fog.clone());
         material.add_uniform("u_fog_start".to_string(), self.globals.global_uniforms.fog_start.clone());
         material.add_uniform("u_fog_end".to_string(), self.globals.global_uniforms.fog_end.clone());
         material.add_uniform("u_enable_lighting".to_string(), self.globals.global_uniforms.enable_lighting.clone());
@@ -425,7 +446,7 @@ impl GraphicsChip {
 
     pub fn new_2d_material(&mut self) -> MaterialId {
         let material = Material::new(
-            self.globals.global_shaders.std_2d, 
+            self.globals.global_programs.std_2d, 
             &self.globals.global_uniforms
         );
         self.assets.add(
@@ -433,13 +454,13 @@ impl GraphicsChip {
         )
     }
 
-    pub fn new_uniform<T: UniformType>(&mut self, value: T) -> UniformId {
-        self.assets.add(
-            Box::new(
-                Uniform::new(value)
-            )
-        )
-    }
+    // pub fn new_uniform<T: UniformType>(&mut self, value: T) -> UniformId {
+    //     self.assets.add(
+    //         Box::new(
+    //             Uniform::new(value)
+    //         )
+    //     )
+    // }
 
     pub fn new_camera(&mut self, transform: TransformHandle) -> CameraHandle {
         let camera_id = self.assets.add(
@@ -558,7 +579,7 @@ impl GraphicsChip {
 
         let new_offset = self.stream_buffer.current_offset + cmd.vertex_count as usize;
         let stream_buffer = StreamBuffer {
-            data: &mut mesh.vertex_buffer[
+            data: &mut mesh.vertices[
                 self.stream_buffer.current_offset
                 ..
                 new_offset

@@ -1,11 +1,5 @@
-use std::{rc::Rc, cell::RefCell, path::{Path, PathBuf}};
+use std::{rc::Rc, cell::RefCell, path::Path};
 
-use glium::{
-    Display, 
-    Frame, 
-    glutin::event::{WindowEvent, DeviceEvent}, 
-    framebuffer::SimpleFrameBuffer
-};
 use mlua::Lua;
 use verdi_audio::prelude::{AudioHandle, Audio, BindAudio};
 use verdi_ecs::prelude::{WorldHandle, World, BindWorld};
@@ -16,7 +10,7 @@ use verdi_graphics::prelude::{
     RenderTarget,
     PassHandle,
 };
-use verdi_input::prelude::{Inputs, BindInputs};
+use verdi_input::prelude::{Inputs, BindInputs, MouseButton, Key};
 use verdi_math::prelude::{BindMath, Math};
 
 use crate::{
@@ -50,6 +44,7 @@ pub enum SystemState {
 
 /// The Game system.
 pub struct System {
+    ctx: Box<dyn miniquad::RenderingBackend>,
     pub state: SystemState,
     lua: Lua,
     world: WorldHandle,
@@ -59,14 +54,15 @@ pub struct System {
     inputs: Rc<RefCell<Inputs>>,
     audio: AudioHandle,
     math: Rc<RefCell<Math>>,
-    path: PathBuf,
     scripts: Rc<RefCell<Scripts>>,
     pub time_step: TimeStep,
     last_error: String,
 }
 
 impl System {
-    pub fn new<P: AsRef<Path>>(path: P, display: &Display) -> Result<Self, SystemError> {
+    pub fn new() -> Result<Self, SystemError> {
+        let mut ctx = miniquad::window::new_rendering_backend();
+
         let math = Rc::new(RefCell::new(Math::new()));
 
         let gpu = Rc::new(
@@ -78,7 +74,7 @@ impl System {
         let renderer = Renderer::new();
 
         let render_target = RenderTarget::new(
-            display, 
+            &mut *ctx,
             320, 
             240)
             .expect("Render target creation failed");
@@ -96,6 +92,7 @@ impl System {
         );
 
         Ok(Self { 
+            ctx,
             state: SystemState::Unloaded,
             lua: Lua::new(),
             world: WorldHandle::new(world),
@@ -105,15 +102,14 @@ impl System {
             inputs: Rc::new(RefCell::new(Inputs::new())),
             audio: AudioHandle::new(audio),
             math,
-            path: path.as_ref().to_path_buf(),
-            scripts: Rc::new(RefCell::new(Scripts::new(path)?)),
+            scripts: Rc::new(RefCell::new(Scripts::new()?)),
             time_step: TimeStep::new(),
             last_error: String::new(),
         })
     }
 
-    pub fn load(&mut self) -> Result<(), SystemError> {
-        self.scripts.as_ref().borrow_mut().load_dir(&self.path)?;
+    pub fn load_scripts<P: AsRef<Path>>(&mut self, path: P) -> Result<(), SystemError> {
+        self.scripts.as_ref().borrow_mut().load_dir(path)?;
         self.state = SystemState::Loaded;
 
         Ok(())
@@ -163,45 +159,69 @@ impl System {
     }
 
     /// Called every frame. Draw as requested during the run call.
-    pub fn render(&mut self, display: &Display, frame: &mut Frame) {
-        self.gpu.borrow_mut().new_frame();
+    pub fn draw(&mut self) {
+        if self.state == SystemState::Running {
+            // run system
+            match self.run() {
+                Ok(_) => {
+                    self.frame_starts();
+
+                    self.gpu.borrow_mut().new_frame();
     
-        // prepare resources for rendering
-        self.gpu.borrow_mut().prepare_gpu_assets(display);
-
-        // create a framebuffer to draw into 
-        let color_target = self.render_target.get_color_target();
-        let mut framebuffer = SimpleFrameBuffer::with_depth_buffer(
-            display, 
-            color_target.as_ref(), 
-            self.render_target.get_depth_target()
-        ).unwrap();
-
-        // draw system in framebuffer
-        self.renderer.render(&mut framebuffer, &mut self.gpu.borrow_mut());
-
-        // blit in frame
-        self.renderer.blit_buffers_to_frame(&mut framebuffer, frame);
-
-        self.renderer.post_render(&mut self.gpu.borrow_mut());
+                    // prepare resources for rendering
+                    self.gpu.borrow_mut().prepare_gpu_assets(&mut *self.ctx);
+            
+                    // draw system in framebuffer
+                    self.renderer.render(&mut *self.ctx, &self.render_target, &mut self.gpu.borrow_mut());
+            
+                    // blit in frame
+                    //self.renderer.blit_buffers_to_frame(&mut framebuffer, frame);
+            
+                    self.renderer.post_render(&mut self.gpu.borrow_mut());
+                    
+                    self.frame_ends();
+                },
+                Err(error) => {
+                    self.state = SystemState::Loaded;
+                    println!("{}", error);
+                }
+                
+            }
+        }
     }
 
-    pub fn frame_starts(&mut self) {
+    pub fn frame_starts(&self) {
         self.gpu.borrow_mut().flush_stream_buffer();
         self.inputs.borrow_mut().reset();
     }
 
-    pub fn frame_ends(&mut self) {
+    pub fn frame_ends(&self) {
         // prepare next frame
         self.gpu.borrow_mut().frame_ends();
     }
 
-    pub fn on_window_event(&mut self, event: &WindowEvent) {
-        self.inputs.borrow_mut().process_win_events(event)
+    pub fn on_mouse_move(&mut self, x: f32, y: f32) {
+        self.inputs.borrow_mut().on_mouse_move(x, y)
     }
 
-    pub fn on_device_event(&mut self, event: &DeviceEvent) {
-        self.inputs.borrow_mut().process_device_events(event);
+    pub fn on_mouse_wheel(&mut self, x: f32, y: f32) {
+        self.inputs.borrow_mut().on_mouse_wheel(x, y)
+    }
+
+    pub fn on_mouse_button_down(&mut self, button: MouseButton, x: f32, y: f32) {
+        self.inputs.borrow_mut().on_mouse_button_down(button, x, y)
+    }
+
+    pub fn on_mouse_button_up(&mut self, button: MouseButton, x: f32, y: f32) {
+        self.inputs.borrow_mut().on_mouse_button_up(button, x, y)
+    }
+
+    pub fn on_key_down(&mut self, keycode: Key, repeat: bool) {
+        self.inputs.borrow_mut().on_key_down(keycode, repeat)
+    }
+
+    pub fn on_key_up(&mut self, keycode: Key) {
+        self.inputs.borrow_mut().on_key_up(keycode)
     }
 
     pub fn shutdown(&mut self) {

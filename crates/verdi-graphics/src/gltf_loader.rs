@@ -91,12 +91,12 @@ impl GltfLoader {
 
         for gltf_node in gltf.nodes() {
             let mesh_id = gltf_node
-            .mesh()
-            .map(|mesh| mesh.index())
-            .and_then(|i| meshes.get(i).cloned())
-            .unwrap();
+                .mesh()
+                .map(|mesh| mesh.index())
+                .and_then(|i| meshes.get(i).cloned());
 
-            let transform = math
+            if let Some(mesh_id) = mesh_id {
+                let transform = math
                 .borrow_mut()
                 .new_transform_from_matrix(
                     Mat4::from_cols_array_2d(
@@ -111,6 +111,7 @@ impl GltfLoader {
                     children: vec![],
                 }
             );
+            }            
         }
 
         Ok(model)
@@ -155,10 +156,14 @@ impl GltfLoader {
             }
         }
 
-        let mut index_buffer = None;
+        let index_buffer ;
         if let Some(indices) = reader.read_indices() {
-            index_buffer = Some(indices.into_u32().collect());
-        };
+            index_buffer = indices.into_u32().collect();
+        }
+        else {
+            // TODO: fill indices 3 by 3
+            index_buffer = vec![];
+        }
 
         let material_id = gltf_primitive.material().index()
             .and_then(|i| materials.get(i).cloned()).unwrap(); // unwrap ??
@@ -198,15 +203,15 @@ impl GltfLoader {
             .map(|info| info.texture().index())
             .and_then(|i| textures.get(i).cloned());
 
-        let mut material = Material::new(globals.global_shaders.gouraud_textured, &globals.global_uniforms);
+        let mut material = Material::new(globals.global_programs.gouraud_textured, &globals.global_uniforms);
         material.add_uniform("u_enable_fog".to_string(), globals.global_uniforms.enable_fog.clone());
         material.add_uniform("u_fog_start".to_string(), globals.global_uniforms.fog_start.clone());
         material.add_uniform("u_fog_end".to_string(), globals.global_uniforms.fog_end.clone());
         material.add_uniform("u_enable_lighting".to_string(), globals.global_uniforms.enable_lighting.clone());
 
-        // if let Some(id) = texture_id {
-        //     material.add_uniform("u_texture", id);
-        // }
+        if let Some(id) = texture_id {
+            material.add_texture(id);
+        }
 
         material.to_owned()
     }

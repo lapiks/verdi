@@ -2,23 +2,52 @@ use verdi_database::Assets;
 use verdi_math::{Vec2, Mat4};
 
 use crate::{
-    program::{ProgramId, Program}, 
-    shader::Shader, uniform::{Uniform, UniformHandle},
+    program::{Program, ProgramId}, 
+    shader::Shader, 
+    uniform::{Uniform, UniformHandle, UniformValue}, 
+    pipeline::{Pipeline, PipelineHandle},
 };
 
-/// Indicates where to find some globals (shader and uniforms) in the database
+/// Indicates where to find some globals (pipelines, shader and uniforms) in the database
 #[derive(Clone)]
 pub struct Globals {
-    pub global_shaders: GlobalShaders,
+    pub global_pipelines: GlobalPipelines,
+    pub global_programs: GlobalPrograms,
     pub global_uniforms: GlobalUniforms,
 }
 
 impl Globals {
     pub fn new(assets: &mut Assets) -> Result<Self, std::io::Error> {
+        let global_uniforms = GlobalUniforms::new(assets);
+        let global_programs = GlobalPrograms::new(assets)?;
+        let global_pipelines = GlobalPipelines::new(assets, &global_programs);
         Ok(Self {
-            global_shaders: GlobalShaders::new(assets)?,
-            global_uniforms: GlobalUniforms::new(assets),
+            global_pipelines,
+            global_programs,
+            global_uniforms,
         })
+    }
+}
+
+#[derive(Clone)]
+pub struct GlobalPipelines {
+    pub default_pipeline: PipelineHandle,
+}
+
+impl GlobalPipelines {
+    pub fn new(assets: &mut Assets, global_programs: &GlobalPrograms) -> Self {
+        Self {
+            default_pipeline: PipelineHandle::new(
+                assets.clone(), 
+                assets.add(
+                    Box::new(
+                        Pipeline::new(
+                            global_programs.gouraud_textured
+                        )
+                    )
+                )
+            ),
+        }
     }
 }
 
@@ -40,39 +69,39 @@ impl GlobalUniforms {
     pub fn new(assets: &mut Assets) -> Self {
         let model_matrix = UniformHandle::new(
             assets.clone(), 
-            assets.add(Box::new(Uniform::new(Mat4::IDENTITY)))
+            assets.add(Box::new(Uniform::new(UniformValue::Mat4(Mat4::IDENTITY))))
         );
         let view_matrix = UniformHandle::new(
             assets.clone(), 
-            assets.add(Box::new(Uniform::new(Mat4::IDENTITY)))
+            assets.add(Box::new(Uniform::new(UniformValue::Mat4(Mat4::IDENTITY))))
         );
         let projection_matrix = UniformHandle::new(
             assets.clone(), 
-            assets.add(Box::new(Uniform::new(Mat4::IDENTITY)))
+            assets.add(Box::new(Uniform::new(UniformValue::Mat4(Mat4::IDENTITY))))
         );
         let resolution = UniformHandle::new(
             assets.clone(), 
-            assets.add(Box::new(Uniform::new(Vec2::ZERO)))
+            assets.add(Box::new(Uniform::new(UniformValue::Vec2(Vec2::ZERO))))
         );
         let enable_lighting = UniformHandle::new(
             assets.clone(), 
-            assets.add(Box::new(Uniform::new(true)))
+            assets.add(Box::new(Uniform::new(UniformValue::Bool(true))))
         );
         let enable_fog = UniformHandle::new(
             assets.clone(), 
-            assets.add(Box::new(Uniform::new(false)))
+            assets.add(Box::new(Uniform::new(UniformValue::Bool(false))))
         );
         let fog_start = UniformHandle::new(
             assets.clone(), 
-            assets.add(Box::new(Uniform::new(0.0)))
+            assets.add(Box::new(Uniform::new(UniformValue::Float(0.0))))
         );
         let fog_end = UniformHandle::new(
             assets.clone(), 
-            assets.add(Box::new(Uniform::new(0.0)))
+            assets.add(Box::new(Uniform::new(UniformValue::Float(0.0))))
         );
         let identity_mat = UniformHandle::new(
             assets.clone(), 
-            assets.add(Box::new(Uniform::new(Mat4::IDENTITY)))
+            assets.add(Box::new(Uniform::new(UniformValue::Mat4(Mat4::IDENTITY))))
         );
 
         Self {
@@ -91,19 +120,21 @@ impl GlobalUniforms {
 
 /// Indicates where to find the global shaders in the database
 #[derive(Clone)]
-pub struct GlobalShaders {
+pub struct GlobalPrograms {
     pub gouraud: ProgramId,
     pub gouraud_textured: ProgramId,
     pub std_2d: ProgramId,
+    pub simple: ProgramId,
 }
 
-impl GlobalShaders {
+impl GlobalPrograms {
     pub fn new(assets: &mut Assets) -> Result<Self, std::io::Error> {
         Ok(
             Self {
-                gouraud: GlobalShaders::init_gouraud(assets)?,
-                gouraud_textured: GlobalShaders::init_gouraud_textured(assets)?,
-                std_2d: GlobalShaders::init_std_2d(assets)?,
+                gouraud: GlobalPrograms::init_gouraud(assets)?,
+                gouraud_textured: GlobalPrograms::init_gouraud_textured(assets)?,
+                std_2d: GlobalPrograms::init_std_2d(assets)?,
+                simple: GlobalPrograms::init_simple(assets)?,
             }
         )
     }
@@ -159,11 +190,8 @@ impl GlobalShaders {
         );
         let fs_id = assets.add(Box::new(fs));
 
-        Ok(assets.add(
-                Box::new(
-                    Program::new(vs_id, fs_id)
-                )
-            )
+        Ok(
+            assets.add(Box::new(Program::new(vs_id, fs_id)))
         )
     }
 
@@ -191,13 +219,35 @@ impl GlobalShaders {
         let fs_id = assets.add(Box::new(fs));
 
         Ok(
-            assets.add(
-                Box::new(
-                    Program::new(
-                        vs_id, fs_id
-                    )
-                )
-            )
+            assets.add(Box::new(Program::new(vs_id, fs_id)))
+        )
+    }
+
+    fn init_simple(assets: &mut Assets) -> Result<ProgramId, std::io::Error> {
+        let vs = Shader::new(
+            match std::fs::read_to_string( "./crates/verdi-graphics/shaders/simple.vs") {
+                Ok(src) => src,
+                Err(e) => {
+                    println!("{}", e);
+                    return Err(e);
+                }
+            }
+        );
+        let vs_id = assets.add(Box::new(vs));
+
+        let fs = Shader::new(
+            match std::fs::read_to_string("./crates/verdi-graphics/shaders/simple.fs") {
+                Ok(src) => src,
+                Err(e) => {
+                    println!("{}", e);
+                    return Err(e);
+                }
+            }
+        );
+        let fs_id = assets.add(Box::new(fs));
+
+        Ok(
+            assets.add(Box::new(Program::new(vs_id, fs_id)))
         )
     }
 }

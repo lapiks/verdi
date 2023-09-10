@@ -7,7 +7,7 @@ function verdi.start()
     image = graphics.newImage("./game_example/assets/Palette.png")
     --sprite = graphics.newSprite(image)
 
-    graphics.camera.transform:setPosition(math.vec3(0, 2.5, 0))
+    graphics.camera.transform:setPosition(math.vec3(0, 2.5, 5))
 
     entity = world.spawn()
     print(entity:id())
@@ -21,16 +21,16 @@ function verdi.start()
         {0, 1, 0}
     }
 
+    indices = { 0, 1, 2 }
+
     mesh:setVertices(vertices)
+    mesh:setIndices(indices)
 	mesh:setPrimitiveType("triangles")
 
-    print(model:getNumNodes())
+    --print(model:getNumNodes())
 
     camPitch = 0
     camYaw = 0
-
-    speed = 5
-    rotSpeed = 1
 
     test.func()
 
@@ -41,7 +41,10 @@ end
 function verdi.update(deltaTime) 
     local camTF = graphics.camera.transform
 
-    if input.getKeyDown("z") then
+    local speed = 5
+    local rotSpeed = 1
+
+    if input.getKeyDown("w") then
         camTF:translate(camTF:forward() * speed * deltaTime)
     end
 
@@ -53,7 +56,7 @@ function verdi.update(deltaTime)
         camTF:translate(camTF:right() * speed * deltaTime)
     end
 
-    if input.getKeyDown("q") then
+    if input.getKeyDown("a") then
         camTF:translate(camTF:left() * speed * deltaTime)
     end
 
@@ -68,7 +71,7 @@ function verdi.update(deltaTime)
    -- camTF:reset()
     --camTF:setRotation(camYaw, 0, 1, 0)
     --camTF:translate(camPos)
-    camTF:rotate(camYaw, 0, 1, 0)
+    ---camTF:rotate(camYaw, 0, 1, 0)
 
     local mouseDelta = {input.getMouseDelta()}
     camYaw = camYaw + mouseDelta[1] * deltaTime * 10

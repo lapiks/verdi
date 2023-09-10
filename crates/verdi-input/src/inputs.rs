@@ -1,13 +1,5 @@
 use std::collections::HashMap;
 
-use egui_glium::egui_winit::egui::Modifiers as EguiModifiers;
-use glium::glutin::{
-    self, 
-    event::{
-        VirtualKeyCode, 
-        MouseButton as GlutinMouseButton
-    }
-};
 use mlua::UserData;
 use verdi_math::Vec2;
 
@@ -76,6 +68,64 @@ pub enum Key {
     F23,
     F24,
     Space,
+    Pause,
+    Insert,
+    Home,
+    Delete,
+    End,
+    PageDown,
+    PageUp,
+    Left,
+    Up,
+    Right,
+    Down,
+    Apostrophe,
+    Comma,
+    Minus,
+    Period,
+    Slash,
+    Semicolon,
+    Equal,
+    LeftBracket,
+    Backslash,
+    RightBracket,
+    GraveAccent,
+    World1,
+    World2,
+    Enter,
+    Tab,
+    Backspace,
+    CapsLock,
+    ScrollLock,
+    NumLock,
+    PrintScreen,
+    F25,
+    Kp0,
+    Kp1,
+    Kp2,
+    Kp3,
+    Kp4,
+    Kp5,
+    Kp6,
+    Kp7,
+    Kp8,
+    Kp9,
+    KpDecimal,
+    KpDivide,
+    KpMultiply,
+    KpSubtract,
+    KpAdd,
+    KpEnter,
+    KpEqual,
+    LeftShift,
+    LeftControl,
+    LeftAlt,
+    LeftSuper,
+    RightShift,
+    RightControl,
+    RightAlt,
+    RightSuper,
+    Menu,
 }
 
 impl UserData for Key {}
@@ -148,172 +198,130 @@ impl From<String> for Key {
     }
 }
 
-impl From<VirtualKeyCode> for Key {
-    fn from(k: VirtualKeyCode) -> Self {
+impl From<miniquad::KeyCode> for Key {
+    fn from(k: miniquad::KeyCode) -> Self {
         match k {
-            VirtualKeyCode::Key1 => Key::Key1,
-            VirtualKeyCode::Key2 => Key::Key2,
-            VirtualKeyCode::Key3 => Key::Key3,
-            VirtualKeyCode::Key4 => Key::Key4,
-            VirtualKeyCode::Key5 => Key::Key5,
-            VirtualKeyCode::Key6 => Key::Key6,
-            VirtualKeyCode::Key7 => Key::Key7,
-            VirtualKeyCode::Key8 => Key::Key8,
-            VirtualKeyCode::Key9 => Key::Key9,
-            VirtualKeyCode::Key0 => Key::Key0,
-            VirtualKeyCode::A => Key::A,
-            VirtualKeyCode::B => Key::B,
-            VirtualKeyCode::C => Key::C,
-            VirtualKeyCode::D => Key::D,
-            VirtualKeyCode::E => Key::E,
-            VirtualKeyCode::F => Key::F,
-            VirtualKeyCode::G => Key::G,
-            VirtualKeyCode::H => Key::H,
-            VirtualKeyCode::I => Key::I,
-            VirtualKeyCode::J => Key::J,
-            VirtualKeyCode::K => Key::K,
-            VirtualKeyCode::L => Key::L,
-            VirtualKeyCode::M => Key::M,
-            VirtualKeyCode::N => Key::N,
-            VirtualKeyCode::O => Key::O,
-            VirtualKeyCode::P => Key::P,
-            VirtualKeyCode::Q => Key::Q,
-            VirtualKeyCode::R => Key::R,
-            VirtualKeyCode::S => Key::S,
-            VirtualKeyCode::T => Key::T,
-            VirtualKeyCode::U => Key::U,
-            VirtualKeyCode::V => Key::V,
-            VirtualKeyCode::W => Key::W,
-            VirtualKeyCode::X => Key::X,
-            VirtualKeyCode::Y => Key::Y,
-            VirtualKeyCode::Z => Key::Z,
-            VirtualKeyCode::Escape => Key::Escape,
-            VirtualKeyCode::F1 => Key::F1,
-            VirtualKeyCode::F2 => Key::F2,
-            VirtualKeyCode::F3 => Key::F3,
-            VirtualKeyCode::F4 => Key::F4,
-            VirtualKeyCode::F5 => Key::F5,
-            VirtualKeyCode::F6 => Key::F6,
-            VirtualKeyCode::F7 => Key::F7,
-            VirtualKeyCode::F8 => Key::F8,
-            VirtualKeyCode::F9 => Key::F9,
-            VirtualKeyCode::F10 => Key::F10,
-            VirtualKeyCode::F11 => Key::F11,
-            VirtualKeyCode::F12 => Key::F12,
-            VirtualKeyCode::F13 => Key::F13,
-            VirtualKeyCode::F14 => Key::F14,
-            VirtualKeyCode::F15 => Key::F15,
-            VirtualKeyCode::F16 => Key::F16,
-            VirtualKeyCode::F17 => Key::F17,
-            VirtualKeyCode::F18 => Key::F18,
-            VirtualKeyCode::F19 => Key::F19,
-            VirtualKeyCode::F20 => Key::F20,
-            VirtualKeyCode::F21 => Key::F21,
-            VirtualKeyCode::F22 => Key::F22,
-            VirtualKeyCode::F23 => Key::F23,
-            VirtualKeyCode::F24 => Key::F24,
-            VirtualKeyCode::Snapshot => Key::D,
-            VirtualKeyCode::Scroll => Key::D,
-            VirtualKeyCode::Pause => Key::D,
-            VirtualKeyCode::Insert => Key::D,
-            VirtualKeyCode::Home => Key::D,
-            VirtualKeyCode::Delete => Key::D,
-            VirtualKeyCode::End => Key::D,
-            VirtualKeyCode::PageDown => Key::D,
-            VirtualKeyCode::PageUp => Key::D,
-            VirtualKeyCode::Left => Key::D,
-            VirtualKeyCode::Up => Key::D,
-            VirtualKeyCode::Right => Key::D,
-            VirtualKeyCode::Down => Key::D,
-            VirtualKeyCode::Back => Key::D,
-            VirtualKeyCode::Return => Key::D,
-            VirtualKeyCode::Space => Key::Space,
-            VirtualKeyCode::Compose => Key::D,
-            VirtualKeyCode::Caret => Key::D,
-            VirtualKeyCode::Numlock => Key::D,
-            VirtualKeyCode::Numpad0 => Key::D,
-            VirtualKeyCode::Numpad1 => Key::D,
-            VirtualKeyCode::Numpad2 => Key::D,
-            VirtualKeyCode::Numpad3 => Key::D,
-            VirtualKeyCode::Numpad4 => Key::D,
-            VirtualKeyCode::Numpad5 => Key::D,
-            VirtualKeyCode::Numpad6 => Key::D,
-            VirtualKeyCode::Numpad7 => Key::D,
-            VirtualKeyCode::Numpad8 => Key::D,
-            VirtualKeyCode::Numpad9 => Key::D,
-            VirtualKeyCode::NumpadAdd => Key::D,
-            VirtualKeyCode::NumpadDivide => Key::D,
-            VirtualKeyCode::NumpadDecimal => Key::D,
-            VirtualKeyCode::NumpadComma => Key::D,
-            VirtualKeyCode::NumpadEnter => Key::D,
-            VirtualKeyCode::NumpadEquals => Key::D,
-            VirtualKeyCode::NumpadMultiply => Key::D,
-            VirtualKeyCode::NumpadSubtract => Key::D,
-            VirtualKeyCode::AbntC1 => Key::D,
-            VirtualKeyCode::AbntC2 => Key::D,
-            VirtualKeyCode::Apostrophe => Key::D,
-            VirtualKeyCode::Apps => Key::D,
-            VirtualKeyCode::Asterisk => Key::D,
-            VirtualKeyCode::At => Key::D,
-            VirtualKeyCode::Ax => Key::D,
-            VirtualKeyCode::Backslash => Key::D,
-            VirtualKeyCode::Calculator => Key::D,
-            VirtualKeyCode::Capital => Key::D,
-            VirtualKeyCode::Colon => Key::D,
-            VirtualKeyCode::Comma => Key::D,
-            VirtualKeyCode::Convert => Key::D,
-            VirtualKeyCode::Equals => Key::D,
-            VirtualKeyCode::Grave => Key::D,
-            VirtualKeyCode::Kana => Key::D,
-            VirtualKeyCode::Kanji => Key::D,
-            VirtualKeyCode::LAlt => Key::D,
-            VirtualKeyCode::LBracket => Key::D,
-            VirtualKeyCode::LControl => Key::D,
-            VirtualKeyCode::LShift => Key::D,
-            VirtualKeyCode::LWin => Key::D,
-            VirtualKeyCode::Mail => Key::D,
-            VirtualKeyCode::MediaSelect => Key::D,
-            VirtualKeyCode::MediaStop => Key::D,
-            VirtualKeyCode::Minus => Key::D,
-            VirtualKeyCode::Mute => Key::D,
-            VirtualKeyCode::MyComputer => Key::D,
-            VirtualKeyCode::NavigateForward => Key::D,
-            VirtualKeyCode::NavigateBackward => Key::D,
-            VirtualKeyCode::NextTrack => Key::D,
-            VirtualKeyCode::NoConvert => Key::D,
-            VirtualKeyCode::OEM102 => Key::D,
-            VirtualKeyCode::Period => Key::D,
-            VirtualKeyCode::PlayPause => Key::D,
-            VirtualKeyCode::Plus => Key::D,
-            VirtualKeyCode::Power => Key::D,
-            VirtualKeyCode::PrevTrack => Key::D,
-            VirtualKeyCode::RAlt => Key::D,
-            VirtualKeyCode::RBracket => Key::D,
-            VirtualKeyCode::RControl => Key::D,
-            VirtualKeyCode::RShift => Key::D,
-            VirtualKeyCode::RWin => Key::D,
-            VirtualKeyCode::Semicolon => Key::D,
-            VirtualKeyCode::Slash => Key::D,
-            VirtualKeyCode::Sleep => Key::D,
-            VirtualKeyCode::Stop => Key::D,
-            VirtualKeyCode::Sysrq => Key::D,
-            VirtualKeyCode::Tab => Key::D,
-            VirtualKeyCode::Underline => Key::D,
-            VirtualKeyCode::Unlabeled => Key::D,
-            VirtualKeyCode::VolumeDown => Key::D,
-            VirtualKeyCode::VolumeUp => Key::D,
-            VirtualKeyCode::Wake => Key::D,
-            VirtualKeyCode::WebBack => Key::D,
-            VirtualKeyCode::WebFavorites => Key::D,
-            VirtualKeyCode::WebForward => Key::D,
-            VirtualKeyCode::WebHome => Key::D,
-            VirtualKeyCode::WebRefresh => Key::D,
-            VirtualKeyCode::WebSearch => Key::D,
-            VirtualKeyCode::WebStop => Key::D,
-            VirtualKeyCode::Yen => Key::D,
-            VirtualKeyCode::Copy => Key::D,
-            VirtualKeyCode::Paste => Key::D,
-            VirtualKeyCode::Cut => Key::D,
+            miniquad::KeyCode::Unknown => Key::Unknown,
+            miniquad::KeyCode::Key1 => Key::Key1,
+            miniquad::KeyCode::Key2 => Key::Key2,
+            miniquad::KeyCode::Key3 => Key::Key3,
+            miniquad::KeyCode::Key4 => Key::Key4,
+            miniquad::KeyCode::Key5 => Key::Key5,
+            miniquad::KeyCode::Key6 => Key::Key6,
+            miniquad::KeyCode::Key7 => Key::Key7,
+            miniquad::KeyCode::Key8 => Key::Key8,
+            miniquad::KeyCode::Key9 => Key::Key9,
+            miniquad::KeyCode::Key0 => Key::Key0,
+            miniquad::KeyCode::A => Key::A,
+            miniquad::KeyCode::B => Key::B,
+            miniquad::KeyCode::C => Key::C,
+            miniquad::KeyCode::D => Key::D,
+            miniquad::KeyCode::E => Key::E,
+            miniquad::KeyCode::F => Key::F,
+            miniquad::KeyCode::G => Key::G,
+            miniquad::KeyCode::H => Key::H,
+            miniquad::KeyCode::I => Key::I,
+            miniquad::KeyCode::J => Key::J,
+            miniquad::KeyCode::K => Key::K,
+            miniquad::KeyCode::L => Key::L,
+            miniquad::KeyCode::M => Key::M,
+            miniquad::KeyCode::N => Key::N,
+            miniquad::KeyCode::O => Key::O,
+            miniquad::KeyCode::P => Key::P,
+            miniquad::KeyCode::Q => Key::Q,
+            miniquad::KeyCode::R => Key::R,
+            miniquad::KeyCode::S => Key::S,
+            miniquad::KeyCode::T => Key::T,
+            miniquad::KeyCode::U => Key::U,
+            miniquad::KeyCode::V => Key::V,
+            miniquad::KeyCode::W => Key::W,
+            miniquad::KeyCode::X => Key::X,
+            miniquad::KeyCode::Y => Key::Y,
+            miniquad::KeyCode::Z => Key::Z,
+            miniquad::KeyCode::Escape => Key::Escape,
+            miniquad::KeyCode::F1 => Key::F1,
+            miniquad::KeyCode::F2 => Key::F2,
+            miniquad::KeyCode::F3 => Key::F3,
+            miniquad::KeyCode::F4 => Key::F4,
+            miniquad::KeyCode::F5 => Key::F5,
+            miniquad::KeyCode::F6 => Key::F6,
+            miniquad::KeyCode::F7 => Key::F7,
+            miniquad::KeyCode::F8 => Key::F8,
+            miniquad::KeyCode::F9 => Key::F9,
+            miniquad::KeyCode::F10 => Key::F10,
+            miniquad::KeyCode::F11 => Key::F11,
+            miniquad::KeyCode::F12 => Key::F12,
+            miniquad::KeyCode::F13 => Key::F13,
+            miniquad::KeyCode::F14 => Key::F14,
+            miniquad::KeyCode::F15 => Key::F15,
+            miniquad::KeyCode::F16 => Key::F16,
+            miniquad::KeyCode::F17 => Key::F17,
+            miniquad::KeyCode::F18 => Key::F18,
+            miniquad::KeyCode::F19 => Key::F19,
+            miniquad::KeyCode::F20 => Key::F20,
+            miniquad::KeyCode::F21 => Key::F21,
+            miniquad::KeyCode::F22 => Key::F22,
+            miniquad::KeyCode::F23 => Key::F23,
+            miniquad::KeyCode::F24 => Key::F24,
+            miniquad::KeyCode::Pause => Key::Pause,
+            miniquad::KeyCode::Insert => Key::Insert,
+            miniquad::KeyCode::Home => Key::Home,
+            miniquad::KeyCode::Delete => Key::Delete,
+            miniquad::KeyCode::End => Key::End,
+            miniquad::KeyCode::PageDown => Key::PageDown,
+            miniquad::KeyCode::PageUp => Key::PageUp,
+            miniquad::KeyCode::Left => Key::Left,
+            miniquad::KeyCode::Up => Key::Up,
+            miniquad::KeyCode::Right => Key::Right,
+            miniquad::KeyCode::Down => Key::Down,
+            miniquad::KeyCode::Space => Key::Space,
+            miniquad::KeyCode::Apostrophe => Key::Apostrophe,
+            miniquad::KeyCode::Comma => Key::Comma,
+            miniquad::KeyCode::Minus => Key::Minus,
+            miniquad::KeyCode::Period => Key::Period,
+            miniquad::KeyCode::Slash => Key::Slash,
+            miniquad::KeyCode::Semicolon => Key::Semicolon,
+            miniquad::KeyCode::Equal => Key::Equal,
+            miniquad::KeyCode::LeftBracket => Key::LeftBracket,
+            miniquad::KeyCode::Backslash => Key::Backslash,
+            miniquad::KeyCode::RightBracket => Key::RightBracket,
+            miniquad::KeyCode::GraveAccent => Key::GraveAccent,
+            miniquad::KeyCode::World1 => Key::World1,
+            miniquad::KeyCode::World2 => Key::World2,
+            miniquad::KeyCode::Enter => Key::Enter,
+            miniquad::KeyCode::Tab => Key::Tab,
+            miniquad::KeyCode::Backspace => Key::Backspace,
+            miniquad::KeyCode::CapsLock => Key::CapsLock,
+            miniquad::KeyCode::ScrollLock => Key::ScrollLock,
+            miniquad::KeyCode::NumLock => Key::NumLock,
+            miniquad::KeyCode::PrintScreen => Key::PrintScreen,
+            miniquad::KeyCode::F25 => Key::F25,
+            miniquad::KeyCode::Kp0 => Key::Kp0,
+            miniquad::KeyCode::Kp1 => Key::Kp1,
+            miniquad::KeyCode::Kp2 => Key::Kp2,
+            miniquad::KeyCode::Kp3 => Key::Kp3,
+            miniquad::KeyCode::Kp4 => Key::Kp4,
+            miniquad::KeyCode::Kp5 => Key::Kp5,
+            miniquad::KeyCode::Kp6 => Key::Kp6,
+            miniquad::KeyCode::Kp7 => Key::Kp7,
+            miniquad::KeyCode::Kp8 => Key::Kp8,
+            miniquad::KeyCode::Kp9 => Key::Kp9,
+            miniquad::KeyCode::KpDecimal => Key::KpDecimal,
+            miniquad::KeyCode::KpDivide => Key::KpDivide,
+            miniquad::KeyCode::KpMultiply => Key::KpMultiply,
+            miniquad::KeyCode::KpSubtract => Key::KpSubtract,
+            miniquad::KeyCode::KpAdd => Key::KpAdd,
+            miniquad::KeyCode::KpEnter => Key::KpEnter,
+            miniquad::KeyCode::KpEqual => Key::KpEqual,
+            miniquad::KeyCode::LeftShift => Key::LeftShift,
+            miniquad::KeyCode::LeftControl => Key::LeftControl,
+            miniquad::KeyCode::LeftAlt => Key::LeftAlt,
+            miniquad::KeyCode::LeftSuper => Key::LeftSuper,
+            miniquad::KeyCode::RightShift => Key::RightShift,
+            miniquad::KeyCode::RightControl => Key::RightControl,
+            miniquad::KeyCode::RightAlt => Key::RightAlt,
+            miniquad::KeyCode::RightSuper => Key::RightSuper,
+            miniquad::KeyCode::Menu => Key::Menu,
         }
     }
 }
@@ -331,8 +339,8 @@ impl Modifiers {
     }
 }
 
-impl From<EguiModifiers> for Modifiers {
-    fn from(b: EguiModifiers) -> Self {
+impl From<miniquad::KeyMods> for Modifiers {
+    fn from(b: miniquad::KeyMods) -> Self {
         Self {
             alt: b.alt,
             ctrl: b.ctrl,
@@ -358,13 +366,13 @@ impl From<String> for MouseButton {
     }
 }
 
-impl From<GlutinMouseButton> for MouseButton {
-    fn from(b: GlutinMouseButton) -> Self {
+impl From<miniquad::MouseButton> for MouseButton {
+    fn from(b: miniquad::MouseButton) -> Self {
         match b {
-            GlutinMouseButton::Left => MouseButton::Left,
-            GlutinMouseButton::Right => MouseButton::Right,
-            GlutinMouseButton::Middle => MouseButton::Middle,
-            GlutinMouseButton::Other(_) => MouseButton::Unknown,
+            miniquad::MouseButton::Left => MouseButton::Left,
+            miniquad::MouseButton::Right => MouseButton::Right,
+            miniquad::MouseButton::Middle => MouseButton::Middle,
+            miniquad::MouseButton::Unknown => MouseButton::Unknown,
         }
     }
 }
@@ -390,43 +398,67 @@ impl Inputs {
         self.mouse_delta = Vec2::ZERO;
     }
 
-    pub fn process_win_events(&mut self, event: &glutin::event::WindowEvent) {
-        match *event {
-            glutin::event::WindowEvent::KeyboardInput { input, .. } => {
-                let pressed = input.state == glutin::event::ElementState::Pressed;
-                let key = match input.virtual_keycode {
-                    Some(key) => key,
-                    None => return,
-                };
+    // pub fn process_win_events(&mut self, event: &glutin::event::WindowEvent) {
+    //     match *event {
+    //         glutin::event::WindowEvent::KeyboardInput { input, .. } => {
+    //             let pressed = input.state == glutin::event::ElementState::Pressed;
+    //             let key = match input.virtual_keycode {
+    //                 Some(key) => key,
+    //                 None => return,
+    //             };
    
-                self.keys.insert(Key::from(key), pressed);
-            },
-            glutin::event::WindowEvent::ModifiersChanged(modifiers_state) => {
-                // todo: à revoir ?
-                self.modifiers.alt = modifiers_state.alt();
-                self.modifiers.shift = modifiers_state.shift();
-                self.modifiers.ctrl = modifiers_state.ctrl();
-            },
-            glutin::event::WindowEvent::MouseInput { button, state, .. } => {
-                let pressed = state == glutin::event::ElementState::Pressed;
-                self.mouse.insert(MouseButton::from(button), pressed);
-            },
-            _ => return,
-        };
+    //             self.keys.insert(Key::from(key), pressed);
+    //         },
+    //         glutin::event::WindowEvent::ModifiersChanged(modifiers_state) => {
+    //             // todo: à revoir ?
+    //             self.modifiers.alt = modifiers_state.alt();
+    //             self.modifiers.shift = modifiers_state.shift();
+    //             self.modifiers.ctrl = modifiers_state.ctrl();
+    //         },
+    //         glutin::event::WindowEvent::MouseInput { button, state, .. } => {
+    //             let pressed = state == glutin::event::ElementState::Pressed;
+    //             self.mouse.insert(MouseButton::from(button), pressed);
+    //         },
+    //         _ => return,
+    //     };
+    // }
+
+    // pub fn process_device_events(&mut self, event: &glutin::event::DeviceEvent) {
+    //     match *event {
+    //         glutin::event::DeviceEvent::MouseMotion { delta, .. } => {
+    //             self.mouse_delta += Vec2::new(delta.0 as f32, delta.1 as f32);
+    //         },
+    //         // glutin::event::DeviceEvent::Motion { axis, value } => {
+    //         //     if axis < 2 {
+    //         //         self.mouse_delta[axis as usize] += value as f32;
+    //         //     }
+    //         // },
+    //         _ => return,
+    //     };
+    // }
+
+    pub fn on_mouse_move(&mut self, x: f32, y: f32) {
+        self.mouse_delta += Vec2::new(x, y);
     }
 
-    pub fn process_device_events(&mut self, event: &glutin::event::DeviceEvent) {
-        match *event {
-            glutin::event::DeviceEvent::MouseMotion { delta, .. } => {
-                self.mouse_delta += Vec2::new(delta.0 as f32, delta.1 as f32);
-            },
-            // glutin::event::DeviceEvent::Motion { axis, value } => {
-            //     if axis < 2 {
-            //         self.mouse_delta[axis as usize] += value as f32;
-            //     }
-            // },
-            _ => return,
-        };
+    pub fn on_mouse_wheel(&mut self, x: f32, y: f32) {
+
+    }
+
+    pub fn on_mouse_button_down(&mut self, button: MouseButton, x: f32, y: f32) {
+        self.mouse.insert(MouseButton::from(button), true);
+    }
+
+    pub fn on_mouse_button_up(&mut self, button: MouseButton, x: f32, y: f32) {
+        self.mouse.insert(MouseButton::from(button), false);
+    }
+
+    pub fn on_key_down(&mut self, keycode: Key, repeat: bool) {
+        self.keys.insert(keycode, true);
+    }
+
+    pub fn on_key_up(&mut self, keycode: Key) {
+        self.keys.insert(keycode, false);
     }
 
     pub fn get_key_down(&self, key: Key) -> bool {

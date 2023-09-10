@@ -1,7 +1,7 @@
 use egui::TextureId;
 
 use crate::{
-    gui::GUIPanel,
+    //gui::GUIPanel,
     commands::Command, 
 };
 
@@ -21,24 +21,24 @@ impl Viewport {
     }
 }
 
-impl GUIPanel for Viewport {
-    fn name(&self) -> &'static str {
-        "3D View"
-    }
+// impl GUIPanel for Viewport {
+//     fn name(&self) -> &'static str {
+//         "3D View"
+//     }
 
-    fn show(&mut self, ctx: &egui::Context, _open: &mut bool) -> Option<Box<dyn Command>> {
-        let mut command = None;
-        egui::CentralPanel::default().show(ctx, |ui| {
-            command = self.ui(ui);
-        });
+//     fn show(&mut self, ctx: &egui::Context, _open: &mut bool) -> Option<Box<dyn Command>> {
+//         let mut command = None;
+//         egui::CentralPanel::default().show(ctx, |ui| {
+//             command = self.ui(ui);
+//         });
 
-        command
-    }
+//         command
+//     }
 
-    fn execute(&mut self, cmd: Box<dyn Command>) {
+//     fn execute(&mut self, cmd: Box<dyn Command>) {
 
-    }
-}
+//     }
+// }
 
 impl Viewport {
     fn ui(&mut self, ui: &mut egui::Ui) -> Option<Box<dyn Command>> {

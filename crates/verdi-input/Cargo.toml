@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 verdi-math = { path = "../verdi-math" }
 mlua = { version = "0.8", features = ["lua54", "vendored"] }
-glium = "*"
+miniquad = "0.4.0-alpha.9"
 egui_glium = "0.19.0"

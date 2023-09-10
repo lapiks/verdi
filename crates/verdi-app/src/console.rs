@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    gui::GUIPanel, 
+    //gui::GUIPanel, 
     commands::Command, 
     app_commands::{Help, Load, Shutdown},
 };
@@ -22,23 +22,23 @@ impl Default for Console {
     }
 }
 
-impl GUIPanel for Console {
-    fn name(&self) -> &'static str {
-        "Console"
-    }
+// impl GUIPanel for Console {
+//     fn name(&self) -> &'static str {
+//         "Console"
+//     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool) -> Option<Box<dyn Command>> {
-        let mut cmd = None;
-        egui::CentralPanel::default().show(ctx, |ui| { 
-            if ui.input().key_pressed(egui::Key::Escape) {
-                *open = false;
-            }
-            cmd = self.ui(ui);
-        });
+//     fn show(&mut self, ctx: &egui::Context, open: &mut bool) -> Option<Box<dyn Command>> {
+//         let mut cmd = None;
+//         egui::CentralPanel::default().show(ctx, |ui| { 
+//             if ui.input().key_pressed(egui::Key::Escape) {
+//                 *open = false;
+//             }
+//             cmd = self.ui(ui);
+//         });
 
-        cmd
-    }
-}
+//         cmd
+//     }
+// }
 
 impl Console {
     pub fn init(&mut self) {

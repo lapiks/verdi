@@ -1,6 +1,5 @@
 use std::ops::{Deref, DerefMut};
 
-use glium::Display;
 use mlua::{UserData, UserDataMethods, Table};
 use slotmap::Key;
 use verdi_database::{ResourceId, Resource, Assets, Handle};
@@ -9,7 +8,7 @@ use crate::{
     vertex::Vertex, 
     material::MaterialId, 
     gpu_mesh::GpuMesh, 
-    gpu_assets::{GpuAsset, GpuAssetError, PrepareAsset}, 
+    gpu_assets::{GpuAsset, GpuAssetError, PrepareAsset, GpuAssets}, 
 };
 
 use thiserror::Error;
@@ -30,13 +29,13 @@ impl From<String> for PrimitiveType {
     }
 }
 
-impl From<PrimitiveType> for glium::index::PrimitiveType {
-    fn from(p: PrimitiveType) -> Self {
-        if p == PrimitiveType::Triangles { return glium::index::PrimitiveType::TrianglesList; }
-        else if p == PrimitiveType::Lines { return glium::index::PrimitiveType::LinesList; }
-        else { return glium::index::PrimitiveType::Points; }
-    }
-}
+// impl From<PrimitiveType> for glium::index::PrimitiveType {
+//     fn from(p: PrimitiveType) -> Self {
+//         if p == PrimitiveType::Triangles { return glium::index::PrimitiveType::TrianglesList; }
+//         else if p == PrimitiveType::Lines { return glium::index::PrimitiveType::LinesList; }
+//         else { return glium::index::PrimitiveType::Points; }
+//     }
+// }
 
 #[derive(Error, Debug)]
 pub enum MeshError {
@@ -48,13 +47,10 @@ pub enum MeshError {
 
 pub type MeshId = ResourceId;
 
-type VertexBuffer = Vec<Vertex>;
-type IndexBuffer = Vec<u32>;
-
 #[derive(Clone)]
 pub struct Mesh {
-    pub vertex_buffer: VertexBuffer,
-    pub index_buffer: Option<IndexBuffer>,
+    pub vertices: Vec<Vertex>,
+    pub indices: Vec<u32>,
     pub primitive_type: PrimitiveType,
     pub material: MaterialId, // toutes les instances d'un même mesh devront utiliser un même matériau
     pub id: MeshId,
@@ -71,14 +67,15 @@ impl Resource for Mesh {
 }
 
 impl Mesh {
-    pub fn new(vertex_buffer: VertexBuffer,
-        index_buffer: Option<IndexBuffer>,
+    pub fn new(
+        vertices: Vec<Vertex>,
+        indices: Vec<u32>,
         primitive_type: PrimitiveType,
         material: MaterialId
     ) -> Self {
         Self {
-            vertex_buffer,
-            index_buffer,
+            vertices,
+            indices,
             primitive_type,
             material,
             id: MeshId::null(),
@@ -87,28 +84,22 @@ impl Mesh {
 }
 
 impl PrepareAsset for Mesh {
-    fn prepare_rendering(&self, display: &Display, assets: &Assets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
-        let vertex_buffer = glium::VertexBuffer::new(display, &self.vertex_buffer).unwrap();
+    fn prepare_rendering(&self, ctx: &mut dyn miniquad::RenderingBackend, assets: &Assets, gpu_assets: &GpuAssets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
+        let vertex_buffer = ctx.new_buffer(
+            miniquad::BufferType::VertexBuffer,
+            miniquad::BufferUsage::Immutable,
+            miniquad::BufferSource::slice(self.vertices.as_slice()),
+        );
 
-        if let Some(index_buffer) = &self.index_buffer {
-            let indices = glium::IndexBuffer::new(
-                display, 
-                glium::index::PrimitiveType::from(self.primitive_type),
-                index_buffer
-            ).unwrap();
+        let index_buffer = ctx.new_buffer(
+            miniquad::BufferType::IndexBuffer,
+            miniquad::BufferUsage::Immutable,
+            miniquad::BufferSource::slice(self.indices.as_slice()),
+        );
 
-            return Ok(
-                Box::new(
-                    GpuMesh::new(vertex_buffer, Some(indices))
-                )
-            );
-        }
-
-        Ok(
-            Box::new(
-                GpuMesh::new(vertex_buffer, None)
-            )
-        )
+        Ok(Box::new(
+            GpuMesh::new(vertex_buffer, index_buffer)
+        ))
     }
 }
 
@@ -139,16 +130,32 @@ impl MeshHandle {
         if let Some(mesh) = self.get_datas_mut().get_mut::<Mesh>(mesh_id)
         {
             if let Ok(v_length) = vertices.len() {
-                mesh.vertex_buffer.resize(v_length as usize, Vertex::default());
-                // fill mesh
+                mesh.vertices.resize(v_length as usize, Vertex::default());
+                // fill vertex buffer
                 for (vertex_index, vertex) in vertices.sequence_values::<Table>().enumerate() {
                     if let Ok(vertex) = vertex {
                         for (comp_index, comp) in vertex.sequence_values::<f32>().enumerate() {
                             if let Ok(comp) = comp {
-                                mesh.vertex_buffer[vertex_index].position[comp_index] = comp;
+                                mesh.vertices[vertex_index].position[comp_index] = comp;
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    pub fn set_indices(&mut self, indices: Table) {
+        let mesh_id = self.get_id();
+        if let Some(mesh) = self.get_datas_mut().get_mut::<Mesh>(mesh_id)
+        {
+            if let Ok(v_length) = indices.len() {
+                mesh.indices.resize(v_length as usize, 0);
+                // fill index buffer
+                for (table_index, value) in indices.sequence_values::<u32>().enumerate() {
+                    if let Ok(value) = value {
+                        mesh.indices[table_index] = value;
+                    } 
                 }
             }
         }
@@ -167,6 +174,10 @@ impl UserData for MeshHandle {
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("setVertices", |_, mesh, vertices: Table| {
             Ok(mesh.set_vertices(vertices))
+        });
+
+        methods.add_method_mut("setIndices", |_, mesh, indices: Table| {
+            Ok(mesh.set_indices(indices))
         });
 
         methods.add_method_mut("setPrimitiveType", |_, mesh, primitive_string: String| {
