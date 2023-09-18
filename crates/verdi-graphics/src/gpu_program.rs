@@ -2,17 +2,19 @@ use verdi_database::Resource;
 
 use crate::gpu_assets::GpuAsset;
 
-pub struct GpuProgram(miniquad::ShaderId);
+pub struct GpuProgram(glium::Program);
 
 impl GpuProgram {
-    pub fn new(id: miniquad::ShaderId) -> Self {
-        Self(id)
+    pub fn new(gl_program: glium::Program) -> Self {
+        Self(
+            gl_program
+        ) 
     }
 }
 
 impl GpuProgram {
-    pub fn get_shader(&self) -> miniquad::ShaderId {
-        self.0
+    pub fn get_gl_program(&self) -> &glium::Program {
+        &self.0
     }
 }
 

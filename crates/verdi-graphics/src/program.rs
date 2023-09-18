@@ -1,9 +1,10 @@
 use std::ops::Deref;
 
+use glium::Display;
 use slotmap::Key;
 use verdi_database::{ResourceId, Resource, Assets, Handle};
 
-use crate::shader::ShaderId;
+use crate::{shader::{ShaderId, Shader}, gpu_assets::{PrepareAsset, GpuAssets, GpuAsset, GpuAssetError}, gpu_program::GpuProgram};
 
 pub type ProgramId = ResourceId;
 
@@ -33,6 +34,30 @@ impl Program {
     }
 }
 
+impl PrepareAsset for Program {
+    fn prepare_rendering(&self, display: &Display, assets: &Assets, gpu_assets: &GpuAssets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
+        if let Some(vs) = assets.get_datas().get::<Shader>(self.vs) {
+            if let Some(fs) = assets.get_datas().get::<Shader>(self.fs) {
+                let gl_program = glium::Program::from_source(
+                    display, 
+                    vs.get_source(), 
+                    fs.get_source(), 
+                    None
+                )?;
+
+                return Ok(
+                    Box::new(
+                        GpuProgram::new(gl_program)
+                    )
+                );
+            }
+        }
+
+        Err(GpuAssetError::PreparationFailed)
+    }
+}
+
+#[derive(Clone)]
 pub struct ProgramHandle(Handle);
 
 impl Deref for ProgramHandle {

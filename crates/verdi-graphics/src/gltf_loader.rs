@@ -9,12 +9,12 @@ use verdi_math::{Mat4, prelude::Math};
 
 use crate::{
     mesh::{Mesh, PrimitiveType, MeshHandle}, 
-    image::{Image, ImageId}, 
+    image::Image, 
     material::{Material, MaterialId}, 
     node::Node,
     vertex::Vertex, 
     model::Model, 
-    globals::Globals, 
+    globals::Globals, uniform::{UniformHandle, Uniform, UniformValue}, 
 };
 
 #[derive(Error, Debug)]
@@ -39,7 +39,7 @@ impl GltfLoader {
 
         let folder = path.as_ref().parent().unwrap();
 
-        let mut textures = vec![];
+        let mut uniforms = vec![];
         for gltf_texture in gltf.textures() {
             let image_id = assets.add(
                 Box::new(
@@ -51,7 +51,18 @@ impl GltfLoader {
                 )
             );
 
-            textures.push(image_id);
+            uniforms.push(
+                UniformHandle::new(
+                    assets.clone(), 
+                    assets.add(
+                        Box::new(
+                            Uniform::new(
+                                UniformValue::Texture(image_id)
+                            )
+                        )
+                    )
+                )
+            );
         }
 
         let mut materials = vec![];
@@ -61,7 +72,7 @@ impl GltfLoader {
                     Box::new(
                         GltfLoader::load_material(
                             gltf_material,
-                            &textures, 
+                            &uniforms, 
                             globals
                         )
                     )
@@ -156,13 +167,9 @@ impl GltfLoader {
             }
         }
 
-        let index_buffer ;
+        let mut index_buffer = None;
         if let Some(indices) = reader.read_indices() {
-            index_buffer = indices.into_u32().collect();
-        }
-        else {
-            // TODO: fill indices 3 by 3
-            index_buffer = vec![];
+            index_buffer = Some(indices.into_u32().collect());
         }
 
         let material_id = gltf_primitive.material().index()
@@ -189,28 +196,28 @@ impl GltfLoader {
             }
             gltf::image::Source::Uri { uri, mime_type: _ } => {
                 let image_path = folder_path.join(uri);
-                Image::new(image_path)?
+                Image::from_path(image_path)?
             }
         };
 
         Ok(source)
     }
 
-    fn load_material(gltf_material: gltf::Material, textures: &Vec<ImageId>, globals: &Globals) -> Material {
+    fn load_material(gltf_material: gltf::Material, texture_uniforms: &Vec<UniformHandle>, globals: &Globals) -> Material {
         let texture_id = gltf_material
             .pbr_metallic_roughness()
             .base_color_texture()
             .map(|info| info.texture().index())
-            .and_then(|i| textures.get(i).cloned());
+            .and_then(|i| texture_uniforms.get(i).cloned());
 
-        let mut material = Material::new(globals.global_programs.gouraud_textured, &globals.global_uniforms);
-        material.add_uniform("u_enable_fog".to_string(), globals.global_uniforms.enable_fog.clone());
-        material.add_uniform("u_fog_start".to_string(), globals.global_uniforms.fog_start.clone());
-        material.add_uniform("u_fog_end".to_string(), globals.global_uniforms.fog_end.clone());
-        material.add_uniform("u_enable_lighting".to_string(), globals.global_uniforms.enable_lighting.clone());
+        let mut material = Material::new(globals.global_programs.gouraud_textured.clone(), &globals.global_uniforms);
+        material.add_uniform("u_enable_fog", globals.global_uniforms.enable_fog.clone());
+        material.add_uniform("u_fog_start", globals.global_uniforms.fog_start.clone());
+        material.add_uniform("u_fog_end", globals.global_uniforms.fog_end.clone());
+        material.add_uniform("u_enable_lighting", globals.global_uniforms.enable_lighting.clone());
 
         if let Some(id) = texture_id {
-            material.add_texture(id);
+            material.add_uniform("u_texture", id);
         }
 
         material.to_owned()

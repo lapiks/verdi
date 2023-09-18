@@ -1,9 +1,10 @@
 #[allow(missing_docs)]
 pub mod prelude {
     #[doc(hidden)]
-    pub use crate::app::Window;
+    pub use crate::app::App;
 }
 
+mod window;
 mod app;
 mod error;
 mod gui;

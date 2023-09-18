@@ -5,20 +5,20 @@ use slotmap::Key;
 use verdi_database::{ResourceId, Resource, Assets, Handle};
 
 use crate::{
-    program::{ProgramId, Program}, 
+    program::ProgramHandle, 
     globals::GlobalUniforms, 
-    image::ImageId, 
-    uniform::{Uniform, UniformHandle, UniformValue}, gpu_assets::{PrepareAsset, GpuAssets, GpuAsset, GpuAssetError}, shader::Shader, gpu_program::GpuProgram, 
+    uniform::{Uniform, UniformHandle, UniformValue},
 };
+
+const MAX_UNIFORMS: usize = 64;
 
 pub type MaterialId = ResourceId;
 
 /// A material defines the program and uniforms to use when rendering a mesh.
 #[derive(Clone)]
 pub struct Material {
-    pub program: ProgramId,
-    textures: Vec<ImageId>,
-    uniforms: Vec<(String, UniformHandle)>,
+    pub program: ProgramHandle,
+    uniforms: Vec<Option<(&'static str, UniformHandle)>>,
     pub id: MaterialId,
 }
 
@@ -33,97 +33,53 @@ impl Resource for Material {
 }
 
 impl Material {
-    pub fn new(program: ProgramId, global_uniforms: &GlobalUniforms) -> Self {
-        let mut uniforms = Vec::with_capacity(4);
+    pub fn new(program: ProgramHandle, global_uniforms: &GlobalUniforms) -> Self {
+        let mut uniforms = vec![None; MAX_UNIFORMS];
         // add global uniforms to the material
-        uniforms.push(("u_model".to_string(), global_uniforms.model_matrix.clone()));
-        uniforms.push(("u_view".to_string(), global_uniforms.view_matrix.clone()));
-        uniforms.push(("u_projection".to_string(), global_uniforms.projection_matrix.clone()));
-        uniforms.push(("u_resolution".to_string(), global_uniforms.resolution.clone()));
+        uniforms[0] = Some(("u_model", global_uniforms.model_matrix.clone()));
+        uniforms[1] = Some(("u_view", global_uniforms.view_matrix.clone()));
+        uniforms[2] = Some(("u_projection", global_uniforms.projection_matrix.clone()));
+        uniforms[3] = Some(("u_resolution", global_uniforms.resolution.clone()));
 
         Self {
             program,
-            textures: Vec::default(),
             uniforms,
             id: MaterialId::null(),
         }
     }
 
-    pub fn add_uniform(&mut self, name: String, uniform_handle: UniformHandle) -> &mut Self {
-        self.uniforms.push((name, uniform_handle));
-
+    pub fn add_uniform(&mut self, name: &'static str, uniform_handle: UniformHandle) -> &mut Self {
+        for uniform in &mut self.uniforms[..] {
+            if uniform.is_none() {
+                *uniform = Some((name, uniform_handle));
+                break;
+            }
+        }
         self
     }
 
-    pub fn add_texture(&mut self, texture: ImageId) {
-        self.textures.push(texture);
-    }
-
-    pub fn get_textures(&self) -> &Vec<ImageId> {
-        &self.textures
-    }
-
-    pub fn get_uniform_values(&self) -> Option<Vec<u8>> {
-        // construct a buffer of uniform values from the material uniforms description as buffer of bytes
-        let mut uniform_values = Vec::default();
-
-        for (_, uniform_handle) in self.uniforms.iter() {
-            if let Some(uniform) = uniform_handle.get_datas().get::<Uniform>(uniform_handle.get_id()) {
-                uniform_values.append(&mut uniform.encode_u8());
-            }
-            else {
-                // missing uniform
-                return None;
-            }
-        }
-
-        Some(uniform_values)
+    pub fn get_uniforms(&self) -> &Vec<Option<(&'static str, UniformHandle)>> {
+        &self.uniforms
     }
 }
 
-impl PrepareAsset for Material {
-    fn prepare_rendering(&self, ctx: &mut dyn miniquad::RenderingBackend, assets: &Assets, gpu_assets: &GpuAssets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
-        if let Some(program) = assets.get_datas().get::<Program>(self.program) {
-            if let Some(vs) = assets.get_datas().get::<Shader>(program.vs) {
-                if let Some(fs) = assets.get_datas().get::<Shader>(program.fs) {
-                    let mut uniform_descs = Vec::with_capacity(self.uniforms.len());
-                    for uniform in &self.uniforms {
-                        if let Some(uniform_value) = assets.get_datas().get::<Uniform>(uniform.1.get_id())
-                        {
-                            uniform_descs.push(
-                                miniquad::UniformDesc::new(
-                                    uniform.0.as_str(),
-                                    uniform_value.get_quad_type(),
-                                )
-                            );
-                        }
-                    }
+pub struct GlUniformValues<'a> {
+    pub uniform_values: [Option<(&'a str, glium::uniforms::UniformValue<'a>)>; MAX_UNIFORMS],
+}
 
-                    let shader_meta = miniquad::ShaderMeta {
-                        images: vec!["u_texture".to_string()], // TODO
-                        uniforms: miniquad::UniformBlockLayout {
-                            uniforms: uniform_descs,
-                        },
-                    };
-
-                    let shader = ctx.new_shader(
-                        miniquad::ShaderSource::Glsl { 
-                            vertex: vs.get_source(), 
-                            fragment: fs.get_source() 
-                        },
-                        shader_meta
-                    )?;
-    
-                    return Ok(
-                        Box::new(
-                            GpuProgram::new(shader)
-                        )
-                    );
-                }
+impl<'material> glium::uniforms::Uniforms for GlUniformValues<'material> {
+    fn visit_values<'a, F>(&'a self, mut set_uniform: F)
+    where
+        F: FnMut(&str, glium::uniforms::UniformValue<'a>),
+    {
+        for uniform in &self.uniform_values[..] {
+            if let Some((name, value)) = *uniform {
+                set_uniform(name, value);
+            }
+            else {
+                break;
             }
         }
-        
-        Err(GpuAssetError::PreparationFailed)
     }
 }
 
@@ -196,14 +152,15 @@ impl UserData for MaterialHandle {
                 };
             }
     
-            if let Some(uniform) = uniform {
-                let material_id = material.get_id();
-                let mut assets = material.get_datas_mut();
-                let material = assets
-                    .get_mut::<Material>(material_id)
-                    .unwrap()
-                    .add_uniform(name, uniform);
-            }
+            // TODO: commented because name should be a static &str and is a String here 
+            // if let Some(uniform) = uniform {
+            //     let material_id = material.get_id();
+            //     let mut assets = material.get_datas_mut();
+            //     let material = assets
+            //         .get_mut::<Material>(material_id)
+            //         .unwrap()
+            //         .add_uniform(name, uniform);
+            // }
     
             Ok(())
         });

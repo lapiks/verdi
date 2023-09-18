@@ -4,13 +4,14 @@ use mlua::{UserData, UserDataMethods};
 use verdi_math::prelude::{TransformHandle, Transform};
 
 use crate::{
-    render_cmds::{DrawCmd, DrawCmd2}, 
+    render_cmds::DrawCmd, 
     mesh::MeshHandle, 
     render_graph::RenderGraph, 
     model::{ModelHandle, Model}, 
     render_state::RenderState, 
     camera::{CameraHandle, Camera}, 
-    sprite::{SpriteHandle, Sprite}
+    sprite::{SpriteHandle, Sprite}, 
+    framebuffer::FramebufferHandle
 };
 
 pub struct CmdQueue {
@@ -32,16 +33,22 @@ impl CmdQueue {
 pub type PassId = u32;
 
 pub struct Pass {
+    framebuffer: FramebufferHandle,
     cmd_queue: CmdQueue,
     pub render_state: RenderState,
 }
 
 impl Pass {
-    pub fn new() -> Self {
+    pub fn new(framebuffer: FramebufferHandle) -> Self {
         Self {
+            framebuffer,
             cmd_queue: CmdQueue::new(),
             render_state: RenderState::new(),
         }
+    }
+
+    pub fn get_framebuffer(&self) -> FramebufferHandle {
+        self.framebuffer.clone()
     }
 
     pub fn add_draw_cmd(&mut self, mesh: MeshHandle, transform: TransformHandle, perspective: bool) {

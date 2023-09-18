@@ -5,7 +5,7 @@ pub mod prelude {
         graphics_chip::GraphicsChip,
         bind_graphics_chip::BindGraphicsChip,
         renderer::Renderer,
-        render_target::RenderTarget,
+        framebuffer::FramebufferHandle,
         globals::Globals,
         pass::PassHandle,
     };
@@ -19,7 +19,6 @@ mod render_pass;
 mod draw_command;
 mod renderer;
 mod renderable;
-mod render_target;
 mod image;
 mod mesh;
 mod model;
@@ -43,3 +42,5 @@ mod pipeline;
 mod render_cmds;
 mod render_graph;
 mod sprite;
+mod framebuffer;
+mod depth_buffer;

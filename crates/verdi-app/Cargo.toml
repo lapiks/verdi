@@ -11,7 +11,7 @@ verdi-graphics = { path = "../verdi-graphics" }
 verdi-math = { path = "../verdi-math" }
 verdi-system = { path = "../verdi-system" }
 verdi-input = { path = "../verdi-input" }
-miniquad = "0.4.0-alpha.9"
+glium = "0.32.1"
 egui = { version = "0.20.1", default-features = true }
 egui-miniquad = "0.14.0"
 syntect = "5.0"

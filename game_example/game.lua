@@ -44,7 +44,7 @@ function verdi.update(deltaTime)
     local speed = 5
     local rotSpeed = 1
 
-    if input.getKeyDown("w") then
+    if input.getKeyDown("z") then
         camTF:translate(camTF:forward() * speed * deltaTime)
     end
 
@@ -56,7 +56,7 @@ function verdi.update(deltaTime)
         camTF:translate(camTF:right() * speed * deltaTime)
     end
 
-    if input.getKeyDown("a") then
+    if input.getKeyDown("q") then
         camTF:translate(camTF:left() * speed * deltaTime)
     end
 
@@ -87,7 +87,7 @@ function verdi.update(deltaTime)
 end
 
 function verdi.draw(pass)
-    graphics.setClearColor(0.0, 0.0, 0.0, 1.0)
+    --graphics.setClearColor(0.0, 0.0, 0.0, 1.0)
 
     --transform:translate(5.0, 0.0, 0.0)
     --transform:rotate(1.0, 0.0, 1.0, 0.0)
@@ -98,7 +98,7 @@ function verdi.draw(pass)
     pass:setFogStart(10.0)
     pass:setFogEnd(25.0)
     pass:drawModel(model)
-    --pass:drawMesh(mesh, transform)
+    pass:drawMesh(mesh, transform)
     --pass:drawSprite(sprite)
 
     pass:submit(graphics.camera)

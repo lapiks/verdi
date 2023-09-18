@@ -3,24 +3,27 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     vertex::Vertex, 
     render_pass::RenderPass, 
-    image::{Image, ImageHandle, ImageId}, 
-    model::ModelId, 
+    image::{Image, ImageHandle}, 
+    model::ModelHandle, 
     gltf_loader::{GltfError, GltfLoader}, 
-    material::{Material, MaterialId}, 
+    material::{Material, MaterialHandle}, 
     globals::Globals, 
-    mesh::{MeshId, Mesh, PrimitiveType, MeshHandle}, 
+    mesh::{Mesh, PrimitiveType, MeshHandle}, 
     render_state::RenderState, 
     pass::PassHandle, 
     render_graph::RenderGraph, 
-    camera::{Camera, CameraHandle}, 
-    sprite::{SpriteId, Sprite}, 
-    uniform::{Uniform, UniformType, UniformId}, 
+    camera::{Camera, CameraHandle},
     gpu_assets::{GpuAssets, PrepareAsset}, 
-    gpu_pipeline::GpuPipeline, pipeline::Pipeline,
+    framebuffer::{FramebufferHandle, Framebuffer}, 
+    depth_buffer::{DepthBufferHandle, DepthBuffer, GpuDepthBuffer}, 
+    gpu_program::GpuProgram, 
+    pipeline::Pipeline, 
+    program::Program, 
+    gpu_image::GpuImage, gpu_mesh::GpuMesh, uniform::{Uniform, UniformValue},
 };
 
+use glium::Display;
 use image::ImageError;
-use miniquad::RenderingBackend;
 use verdi_database::Assets;
 use verdi_math::prelude::*;
 
@@ -28,6 +31,7 @@ use verdi_math::prelude::*;
 pub struct GraphicsChip {
     pub render_graph: Rc<RefCell<RenderGraph>>,
     pub render_passes: Vec<RenderPass>,
+    framebuffer: Option<FramebufferHandle>,
     pub stream_buffer: StreamBufferState,
     pub assets: Assets,
     pub gpu_assets: GpuAssets,
@@ -48,7 +52,7 @@ impl GraphicsChip {
         let mat_2d = assets
             .add(
                 Box::new(
-                    Material::new(globals.global_programs.gouraud, &globals.global_uniforms)
+                    Material::new(globals.global_programs.gouraud.clone(), &globals.global_uniforms)
                         .clone()
                 )
         );
@@ -58,7 +62,7 @@ impl GraphicsChip {
                 Box::new(
                     Mesh::new(
                         vec![Vertex::default(); 1024 * 1024],
-                        vec![], // TODO: fill something
+                        None,
                         //PrimitiveType::Triangles,
                         PrimitiveType::Lines,
                         mat_2d,
@@ -77,6 +81,7 @@ impl GraphicsChip {
         Ok(Self { 
             render_graph: Rc::new(RefCell::new(RenderGraph::new())),
             render_passes: Vec::new(),
+            framebuffer: None,
             stream_buffer,
             assets,
             gpu_assets: GpuAssets::new(),
@@ -86,8 +91,16 @@ impl GraphicsChip {
         })
     }
 
-    pub fn on_game_start(&mut self) {
+    pub fn get_framebuffer(&self) -> Option<FramebufferHandle> {
+        self.framebuffer.clone()
+    }
 
+    pub fn on_game_start(&mut self) {
+        let color_target = self.new_empty_image(320, 240);
+        let depth_target  = self.new_depth_buffer(320, 240);
+        let framebuffer = self.new_framebuffer(color_target, depth_target);
+
+        self.framebuffer = Some(framebuffer.clone());
     }
 
     pub fn on_game_shutdown(&mut self) {
@@ -113,78 +126,83 @@ impl GraphicsChip {
         //self.buffer_state.next_frame();
     }
 
-    pub fn prepare_gpu_assets(&mut self, ctx: &mut dyn RenderingBackend) {
-        // à rendre générique
-
+    pub fn prepare_gpu_assets(&mut self, ctx: &Display) {
+        // fonction à revoir commplètement. Le gros point noir du moteur pour l'instant.
         let asset_datas = self.assets.get_datas();
-
-        // construct gpu programs
-        // Pas fou !
-        // if self.gpu_assets.get::<Material>(self.globals.global_programs.gouraud).is_none() {
-        //     if let Some(program) = self.assets.get_datas().get::<Material>(self.globals.global_programs.gouraud) {
-        //         match program.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
-        //             Ok(gpu_program) => self.gpu_assets.add(self.globals.global_programs.gouraud, gpu_program),
-        //             Err(_) => todo!(),
-        //         }
-        //     }   
-        // }
-
-        // if self.gpu_assets.get::<Material>(self.globals.global_programs.gouraud_textured).is_none() {
-        //     if let Some(program) = self.assets.get_datas().get::<Material>(self.globals.global_programs.gouraud_textured) {
-        //         match program.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
-        //             Ok(gpu_program) => self.gpu_assets.add(self.globals.global_programs.gouraud_textured, gpu_program),
-        //             Err(_) => todo!(),
-        //         }
-        //     }   
-        // }
-
-        // if self.gpu_assets.get::<Material>(self.globals.global_programs.std_2d).is_none() {
-        //     if let Some(program) = self.assets.get_datas().get::<Material>(self.globals.global_programs.std_2d) {
-        //         match program.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
-        //             Ok(gpu_program) => self.gpu_assets.add(self.globals.global_programs.std_2d, gpu_program),
-        //             Err(_) => todo!(),
-        //         }
-        //     }   
-        // }
 
         for pass in self.render_graph.borrow().get_passes().iter() {
             for cmd in pass.get_cmds() {
-                let mesh = asset_datas
-                    .get::<Mesh>(cmd.mesh.get_id())
-                    .expect("Missing primitive resource");
+                if self.gpu_assets.get::<GpuMesh>(cmd.mesh.get_id()).is_none() {
+                    let mesh = asset_datas
+                        .get::<Mesh>(cmd.mesh.get_id())
+                        .expect("Missing primitive resource");
 
-                // construct gpu primitive
-                match mesh.prepare_rendering(ctx, &self.assets, &self.gpu_assets) {
-                    Ok(gpu_mesh) => self.gpu_assets.add(cmd.mesh.get_id(), gpu_mesh),
-                    Err(_) => todo!(),
-                }
-
-                // construct gpu objects needed by the material
-                if let Some(material) = self.assets.get_datas().get::<Material>(mesh.material) {
-                    match material.prepare_rendering(ctx, &self.assets, &self.gpu_assets) {
-                        Ok(gpu_program) => self.gpu_assets.add(material.program, gpu_program),
+                    // construct gpu primitive
+                    match mesh.prepare_rendering(ctx, &self.assets, &self.gpu_assets) {
+                        Ok(gpu_mesh) => self.gpu_assets.add(cmd.mesh.get_id(), gpu_mesh),
                         Err(_) => todo!(),
-                    }   
-                    for texture_id in material.get_textures() {
-                        if let Some(texture) = asset_datas.get::<Image>(*texture_id) {
-                            match texture.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
-                                Ok(gpu_texture) => self.gpu_assets.add(*texture_id, gpu_texture),
-                                Err(_) => todo!(),
+                    }
 
+                    // construct gpu objects needed by the material
+                    if let Some(material) = self.assets.get_datas().get::<Material>(mesh.material) {
+                        for uniform_handle in material.get_uniforms() {
+                            if let Some(uniform_handle) = uniform_handle {
+                                if let Some(uniform) = uniform_handle.1.get_datas().get::<Uniform>(uniform_handle.1.get_id()) {
+                                    match uniform.get_value() {
+                                        UniformValue::Texture(id) => {
+                                            if let Some(texture) = asset_datas.get::<Image>(*id) {                      
+                                                match texture.prepare_rendering(ctx, &self.assets, &self.gpu_assets) {
+                                                    Ok(gpu_image) => self.gpu_assets.add(*id, gpu_image),
+                                                    Err(_) => todo!(),
+                                                }
+                                            }
+                                        },
+                                        _ => {
+                                            continue;
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
-                }     
+                    }     
+                }                
             }     
         }
 
-        if self.gpu_assets.get::<GpuPipeline>(self.globals.global_pipelines.default_pipeline.get_id()).is_none() {
-            if let Some(pipeline) = self.assets.get_datas().get::<Pipeline>(self.globals.global_pipelines.default_pipeline.get_id()) {
-                match pipeline.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
-                    Ok(gpu_pipeline) => self.gpu_assets.add(self.globals.global_pipelines.default_pipeline.get_id(), gpu_pipeline),
-                    Err(_) => todo!(),
+        if let Some(pipeline) = self.assets.get_datas().get::<Pipeline>(self.globals.global_pipelines.default_pipeline.get_id()) {
+            if self.gpu_assets.get::<GpuProgram>(pipeline.get_program().get_id()).is_none() {
+                if let Some(program) = self.assets.get_datas().get::<Program>(pipeline.get_program().get_id()) {
+                    match program.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
+                        Ok(gpu_program) => self.gpu_assets.add(pipeline.get_program().get_id(), gpu_program),
+                        Err(_) => todo!(),
+                    }
                 }
-            }   
+            }
+        }
+
+        if let Some(framebuffer_handle) = &self.framebuffer {
+            if let Some(framebuffer) = framebuffer_handle.get_datas().get::<Framebuffer>(framebuffer_handle.get_id()) {
+                let color_handle = framebuffer.get_color_target();
+                let depth_handle = framebuffer.get_depth_target();
+                let color_id = color_handle.get_id();
+                let depth_id = depth_handle.get_id();
+                if self.gpu_assets.get::<GpuImage>(color_id).is_none() {
+                    if let Some(image) = self.assets.get_datas().get::<Image>(color_id) {
+                        match image.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
+                            Ok(gpu_image) => self.gpu_assets.add(color_id, gpu_image),
+                            Err(_) => todo!(),
+                        }
+                    }
+                }
+                if self.gpu_assets.get::<GpuDepthBuffer>(depth_id).is_none() {
+                    if let Some(depth) = self.assets.get_datas().get::<DepthBuffer>(depth_id) {
+                        match depth.prepare_rendering(ctx, &self.assets, &self.gpu_assets)  {
+                            Ok(gpu_depth) => self.gpu_assets.add(depth_id, gpu_depth),
+                            Err(_) => todo!(),
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -271,10 +289,38 @@ impl GraphicsChip {
         // };
     }
 
-    pub fn new_image(&mut self, path: &String) -> Result<ImageId, ImageError> {
-        let image = Image::new(path)?;
+    pub fn new_image(&mut self, path: &String) -> Result<ImageHandle, ImageError> {
+        let image = Image::from_path(path)?;
+        Ok(
+            ImageHandle::new(
+                self.assets.clone(),
+                self.assets.add(Box::new(image))
+            )
+        )
+    }
 
-        Ok(self.assets.add(Box::new(image)))
+    pub fn new_empty_image(&mut self, width: u32, height: u32) -> ImageHandle {
+        let image = Image::new(width, height);
+        ImageHandle::new(
+            self.assets.clone(),
+            self.assets.add(Box::new(image))
+        )
+    }
+
+    pub fn new_depth_buffer(&mut self, width: u32, height: u32) -> DepthBufferHandle {
+        let depth_buffer = DepthBuffer::new(width, height);
+        DepthBufferHandle::new(
+            self.assets.clone(),
+            self.assets.add(Box::new(depth_buffer))
+        )
+    }
+
+    pub fn new_framebuffer(&mut self, color_target: ImageHandle, depth_target: DepthBufferHandle) -> FramebufferHandle {
+        let framebuffer = Framebuffer::new(color_target, depth_target);
+        FramebufferHandle::new(
+            self.assets.clone(),
+            self.assets.add(Box::new(framebuffer))
+        )
     }
 
     pub fn bind_texture(&mut self, image: ImageHandle) {
@@ -286,79 +332,33 @@ impl GraphicsChip {
         // };
     }
 
-    // pub fn draw_model(&mut self, model_id: ModelId) {
-    //     let db = self.assets.borrow();
-    //     let model = db.get::<Model>(model_id).unwrap();
-    //     for node in model.nodes.iter() {
-    //         // nothing to draw
-    //         if node.mesh.is_none() {
-    //             continue;
-    //         }
-
-    //         if let Some(mesh) = db.get::<Mesh>(node.mesh.unwrap().get_id()) {
-    //             self.render_passes.push(
-    //                 RenderPass { 
-    //                     mesh_id: mesh.id,
-    //                     transform: node.transform,
-    //                 }
-    //             );
-    //         }
-    //     }
-    // }
-
-    // pub fn draw_mesh(&mut self, mesh_id: MeshId, transform_id: TransformId) {
-    //     if let Some(mesh) = self.assets.borrow().get::<Mesh>(mesh_id) {
-    //         self.render_passes.push(
-    //             RenderPass { 
-    //                 mesh_id: mesh.id,
-    //                 transform: transform_id,
-    //             }
-    //         );
-    //     }
-    // }
-
-    // pub fn draw_node(&mut self, node: &Node) {
-    //     // nothing to draw
-    //     if node.mesh.is_none() {
-    //         return;
-    //     }
-
-    //     if let Some(mesh) = self.assets.borrow().get::<Mesh>(node.mesh.unwrap().get_id()) {
-    //         self.render_passes.push(
-    //             RenderPass { 
-    //                 mesh_id: node.mesh.unwrap(),
-    //                 transform: node.transform.clone(),
-    //             }
-    //         );
-    //     }
-    // }
-
-    pub fn new_model(&mut self, path: &String) -> Result<ModelId, GltfError> {
+    pub fn new_model(&mut self, path: &String) -> Result<ModelHandle, GltfError> {
         let model = GltfLoader::load(path, &mut self.assets, self.math.clone(), &self.globals)?;
 
-        Ok(self.assets.add(Box::new(model)))
+        Ok(
+            ModelHandle::new(
+                self.assets.clone(), 
+                self.assets.add(Box::new(model))
+            )
+        )
     }
     
-    pub fn new_mesh(&mut self) -> Result<MeshId, GltfError> {
+    pub fn new_mesh(&mut self) -> Result<MeshHandle, GltfError> {
         let vertex_buffer:Vec<Vertex> = Vec::new();
         let material_id = self.new_gouraud_material();
-        // let material = Material::new(
-        //     self.globals.global_programs.gouraud, 
-        //     &self.globals.global_uniforms
-        // );
 
-        // let material_id = self.assets.add(
-        //     Box::new(material)
-        // );
-
-        Ok(self.assets.add(
-            Box::new(
-                Mesh::new(
-                    vertex_buffer,
-                    vec![], // TODO: fill something,
-                    PrimitiveType::Triangles,
-                    material_id
-                )
+        Ok(
+            MeshHandle::new(
+                self.assets.clone(),
+                self.assets.add(
+                    Box::new(
+                        Mesh::new(
+                            vertex_buffer,
+                            None,
+                            PrimitiveType::Triangles,
+                            material_id.get_id()
+                        )
+                    )
             )
         ))
     }
@@ -429,28 +429,34 @@ impl GraphicsChip {
     //     self.assets.borrow_mut().add(Box::new(sprite))
     // }
 
-    pub fn new_gouraud_material(&mut self) -> MaterialId {
+    pub fn new_gouraud_material(&mut self) -> MaterialHandle {
         let mut material = Material::new(
-            self.globals.global_programs.gouraud_textured, 
+            self.globals.global_programs.gouraud_textured.clone(), 
             &self.globals.global_uniforms
         );
-        material.add_uniform("u_enable_fog".to_string(), self.globals.global_uniforms.enable_fog.clone());
-        material.add_uniform("u_fog_start".to_string(), self.globals.global_uniforms.fog_start.clone());
-        material.add_uniform("u_fog_end".to_string(), self.globals.global_uniforms.fog_end.clone());
-        material.add_uniform("u_enable_lighting".to_string(), self.globals.global_uniforms.enable_lighting.clone());
+        material.add_uniform("u_enable_fog", self.globals.global_uniforms.enable_fog.clone());
+        material.add_uniform("u_fog_start", self.globals.global_uniforms.fog_start.clone());
+        material.add_uniform("u_fog_end", self.globals.global_uniforms.fog_end.clone());
+        material.add_uniform("u_enable_lighting", self.globals.global_uniforms.enable_lighting.clone());
 
-        self.assets.add(
-            Box::new(material)
+        MaterialHandle::new(
+            self.assets.clone(),
+            self.assets.add(
+             Box::new(material)
+            )
         )
     }
 
-    pub fn new_2d_material(&mut self) -> MaterialId {
+    pub fn new_2d_material(&mut self) -> MaterialHandle {
         let material = Material::new(
-            self.globals.global_programs.std_2d, 
+            self.globals.global_programs.std_2d.clone(), 
             &self.globals.global_uniforms
         );
-        self.assets.add(
-            Box::new(material)
+        MaterialHandle::new(
+            self.assets.clone(),
+            self.assets.add(
+             Box::new(material)
+            )
         )
     }
 
@@ -475,31 +481,23 @@ impl GraphicsChip {
     }
 
     pub fn new_pass(&mut self) -> PassHandle {
+        let color_target = self.new_empty_image(800, 600);
+        let depth_target = self.new_depth_buffer(800, 600);
+
+        let framebuffer = FramebufferHandle::new(
+            self.assets.clone(), 
+            self.assets.add(Box::new(Framebuffer::new(color_target, depth_target)))
+        );
+
         PassHandle {
             graph: self.render_graph.clone(),
-            id: self.render_graph.borrow_mut().create_pass(),
+            id: self.render_graph.borrow_mut().create_pass(framebuffer),
         }
     }
 
     pub fn set_clear_color(&mut self, color: &Vec4) {
         self.render_state.clear_color = *color;
     }
-
-    // pub fn translate(&mut self, v: &Vec3) {
-    //     *self.assets.borrow_mut().uniforms
-    //         .get_mat4_mut(
-    //             self.globals.global_uniforms.view_matrix
-    //         ).unwrap() 
-    //             *= Mat4::from_translation(*v);
-    // }
-
-    // pub fn rotate(&mut self, angle: f32, axis: &Vec3) {
-    //     *self.assets.borrow_mut().uniforms
-    //         .get_mat4_mut(
-    //             self.globals.global_uniforms.view_matrix
-    //         ).unwrap() 
-    //             *= Mat4::from_axis_angle(*axis, angle);
-    // }
 
     pub fn draw_line(&mut self, p1: &Vec2, p2: &Vec2) {
         let v1 = Vertex {

@@ -1,5 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
+use glium::Display;
 use mlua::{UserData, UserDataMethods, Table};
 use slotmap::Key;
 use verdi_database::{ResourceId, Resource, Assets, Handle};
@@ -22,20 +23,24 @@ pub enum PrimitiveType {
 
 impl From<String> for PrimitiveType {
     fn from(string: String) -> Self {
-        if string == "triangles" { PrimitiveType::Triangles }
-        else if string == "points" { PrimitiveType::Points }
-        else if string == "lines" { PrimitiveType::Lines }
-        else { PrimitiveType::Triangles }
+        match string.as_str() {
+            "triangles" => return PrimitiveType::Triangles,
+            "points" => return PrimitiveType::Points,
+            "lines" => return PrimitiveType::Lines,
+            _ => PrimitiveType::Triangles
+        }
     }
 }
 
-// impl From<PrimitiveType> for glium::index::PrimitiveType {
-//     fn from(p: PrimitiveType) -> Self {
-//         if p == PrimitiveType::Triangles { return glium::index::PrimitiveType::TrianglesList; }
-//         else if p == PrimitiveType::Lines { return glium::index::PrimitiveType::LinesList; }
-//         else { return glium::index::PrimitiveType::Points; }
-//     }
-// }
+impl From<PrimitiveType> for glium::index::PrimitiveType {
+    fn from(p: PrimitiveType) -> Self {
+        match p {
+            PrimitiveType::Triangles => glium::index::PrimitiveType::TrianglesList,
+            PrimitiveType::Points => glium::index::PrimitiveType::Points,
+            PrimitiveType::Lines => glium::index::PrimitiveType::LinesList,
+        }
+    }
+}
 
 #[derive(Error, Debug)]
 pub enum MeshError {
@@ -50,7 +55,7 @@ pub type MeshId = ResourceId;
 #[derive(Clone)]
 pub struct Mesh {
     pub vertices: Vec<Vertex>,
-    pub indices: Vec<u32>,
+    pub indices: Option<Vec<u32>>,
     pub primitive_type: PrimitiveType,
     pub material: MaterialId, // toutes les instances d'un même mesh devront utiliser un même matériau
     pub id: MeshId,
@@ -69,7 +74,7 @@ impl Resource for Mesh {
 impl Mesh {
     pub fn new(
         vertices: Vec<Vertex>,
-        indices: Vec<u32>,
+        indices: Option<Vec<u32>>,
         primitive_type: PrimitiveType,
         material: MaterialId
     ) -> Self {
@@ -84,22 +89,31 @@ impl Mesh {
 }
 
 impl PrepareAsset for Mesh {
-    fn prepare_rendering(&self, ctx: &mut dyn miniquad::RenderingBackend, assets: &Assets, gpu_assets: &GpuAssets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
-        let vertex_buffer = ctx.new_buffer(
-            miniquad::BufferType::VertexBuffer,
-            miniquad::BufferUsage::Immutable,
-            miniquad::BufferSource::slice(self.vertices.as_slice()),
-        );
+    fn prepare_rendering(&self, ctx: &Display, assets: &Assets, gpu_assets: &GpuAssets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
+        let vertex_buffer = glium::VertexBuffer::new(
+            ctx, 
+            &self.vertices
+        ).unwrap();
 
-        let index_buffer = ctx.new_buffer(
-            miniquad::BufferType::IndexBuffer,
-            miniquad::BufferUsage::Immutable,
-            miniquad::BufferSource::slice(self.indices.as_slice()),
-        );
+        if let Some(indices) = &self.indices {
+            let index_buffer = glium::IndexBuffer::new(
+                ctx, 
+                glium::index::PrimitiveType::from(self.primitive_type),
+                indices
+            ).unwrap();
 
-        Ok(Box::new(
-            GpuMesh::new(vertex_buffer, index_buffer)
-        ))
+            return Ok(
+                Box::new(
+                    GpuMesh::new(vertex_buffer, Some(index_buffer))
+                )
+            );
+        }
+
+        Ok(
+            Box::new(
+                GpuMesh::new(vertex_buffer, None)
+            )
+        )
     }
 }
 
@@ -145,17 +159,20 @@ impl MeshHandle {
         }
     }
 
-    pub fn set_indices(&mut self, indices: Table) {
+    pub fn set_indices(&mut self, indices_table: Table) {
         let mesh_id = self.get_id();
         if let Some(mesh) = self.get_datas_mut().get_mut::<Mesh>(mesh_id)
         {
-            if let Ok(v_length) = indices.len() {
-                mesh.indices.resize(v_length as usize, 0);
-                // fill index buffer
-                for (table_index, value) in indices.sequence_values::<u32>().enumerate() {
-                    if let Ok(value) = value {
-                        mesh.indices[table_index] = value;
-                    } 
+            // TODO: if no indices yet?
+            if let Ok(v_length) = indices_table.len() {
+                if let Some(indices) = &mut mesh.indices {
+                    indices.resize(v_length as usize, 0);
+                    // fill index buffer
+                    for (table_index, value) in indices_table.sequence_values::<u32>().enumerate() {
+                        if let Ok(value) = value {
+                            indices[table_index] = value;
+                        } 
+                    }
                 }
             }
         }

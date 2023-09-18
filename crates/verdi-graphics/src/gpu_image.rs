@@ -1,22 +1,27 @@
+use glium::{uniforms::SamplerBehavior, texture::SrgbTexture2d};
 use verdi_database::Resource;
 
-use crate::{image::Image, gpu_assets::GpuAsset};
+use crate::gpu_assets::GpuAsset;
 
-pub struct GpuImage(miniquad::TextureId);
+pub struct GpuImage { 
+    gl: SrgbTexture2d,
+    sampler: SamplerBehavior,
+}
 
 impl GpuImage {
-    pub fn new(ctx: &mut dyn miniquad::RenderingBackend, image: &Image) -> Self {
-        Self(
-            ctx.new_texture_from_rgba8(
-                image.get_width() as u16,
-                image.get_height() as u16,
-                &image.get_data().as_raw(),
-            )
-        )
+    pub fn new(gl: glium::texture::SrgbTexture2d, sampler: SamplerBehavior) -> Self {    
+        Self {
+            gl,
+            sampler,
+        }
     }
 
-    pub fn get_quad_texture(&self) -> miniquad::TextureId {
-        self.0
+    pub fn get_gl_texture(&self) -> &SrgbTexture2d {
+        &self.gl
+    }
+
+    pub fn get_gl_sampler(&self) -> &SamplerBehavior {
+        &self.sampler
     }
 }
 

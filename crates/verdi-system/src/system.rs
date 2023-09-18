@@ -1,5 +1,6 @@
 use std::{rc::Rc, cell::RefCell, path::Path};
 
+use glium::{Display, Frame};
 use mlua::Lua;
 use verdi_audio::prelude::{AudioHandle, Audio, BindAudio};
 use verdi_ecs::prelude::{WorldHandle, World, BindWorld};
@@ -7,7 +8,6 @@ use verdi_graphics::prelude::{
     GraphicsChip, 
     Renderer, 
     BindGraphicsChip, 
-    RenderTarget,
     PassHandle,
 };
 use verdi_input::prelude::{Inputs, BindInputs, MouseButton, Key};
@@ -42,15 +42,36 @@ pub enum SystemState {
     Stopped,
 }
 
+pub trait EventHandler {
+    /// Initialize system. Called once.
+    fn boot(&mut self) -> Result<(), SystemError>;
+    /// Update system's logic. Called every frame.
+    fn update(&mut self) -> Result<(), SystemError> ;
+    /// Draw system. Called every frame.
+    fn draw(&mut self, ctx: &Display, frame: &mut Frame);
+    /// Call at system's shutdown.
+    fn on_shutdown(&mut self);
+    /// Called on mouse move event
+    fn on_mouse_move(&mut self, x: f32, y: f32);
+    /// Called on mouse wheel event
+    fn on_mouse_wheel(&mut self, x: f32, y: f32);
+    /// Called on mouse button down event
+    fn on_mouse_button_down(&mut self, button: MouseButton);
+    /// Called on mouse button up event
+    fn on_mouse_button_up(&mut self, button: MouseButton);
+    /// Called on key down event
+    fn on_key_down(&mut self, keycode: Key);
+    /// called on key up event
+    fn on_key_up(&mut self, keycode: Key);
+}
+
 /// The Game system.
 pub struct System {
-    ctx: Box<dyn miniquad::RenderingBackend>,
     pub state: SystemState,
     lua: Lua,
     world: WorldHandle,
     gpu: Rc<RefCell<GraphicsChip>>,
     renderer: Renderer,
-    render_target: RenderTarget,
     inputs: Rc<RefCell<Inputs>>,
     audio: AudioHandle,
     math: Rc<RefCell<Math>>,
@@ -61,8 +82,6 @@ pub struct System {
 
 impl System {
     pub fn new() -> Result<Self, SystemError> {
-        let mut ctx = miniquad::window::new_rendering_backend();
-
         let math = Rc::new(RefCell::new(Math::new()));
 
         let gpu = Rc::new(
@@ -71,13 +90,7 @@ impl System {
             )
         );
 
-        let renderer = Renderer::new();
-
-        let render_target = RenderTarget::new(
-            &mut *ctx,
-            320, 
-            240)
-            .expect("Render target creation failed");
+        let renderer = Renderer {};
 
         let world = Rc::new(
             RefCell::new(
@@ -92,13 +105,11 @@ impl System {
         );
 
         Ok(Self { 
-            ctx,
             state: SystemState::Unloaded,
             lua: Lua::new(),
             world: WorldHandle::new(world),
             gpu,
             renderer,
-            render_target,
             inputs: Rc::new(RefCell::new(Inputs::new())),
             audio: AudioHandle::new(audio),
             math,
@@ -115,8 +126,24 @@ impl System {
         Ok(())
     }
 
+    pub fn frame_starts(&self) {
+        self.gpu.borrow_mut().flush_stream_buffer();
+        self.inputs.borrow_mut().reset();
+    }
+
+    pub fn frame_ends(&self) {
+        // prepare next frame
+        self.gpu.borrow_mut().frame_ends();
+    }
+
+    pub fn get_scripts(&self) -> Rc<RefCell<Scripts>> {
+        self.scripts.clone()
+    }
+}
+
+impl EventHandler for System {
     /// called at the start of the game execution
-    pub fn boot(&mut self) -> Result<(), SystemError> {
+    fn boot(&mut self) -> Result<(), SystemError> {
         LuaContext::create_verdi_table(&self.lua)?;
 
         BindWorld::bind(&self.lua, self.world.clone())?;
@@ -136,103 +163,77 @@ impl System {
     }
 
     /// Called every frame 
-    pub fn run(&mut self) -> Result<(), SystemError> {
+    fn update(&mut self) -> Result<(), SystemError> {
         let delta_time = self.time_step.tick();
         
         self.scripts.as_ref().borrow_mut().hot_reload(&self.lua)?;
 
-        let pass = PassHandle {
-            graph: self.gpu.borrow().render_graph.clone(),
-            id: self.gpu.borrow().render_graph.borrow_mut().create_pass(),
-        };
-
-        // callbacks
-        if let Err(err) = LuaContext::call_run(&self.lua, delta_time, pass) {
-            let current_error = err.to_string();
-            if self.last_error != current_error {
-                println!("{}", err);
-                self.last_error = current_error;
+        if let Some(framebuffer) = self.gpu.borrow().get_framebuffer() {
+            let pass = PassHandle {
+                graph: self.gpu.borrow().render_graph.clone(),
+                id: self.gpu.borrow().render_graph.borrow_mut().create_pass(framebuffer),
+            };
+    
+            // callbacks
+            if let Err(err) = LuaContext::call_run(&self.lua, delta_time, pass) {
+                let current_error = err.to_string();
+                if self.last_error != current_error {
+                    println!("{}", err);
+                    self.last_error = current_error;
+                }
             }
         }
-
+        
         Ok(())
     }
 
-    /// Called every frame. Draw as requested during the run call.
-    pub fn draw(&mut self) {
+    fn draw(&mut self, ctx: &Display, frame: &mut Frame) {
         if self.state == SystemState::Running {
-            // run system
-            match self.run() {
-                Ok(_) => {
-                    self.frame_starts();
+            // draw system
+            self.frame_starts();
 
-                    self.gpu.borrow_mut().new_frame();
+            self.gpu.borrow_mut().new_frame();
+
+            // prepare resources for rendering
+            self.gpu.borrow_mut().prepare_gpu_assets(ctx);
+
+            // draw system in framebuffer
+            self.renderer.render(ctx, &mut self.gpu.borrow_mut(), frame);
     
-                    // prepare resources for rendering
-                    self.gpu.borrow_mut().prepare_gpu_assets(&mut *self.ctx);
+            // // blit in frame
+            // self.renderer.blit_buffers_to_frame(self.gpu.borrow().get_framebuffer().unwrap(), frame);
+    
+            self.renderer.post_render(&mut self.gpu.borrow_mut());
             
-                    // draw system in framebuffer
-                    self.renderer.render(&mut *self.ctx, &self.render_target, &mut self.gpu.borrow_mut());
-            
-                    // blit in frame
-                    //self.renderer.blit_buffers_to_frame(&mut framebuffer, frame);
-            
-                    self.renderer.post_render(&mut self.gpu.borrow_mut());
-                    
-                    self.frame_ends();
-                },
-                Err(error) => {
-                    self.state = SystemState::Loaded;
-                    println!("{}", error);
-                }
-                
-            }
+            self.frame_ends();
         }
     }
 
-    pub fn frame_starts(&self) {
-        self.gpu.borrow_mut().flush_stream_buffer();
-        self.inputs.borrow_mut().reset();
-    }
-
-    pub fn frame_ends(&self) {
-        // prepare next frame
-        self.gpu.borrow_mut().frame_ends();
-    }
-
-    pub fn on_mouse_move(&mut self, x: f32, y: f32) {
-        self.inputs.borrow_mut().on_mouse_move(x, y)
-    }
-
-    pub fn on_mouse_wheel(&mut self, x: f32, y: f32) {
-        self.inputs.borrow_mut().on_mouse_wheel(x, y)
-    }
-
-    pub fn on_mouse_button_down(&mut self, button: MouseButton, x: f32, y: f32) {
-        self.inputs.borrow_mut().on_mouse_button_down(button, x, y)
-    }
-
-    pub fn on_mouse_button_up(&mut self, button: MouseButton, x: f32, y: f32) {
-        self.inputs.borrow_mut().on_mouse_button_up(button, x, y)
-    }
-
-    pub fn on_key_down(&mut self, keycode: Key, repeat: bool) {
-        self.inputs.borrow_mut().on_key_down(keycode, repeat)
-    }
-
-    pub fn on_key_up(&mut self, keycode: Key) {
-        self.inputs.borrow_mut().on_key_up(keycode)
-    }
-
-    pub fn shutdown(&mut self) {
+    fn on_shutdown(&mut self) {
         self.gpu.borrow_mut().on_game_shutdown();
     }
 
-    pub fn get_scripts(&self) -> Rc<RefCell<Scripts>> {
-        self.scripts.clone()
+    fn on_mouse_move(&mut self, x: f32, y: f32) {
+        self.inputs.borrow_mut().on_mouse_move(x, y)
     }
 
-    pub fn get_render_target(&self) -> &RenderTarget {
-        &self.render_target
+    fn on_mouse_wheel(&mut self, x: f32, y: f32) {
+        self.inputs.borrow_mut().on_mouse_wheel(x, y)
+    }
+
+    fn on_mouse_button_down(&mut self, button: MouseButton) {
+        self.inputs.borrow_mut().on_mouse_button_down(button)
+    }
+
+    fn on_mouse_button_up(&mut self, button: MouseButton) {
+        self.inputs.borrow_mut().on_mouse_button_up(button)
+    }
+
+    fn on_key_down(&mut self, keycode: Key) {
+        self.inputs.borrow_mut().on_key_down(keycode)
+    }
+
+    fn on_key_up(&mut self, keycode: Key) {
+        self.inputs.borrow_mut().on_key_up(keycode)
     }
 }

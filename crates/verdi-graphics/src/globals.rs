@@ -2,7 +2,7 @@ use verdi_database::Assets;
 use verdi_math::{Vec2, Mat4};
 
 use crate::{
-    program::{Program, ProgramId}, 
+    program::{Program, ProgramHandle}, 
     shader::Shader, 
     uniform::{Uniform, UniformHandle, UniformValue}, 
     pipeline::{Pipeline, PipelineHandle},
@@ -42,7 +42,7 @@ impl GlobalPipelines {
                 assets.add(
                     Box::new(
                         Pipeline::new(
-                            global_programs.gouraud_textured
+                            global_programs.gouraud_textured.clone()
                         )
                     )
                 )
@@ -121,10 +121,10 @@ impl GlobalUniforms {
 /// Indicates where to find the global shaders in the database
 #[derive(Clone)]
 pub struct GlobalPrograms {
-    pub gouraud: ProgramId,
-    pub gouraud_textured: ProgramId,
-    pub std_2d: ProgramId,
-    pub simple: ProgramId,
+    pub gouraud: ProgramHandle,
+    pub gouraud_textured: ProgramHandle,
+    pub std_2d: ProgramHandle,
+    pub simple: ProgramHandle,
 }
 
 impl GlobalPrograms {
@@ -139,7 +139,7 @@ impl GlobalPrograms {
         )
     }
 
-    fn init_gouraud(assets: &mut Assets) -> Result<ProgramId, std::io::Error> {
+    fn init_gouraud(assets: &mut Assets) -> Result<ProgramHandle, std::io::Error> {
         let vs = Shader::new(
             match std::fs::read_to_string( "./crates/verdi-graphics/shaders/gouraud.vs") {
                 Ok(src) => src,
@@ -163,11 +163,14 @@ impl GlobalPrograms {
         let fs_id = assets.add(Box::new(fs));
 
         Ok(
-            assets.add(Box::new(Program::new(vs_id, fs_id)))
+            ProgramHandle::new(
+                assets.clone(), 
+                assets.add(Box::new(Program::new(vs_id, fs_id)))
+            )    
         )
     }
 
-    fn init_gouraud_textured(assets: &mut Assets) -> Result<ProgramId, std::io::Error> {
+    fn init_gouraud_textured(assets: &mut Assets) -> Result<ProgramHandle, std::io::Error> {
         let vs = Shader::new(
             match std::fs::read_to_string( "./crates/verdi-graphics/shaders/gouraud.vs") {
                 Ok(src) => src,
@@ -191,11 +194,14 @@ impl GlobalPrograms {
         let fs_id = assets.add(Box::new(fs));
 
         Ok(
-            assets.add(Box::new(Program::new(vs_id, fs_id)))
+            ProgramHandle::new(
+                assets.clone(), 
+                assets.add(Box::new(Program::new(vs_id, fs_id)))
+            )    
         )
     }
 
-    fn init_std_2d(assets: &mut Assets) -> Result<ProgramId, std::io::Error> {
+    fn init_std_2d(assets: &mut Assets) -> Result<ProgramHandle, std::io::Error> {
         let vs = Shader::new(
             match std::fs::read_to_string( "./crates/verdi-graphics/shaders/std2d.vs") {
                 Ok(src) => src,
@@ -219,11 +225,14 @@ impl GlobalPrograms {
         let fs_id = assets.add(Box::new(fs));
 
         Ok(
-            assets.add(Box::new(Program::new(vs_id, fs_id)))
+            ProgramHandle::new(
+                assets.clone(), 
+                assets.add(Box::new(Program::new(vs_id, fs_id)))
+            )    
         )
     }
 
-    fn init_simple(assets: &mut Assets) -> Result<ProgramId, std::io::Error> {
+    fn init_simple(assets: &mut Assets) -> Result<ProgramHandle, std::io::Error> {
         let vs = Shader::new(
             match std::fs::read_to_string( "./crates/verdi-graphics/shaders/simple.vs") {
                 Ok(src) => src,
@@ -247,7 +256,10 @@ impl GlobalPrograms {
         let fs_id = assets.add(Box::new(fs));
 
         Ok(
-            assets.add(Box::new(Program::new(vs_id, fs_id)))
+            ProgramHandle::new(
+                assets.clone(), 
+                assets.add(Box::new(Program::new(vs_id, fs_id)))
+            )    
         )
     }
 }

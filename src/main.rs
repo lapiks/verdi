@@ -1,10 +1,5 @@
-use verdi::app::prelude::Window;
+use verdi::app::prelude::App;
 
 fn main() {
-    Window::new(
-        "Verdi Engine",
-        800, 
-        600, 
-        false,
-    );
+    App::run().expect("Unexpected error");
 }

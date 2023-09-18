@@ -10,8 +10,7 @@ use crate::{
     mesh::{MeshHandle, PrimitiveType}, 
     material::MaterialHandle, 
     camera::CameraHandle, 
-    sprite::SpriteHandle, 
-    uniform::UniformHandle
+    sprite::SpriteHandle,
 };
 
 pub struct BindGraphicsChip;
@@ -48,18 +47,15 @@ impl<'lua> BindGraphicsChip {
 
     // object construction
     fn new_image(gpu: Rc<RefCell<GraphicsChip>>, path: &String) -> ImageHandle {
-        let image_id = gpu.borrow_mut().new_image(path).unwrap();
-        ImageHandle::new(gpu.borrow().assets.clone(), image_id)
+        gpu.borrow_mut().new_image(path).unwrap()
     }
 
     fn new_model(gpu: Rc<RefCell<GraphicsChip>>, path: &String) -> ModelHandle {
-        let model_id = gpu.borrow_mut().new_model(path).unwrap();
-        ModelHandle::new(gpu.borrow().assets.clone(), model_id)
+        gpu.borrow_mut().new_model(path).unwrap()
     }
     
     fn new_mesh(gpu: Rc<RefCell<GraphicsChip>>) -> MeshHandle {
-        let mesh_id = gpu.borrow_mut().new_mesh().unwrap();
-        MeshHandle::new(gpu.borrow().assets.clone(), mesh_id)
+        gpu.borrow_mut().new_mesh().unwrap()
     }
 
     // fn new_sprite(gpu: Rc<RefCell<GraphicsChip>>, image: ImageHandle) -> SpriteHandle {
@@ -71,11 +67,7 @@ impl<'lua> BindGraphicsChip {
     // }
 
     fn new_material(gpu: Rc<RefCell<GraphicsChip>>) -> MaterialHandle {
-        let mat_id = gpu.borrow_mut().new_gouraud_material();
-        MaterialHandle::new(
-            gpu.borrow().assets.clone(), 
-            mat_id
-        )
+        gpu.borrow_mut().new_gouraud_material()
     }
 
     fn new_camera(gpu: Rc<RefCell<GraphicsChip>>, transform: TransformHandle) -> CameraHandle {

@@ -2,23 +2,23 @@ use std::ops::{Deref, DerefMut};
 
 use verdi_database::{Resource, ResourceId, Assets, Handle};
 
-use crate::{
-    gpu_assets::{PrepareAsset, GpuAsset, GpuAssetError, GpuAssets}, 
-    gpu_pipeline::GpuPipeline, 
-    gpu_program::GpuProgram, program::ProgramId
-};
+use crate::program::ProgramHandle;
 
 pub type PipelineId = ResourceId;
 
 pub struct Pipeline {
-    program: ProgramId,
+    program: ProgramHandle,
 }
 
 impl Pipeline {
-    pub fn new(program: ProgramId) -> Self {
+    pub fn new(program: ProgramHandle) -> Self {
         Self {
             program,
         }
+    }
+
+    pub fn get_program(&self) -> ProgramHandle {
+        self.program.clone()
     }
 }
 
@@ -32,40 +32,40 @@ impl Resource for Pipeline {
     }
 }
 
-impl PrepareAsset for Pipeline {
-    fn prepare_rendering(&self, ctx: &mut dyn miniquad::RenderingBackend, assets: &Assets, gpu_assets: &GpuAssets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
-        if let Some(gpu_program) = gpu_assets.get::<GpuProgram>(self.program) {
-            let params = miniquad::PipelineParams {
-                color_blend: Some(miniquad::BlendState::new(
-                    miniquad::Equation::Add,
-                    miniquad::BlendFactor::Value(miniquad::BlendValue::SourceAlpha),
-                    miniquad::BlendFactor::OneMinusValue(miniquad::BlendValue::SourceAlpha),
-                )),
-                depth_test: miniquad::Comparison::LessOrEqual,
-                depth_write: true,
-                ..Default::default()
-            };
+// impl PrepareAsset for Pipeline {
+//     fn prepare_rendering(&self, ctx: &Display, assets: &Assets, gpu_assets: &GpuAssets) -> Result<Box<dyn GpuAsset>, GpuAssetError> {
+//         if let Some(gpu_program) = gpu_assets.get::<GpuProgram>(self.program) {
+//             let params = miniquad::PipelineParams {
+//                 color_blend: Some(miniquad::BlendState::new(
+//                     miniquad::Equation::Add,
+//                     miniquad::BlendFactor::Value(miniquad::BlendValue::SourceAlpha),
+//                     miniquad::BlendFactor::OneMinusValue(miniquad::BlendValue::SourceAlpha),
+//                 )),
+//                 depth_test: miniquad::Comparison::LessOrEqual,
+//                 depth_write: true,
+//                 ..Default::default()
+//             };
 
-            let pipeline = ctx.new_pipeline_with_params(
-                &[miniquad::BufferLayout::default()],
-                &[
-                    miniquad::VertexAttribute::new("position", miniquad::VertexFormat::Float3),
-                    miniquad::VertexAttribute::new("normal", miniquad::VertexFormat::Float3),
-                    miniquad::VertexAttribute::new("color", miniquad::VertexFormat::Float4),
-                    miniquad::VertexAttribute::new("uv", miniquad::VertexFormat::Float2),
-                ],
-                gpu_program.get_shader(),
-                params,
-            );
+//             let pipeline = ctx.new_pipeline_with_params(
+//                 &[miniquad::BufferLayout::default()],
+//                 &[
+//                     miniquad::VertexAttribute::new("position", miniquad::VertexFormat::Float3),
+//                     miniquad::VertexAttribute::new("normal", miniquad::VertexFormat::Float3),
+//                     miniquad::VertexAttribute::new("color", miniquad::VertexFormat::Float4),
+//                     miniquad::VertexAttribute::new("uv", miniquad::VertexFormat::Float2),
+//                 ],
+//                 gpu_program.get_shader(),
+//                 params,
+//             );
 
-            return Ok(Box::new(
-                GpuPipeline::new(pipeline)
-            ));
-        }
+//             return Ok(Box::new(
+//                 GpuPipeline::new(pipeline)
+//             ));
+//         }
 
-        Err(GpuAssetError::PreparationFailed)
-    }
-}
+//         Err(GpuAssetError::PreparationFailed)
+//     }
+// }
 
 #[derive(Clone)]
 pub struct PipelineHandle(Handle);

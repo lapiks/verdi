@@ -1,3 +1,5 @@
+use verdi_input::prelude::{MouseButton, Key};
+
 use crate::{
     code_editor::CodeEditor, 
     console::Console, 
@@ -76,19 +78,19 @@ impl Gui {
         false
     }
 
-    pub fn on_mouse_button_down(&mut self, button: miniquad::MouseButton, x: f32, y: f32)  -> bool {
+    pub fn on_mouse_button_down(&mut self, button: MouseButton, x: f32, y: f32)  -> bool {
         false
     }
 
-    pub fn on_mouse_button_up(&mut self, button: miniquad::MouseButton, x: f32, y: f32)  -> bool {
+    pub fn on_mouse_button_up(&mut self, button: MouseButton, x: f32, y: f32)  -> bool {
         false
     }
 
-    pub fn on_key_down(&mut self, keycode: miniquad::KeyCode, keymods: miniquad::KeyMods, repeat: bool) -> bool {
+    pub fn on_key_down(&mut self, keycode: Key) -> bool {
         false
     }
 
-    pub fn on_key_up(&mut self, keycode: miniquad::KeyCode, keymods: miniquad::KeyMods) -> bool {
+    pub fn on_key_up(&mut self, keycode: Key) -> bool {
         false
     }
 

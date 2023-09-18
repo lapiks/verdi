@@ -1,3 +1,5 @@
+use glium::implement_vertex;
+
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Vertex {
@@ -6,6 +8,8 @@ pub struct Vertex {
     pub color: [f32; 4],
     pub uv: [f32; 2]
 }
+
+implement_vertex!(Vertex, position, normal, uv, color);
 
 impl Default for Vertex {
     fn default() -> Self {

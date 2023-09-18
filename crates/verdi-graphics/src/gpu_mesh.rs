@@ -1,18 +1,27 @@
+use glium::{VertexBuffer, IndexBuffer};
 use verdi_database::Resource;
 
-use crate::gpu_assets::GpuAsset;
+use crate::{gpu_assets::GpuAsset, vertex::Vertex};
 
 pub struct GpuMesh {
-    pub vertex_buffer: miniquad::BufferId,
-    pub index_buffer: miniquad::BufferId,
+    vertex_buffer: VertexBuffer<Vertex>,
+    index_buffer: Option<IndexBuffer<u32>>,
 }
 
 impl GpuMesh {
-    pub fn new(vertex_buffer: miniquad::BufferId, index_buffer: miniquad::BufferId) -> Self {
+    pub fn new(vertex_buffer: VertexBuffer<Vertex>, index_buffer: Option<IndexBuffer<u32>>) -> Self {
         Self {
             vertex_buffer,
             index_buffer,
         }
+    }
+
+    pub fn get_vertex_buffer(&self) -> &VertexBuffer<Vertex> {
+        &self.vertex_buffer
+    }
+
+    pub fn get_index_buffer(&self) -> &Option<IndexBuffer<u32>> {
+        &self.index_buffer
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::pass::{Pass, PassId};
+use crate::{pass::{Pass, PassId}, framebuffer::FramebufferHandle};
 
 pub struct RenderGraph {
     passes: Vec<Pass>,
@@ -17,8 +17,8 @@ impl RenderGraph {
         RenderGraph::default()
     }
 
-    pub fn create_pass(&mut self) -> PassId {
-        self.passes.push(Pass::new());
+    pub fn create_pass(&mut self, framebuffer: FramebufferHandle) -> PassId {
+        self.passes.push(Pass::new(framebuffer));
         (self.passes.len() - 1) as PassId
     }
 
