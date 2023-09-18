@@ -7,7 +7,7 @@ function verdi.start()
     image = graphics.newImage("./game_example/assets/Palette.png")
     --sprite = graphics.newSprite(image)
 
-    graphics.camera.transform:setPosition(math.vec3(0, 2.5, 5))
+    graphics.camera.transform:setPosition(math.vec3(-2.0, 2.5, -5))
 
     entity = world.spawn()
     print(entity:id())
