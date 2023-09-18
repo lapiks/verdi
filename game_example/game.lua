@@ -27,7 +27,7 @@ function verdi.start()
     mesh:setIndices(indices)
 	mesh:setPrimitiveType("triangles")
 
-    --print(model:getNumNodes())
+    print(model:getNumNodes())
 
     camPitch = 0
     camYaw = 0
@@ -68,10 +68,10 @@ function verdi.update(deltaTime)
         camYaw = camYaw - rotSpeed * deltaTime
     end
 
-   -- camTF:reset()
-    --camTF:setRotation(camYaw, 0, 1, 0)
-    --camTF:translate(camPos)
-    ---camTF:rotate(camYaw, 0, 1, 0)
+    -- camTF:reset()
+    -- camTF:setRotation(camYaw, 0, 1, 0)
+    -- camTF:translate(camPos)
+    -- camTF:rotate(camYaw, 0, 1, 0)
 
     local mouseDelta = {input.getMouseDelta()}
     camYaw = camYaw + mouseDelta[1] * deltaTime * 10
@@ -89,10 +89,6 @@ end
 function verdi.draw(pass)
     --graphics.setClearColor(0.0, 0.0, 0.0, 1.0)
 
-    --transform:translate(5.0, 0.0, 0.0)
-    --transform:rotate(1.0, 0.0, 1.0, 0.0)
-    --transform:scale(2.0, 2.0, 2.0)
-
     pass:enableLighting(true)
     pass:enableFog(true)
     pass:setFogStart(10.0)
@@ -102,11 +98,6 @@ function verdi.draw(pass)
     --pass:drawSprite(sprite)
 
     pass:submit(graphics.camera)
-
-    -- for i = 0, model:getNumNodes() do
-    --     local node = model:getNode(i) 
-    --     node:draw()
-    -- end
 
     --graphics.beginObject("triangles")
         --graphics.bindTexture(image)
